@@ -1,3 +1,66 @@
 from django.db import models
+from core.models import BaseModel
+from users.models import User
+from django.utils.text import slugify
 
-# Create your models here.
+class Category(BaseModel):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name_plural = "Categories"
+
+    def __str__(self):
+        return self.name
+
+class Author(BaseModel):
+    """
+    Agar koi user author hai toh uski extra details. (author.js ke mutabiq)
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='author_profile')
+    role = models.CharField(max_length=100, help_text="e.g. Senior Tech Reporter")
+    twitter_url = models.URLField(blank=True, null=True)
+    linkedin_url = models.URLField(blank=True, null=True)
+
+    def __str__(self):
+        return self.user.name
+
+class Article(BaseModel):
+    STATUS_CHOICES = (
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+    )
+
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=300, unique=True, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='articles')
+    author = models.ForeignKey(Author, on_delete=models.SET_NULL, null=True, related_name='articles')
+    
+    # External sources (e.g. BBC News, TechCrunch)
+    source_name = models.CharField(max_length=100, blank=True, null=True)
+    
+    description = models.TextField(help_text="Short excerpt for homepage")
+    content = models.TextField(help_text="Full article content")
+    featured_image = models.ImageField(upload_to='articles/images/', blank=True, null=True)
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    published_at = models.DateTimeField(blank=True, null=True)
+    
+    # Frontend flags & stats
+    views = models.PositiveIntegerField(default=0)
+    is_featured = models.BooleanField(default=False, help_text="Show in large header banner")
+    is_trending = models.BooleanField(default=False, help_text="Show in trending sidebar")
+    is_breaking = models.BooleanField(default=False, help_text="Show in breaking news ticker")
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.title

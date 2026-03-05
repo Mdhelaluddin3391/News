@@ -15,8 +15,25 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    
+    # JWT Authentication Endpoints (Login)
+    path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    # App API Routes
+    path('api/users/', include('users.urls')),
+    path('api/news/', include('news.urls')),
+    path('api/interactions/', include('interactions.urls')),
+    # path('api/interactions/', include('interactions.urls')), # Ise next step mein banayenge
 ]
+
+# Media files ko serve karne ke liye (Images show karne ke liye)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

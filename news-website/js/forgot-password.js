@@ -1,20 +1,48 @@
-const FORGOT_PASSWORD_API = 'https://your-backend.com/api/forgot-password'; // Replace
+// js/forgot-password.js
 
-document.getElementById('forgot-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const errorDiv = document.getElementById('forgot-error');
-    const successDiv = document.getElementById('forgot-success');
+// Aapke Django backend ka forgot-password endpoint (abhi backend mein banana baaki hai)
+const FORGOT_PASSWORD_API = `${CONFIG.API_BASE_URL}/users/forgot-password/`;
 
-    errorDiv.style.display = 'none';
-    successDiv.style.display = 'none';
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('forgot-form');
+    if (!form) return;
 
-    // Simulate API call
-    // In real app: fetch(FORGOT_PASSWORD_API, { method: 'POST', body: JSON.stringify({ email }) })
-    setTimeout(() => {
-        // Mock success: always show success (don't reveal if email exists)
-        successDiv.textContent = 'If that email is registered, we have sent a password reset link. Please check your inbox.';
-        successDiv.style.display = 'block';
-        document.getElementById('forgot-form').reset();
-    }, 800);
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('email').value.trim();
+        const errorDiv = document.getElementById('forgot-error');
+        const successDiv = document.getElementById('forgot-success');
+        const submitBtn = form.querySelector('.auth-btn');
+
+        // Reset messages & disable button
+        errorDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+
+        try {
+            const response = await fetch(FORGOT_PASSWORD_API, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email })
+            });
+
+            // Security Best Practice: Success message show karein taaki email enumeration na ho sake
+            successDiv.textContent = 'If that email is registered, we have sent a password reset link. Please check your inbox.';
+            successDiv.style.display = 'block';
+            form.reset();
+            
+        } catch (error) {
+            console.error('Forgot password network error:', error);
+            // Agar server down hai ya network issue hai toh actual error dikhayein
+            errorDiv.textContent = 'A network error occurred. Please try again later.';
+            errorDiv.style.display = 'block';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send Reset Link';
+        }
+    });
 });

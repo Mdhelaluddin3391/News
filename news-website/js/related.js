@@ -1,42 +1,43 @@
+// js/related.js
 // ==================== RELATED ARTICLES MODULE ====================
 
-const RELATED_API_URL = 'https://your-backend.com/api/related'; // Replace
-
-// Mock related articles data (by category)
-const mockRelated = {
-    general: [
-        { id: 'gen-2', title: 'Breakthrough in Renewable Energy', urlToImage: 'https://picsum.photos/id/16/200/120', url: '#' },
-        { id: 'gen-3', title: 'New AI Model Predicts Weather', urlToImage: 'https://picsum.photos/id/1043/200/120', url: '#' }
-    ],
-    technology: [
-        { id: 'tech-2', title: 'Quantum Computing Milestone', urlToImage: 'https://picsum.photos/id/20/200/120', url: '#' },
-        { id: 'tech-1', title: 'Apple Unveils AR Glasses', urlToImage: 'https://picsum.photos/id/0/200/120', url: '#' }
-    ],
-    sports: [
-        { id: 'sport-2', title: 'Olympics 2025: New Sports', urlToImage: 'https://picsum.photos/id/82/200/120', url: '#' },
-        { id: 'sport-1', title: 'Champions League Final', urlToImage: 'https://picsum.photos/id/28/200/120', url: '#' }
-    ]
-};
+const RELATED_API_URL = `${CONFIG.API_BASE_URL}/news/articles/`;
 
 // Fetch related articles based on current article's category
-async function fetchRelatedArticles(category, currentArticleId) {
-    // Simulate API call
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            let related = mockRelated[category] || mockRelated.general;
-            // Filter out current article if accidentally included
-            related = related.filter(a => a.id !== currentArticleId);
-            resolve(related.slice(0, 3)); // limit to 3
-        }, 400);
-    });
+async function fetchRelatedArticles(categorySlug, currentArticleId) {
+    try {
+        // Backend se same category ke articles fetch karna
+        const response = await fetch(`${RELATED_API_URL}?category__slug=${categorySlug}`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch related articles');
+        }
+        
+        const data = await response.json();
+        const articles = data.results || data; // Handle paginated response
+        
+        // Current article ko filter out karna taaki wo khud related list mein na dikhe
+        const related = articles.filter(a => a.id != currentArticleId);
+        
+        // Sirf top 3 articles return karna
+        return related.slice(0, 3);
+        
+    } catch (error) {
+        console.error('Error fetching related articles:', error);
+        return [];
+    }
 }
 
 // Render related articles in container
-async function renderRelated(containerId, category, currentArticleId) {
+async function renderRelated(containerId, categorySlug, currentArticleId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    const related = await fetchRelatedArticles(category, currentArticleId);
+    // Optional: Show loading state
+    container.innerHTML = '<p style="color: var(--gray); font-size: 0.9rem;">Loading related articles...</p>';
+
+    const related = await fetchRelatedArticles(categorySlug, currentArticleId);
+    
     if (related.length === 0) {
         container.innerHTML = '<p>No related articles found.</p>';
         return;
@@ -44,10 +45,13 @@ async function renderRelated(containerId, category, currentArticleId) {
 
     let html = '';
     related.forEach(a => {
+        // Backend se image url set karna
+        const imageUrl = a.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
+        
         html += `
             <div class="related-card">
                 <a href="article.html?id=${a.id}">
-                    <img src="${a.urlToImage}" alt="${a.title}" loading="lazy">
+                    <img src="${imageUrl}" alt="${a.title}" loading="lazy">
                     <div class="related-content">
                         <h4>${a.title}</h4>
                     </div>
@@ -55,5 +59,6 @@ async function renderRelated(containerId, category, currentArticleId) {
             </div>
         `;
     });
+    
     container.innerHTML = html;
 }

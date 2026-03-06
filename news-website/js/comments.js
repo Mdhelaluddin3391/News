@@ -1,91 +1,65 @@
+// js/comments.js
 // ==================== COMMENTS MODULE ====================
 // Depends on auth.js (getCurrentUser)
 
-const COMMENTS_API_URL = 'https://your-backend.com/api/comments'; // Replace with real endpoint
-
-// Mock comments data (by articleId)
-const mockComments = {
-    'gen-1': [
-        {
-            id: 'c1',
-            articleId: 'gen-1',
-            author: { id: 'user1', name: 'John Doe' },
-            text: 'Great article! Really informative.',
-            createdAt: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-            id: 'c2',
-            articleId: 'gen-1',
-            author: { id: 'user2', name: 'Jane Smith' },
-            text: 'I disagree with some points, but well written.',
-            createdAt: new Date(Date.now() - 7200000).toISOString()
-        }
-    ],
-    'tech-1': [
-        {
-            id: 'c3',
-            articleId: 'tech-1',
-            author: { id: 'user1', name: 'John Doe' },
-            text: 'Can’t wait to try these glasses!',
-            createdAt: new Date().toISOString()
-        }
-    ]
-};
+// Real Django backend endpoint for comments
+const COMMENTS_API_URL = `${CONFIG.API_BASE_URL}/interactions/comments/`;
 
 // Fetch comments for an article
 async function fetchComments(articleId) {
-    // Simulate API call
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve(mockComments[articleId] || []);
-        }, 500);
-    });
+    try {
+        const response = await fetch(`${COMMENTS_API_URL}?article_id=${articleId}`);
+        if (!response.ok) throw new Error('Failed to fetch comments');
+        
+        const data = await response.json();
+        // Return results array if paginated, otherwise the whole data array
+        return data.results || data;
+    } catch (error) {
+        console.error('Error fetching comments:', error);
+        return [];
+    }
 }
 
 // Post a new comment
 async function postComment(articleId, text) {
-    const user = getCurrentUser();
-    if (!user) throw new Error('You must be logged in to comment.');
+    const token = localStorage.getItem('newsHub_accessToken');
+    if (!token) throw new Error('You must be logged in to comment.');
 
-    // Simulate API post
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            const newComment = {
-                id: 'c' + Date.now(),
-                articleId,
-                author: { id: user.id, name: user.name },
-                text,
-                createdAt: new Date().toISOString()
-            };
-            if (!mockComments[articleId]) mockComments[articleId] = [];
-            mockComments[articleId].push(newComment);
-            resolve(newComment);
-        }, 500);
+    const response = await fetch(COMMENTS_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            article: articleId,
+            text: text
+        })
     });
+
+    if (!response.ok) {
+        throw new Error('Failed to post comment. Please try again.');
+    }
+    
+    return await response.json();
 }
 
-// Delete a comment (only if author matches current user)
-async function deleteComment(commentId, articleId) {
-    const user = getCurrentUser();
-    if (!user) throw new Error('You must be logged in.');
+// Delete a comment (Backend checks if user is authorized/admin, but we show the button only for the author)
+async function deleteComment(commentId) {
+    const token = localStorage.getItem('newsHub_accessToken');
+    if (!token) throw new Error('You must be logged in.');
 
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const comments = mockComments[articleId] || [];
-            const commentIndex = comments.findIndex(c => c.id === commentId);
-            if (commentIndex === -1) {
-                reject(new Error('Comment not found.'));
-                return;
-            }
-            const comment = comments[commentIndex];
-            if (comment.author.id !== user.id) {
-                reject(new Error('You can only delete your own comments.'));
-                return;
-            }
-            comments.splice(commentIndex, 1);
-            resolve();
-        }, 500);
+    const response = await fetch(`${COMMENTS_API_URL}${commentId}/`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
     });
+
+    if (!response.ok) {
+        throw new Error('Failed to delete comment.');
+    }
+    return true;
 }
 
 // Render comments list and form
@@ -101,12 +75,16 @@ async function renderComments(articleId, containerId) {
     } else {
         let html = '';
         comments.forEach(c => {
-            const isAuthor = user && c.author.id === user.id;
+            // Django backend serializer mein user detail 'user_detail' object ke andar aati hai
+            const authorId = c.user_detail ? c.user_detail.id : null;
+            const authorName = c.user_detail ? c.user_detail.name : 'Unknown User';
+            const isAuthor = user && authorId === user.id;
+            
             html += `
                 <div class="comment" data-comment-id="${c.id}">
                     <div class="comment-header">
-                        <span class="comment-author">${c.author.name}</span>
-                        <span class="comment-date">${new Date(c.createdAt).toLocaleString()}</span>
+                        <span class="comment-author">${authorName}</span>
+                        <span class="comment-date">${new Date(c.created_at).toLocaleString()}</span>
                     </div>
                     <div class="comment-text">${c.text}</div>
                     ${isAuthor ? `
@@ -123,9 +101,11 @@ async function renderComments(articleId, containerId) {
         container.querySelectorAll('.delete-comment').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const commentId = e.target.dataset.commentId;
+                if (!confirm("Are you sure you want to delete this comment?")) return;
+                
                 try {
-                    await deleteComment(commentId, articleId);
-                    await renderComments(articleId, containerId); // Refresh
+                    await deleteComment(commentId);
+                    await renderComments(articleId, containerId); // Refresh comments after deleting
                 } catch (err) {
                     alert(err.message);
                 }
@@ -146,16 +126,20 @@ async function renderComments(articleId, containerId) {
         document.getElementById('submit-comment').addEventListener('click', async () => {
             const text = document.getElementById('new-comment-text').value.trim();
             if (!text) return;
+            
             const btn = document.getElementById('submit-comment');
             btn.disabled = true;
+            btn.textContent = 'Posting...';
+            
             try {
                 await postComment(articleId, text);
                 document.getElementById('new-comment-text').value = '';
-                await renderComments(articleId, containerId);
+                await renderComments(articleId, containerId); // Refresh comments after posting
             } catch (err) {
                 alert(err.message);
             } finally {
                 btn.disabled = false;
+                btn.textContent = 'Post Comment';
             }
         });
     } else {

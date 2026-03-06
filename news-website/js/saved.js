@@ -1,32 +1,17 @@
-// ==================== SAVED ARTICLES PAGE ====================
-
+// js/saved.js
 const articlesContainer = document.getElementById('articles-container');
 const loader = document.getElementById('loader');
 const errorDiv = document.getElementById('error-message');
 
-function showLoader() {
-    loader.style.display = 'block';
-}
-
-function hideLoader() {
-    loader.style.display = 'none';
-}
-
+function showLoader() { loader.style.display = 'block'; }
+function hideLoader() { loader.style.display = 'none'; }
 function showError(message) {
     errorDiv.textContent = message;
     errorDiv.style.display = 'block';
-    setTimeout(() => {
-        errorDiv.style.display = 'none';
-    }, 5000);
+    setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
 }
-
 function formatDate(isoString) {
-    const date = new Date(isoString);
-    return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
+    return new Date(isoString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function renderArticles(articles) {
@@ -35,15 +20,13 @@ function renderArticles(articles) {
         return;
     }
 
-    const user = getCurrentUser();
     const html = articles.map(article => {
-        const imageUrl = article.urlToImage || 'https://picsum.photos/300/200?random=1';
+        const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
         const title = article.title || 'Untitled';
         const description = article.description || 'No description available.';
-        const source = article.source?.name || 'Unknown source';
-        const date = article.publishedAt ? formatDate(article.publishedAt) : 'Unknown date';
+        const source = article.source_name || 'NewsHub';
+        const date = article.published_at ? formatDate(article.published_at) : 'Unknown date';
         const articleId = article.id || '';
-        const isSaved = true; // by definition
 
         return `
             <div class="article-card">
@@ -66,33 +49,53 @@ function renderArticles(articles) {
 
     // Attach unsave functionality
     document.querySelectorAll('.save-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             e.preventDefault();
             const articleId = btn.dataset.id;
-            unsaveArticle(articleId);
-            // Remove the card from UI
-            btn.closest('.article-card').remove();
-            // If no articles left, show empty message
-            if (articlesContainer.children.length === 0) {
-                articlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">You have no saved articles.</p>';
+            const success = await unsaveArticle(articleId); // Async call to backend
+            
+            if (success) {
+                btn.closest('.article-card').remove();
+                if (articlesContainer.children.length === 0) {
+                    articlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">You have no saved articles.</p>';
+                }
             }
         });
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const user = getCurrentUser();
-    if (!user) {
-        // Redirect to login with return URL
-        window.location.href = 'login.html?redirect=saved.html';
+async function fetchSavedArticlesData() {
+    showLoader();
+    // Bookmark IDs local cache se li jayengi jo auth.js fetch karta hai
+    const bookmarks = JSON.parse(localStorage.getItem('newsHub_bookmarks') || '[]');
+    
+    if (bookmarks.length === 0) {
+        renderArticles([]);
+        hideLoader();
         return;
     }
 
-    showLoader();
-    // Simulate loading
-    setTimeout(() => {
-        const saved = getSavedArticles();
-        renderArticles(saved);
+    try {
+        // Backend se ek-ek karke saved articles ka data fetch karna
+        const articlePromises = bookmarks.map(b => 
+            fetch(`${CONFIG.API_BASE_URL}/news/articles/${b.article}/`)
+                .then(res => res.ok ? res.json() : null)
+        );
+        
+        const articles = await Promise.all(articlePromises);
+        renderArticles(articles.filter(a => a !== null));
+    } catch (e) {
+        showError("Failed to load saved articles.");
+    } finally {
         hideLoader();
-    }, 500);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const user = getCurrentUser();
+    if (!user) {
+        window.location.href = 'login.html?redirect=saved.html';
+        return;
+    }
+    fetchSavedArticlesData();
 });

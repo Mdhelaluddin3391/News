@@ -1,91 +1,94 @@
-// ==================== AUTHENTICATION HELPERS ====================
+// js/auth.js
+// ==================== AUTHENTICATION & API HELPERS ====================
 
+const API_BASE_URL_AUTH = CONFIG.API_BASE_URL;
 const AUTH_STORAGE_KEY = 'newsHub_currentUser';
-const USERS_STORAGE_KEY = 'newsHub_users';
+const TOKEN_KEY = 'newsHub_accessToken';
+const REFRESH_KEY = 'newsHub_refreshToken';
+const BOOKMARKS_KEY = 'newsHub_bookmarks';
 
-// Initialize users storage if not exists
-function initUsers() {
-    if (!localStorage.getItem(USERS_STORAGE_KEY)) {
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([]));
+// Register a new user via API
+async function registerUser(name, email, password) {
+    try {
+        const response = await fetch(`${API_BASE_URL_AUTH}/users/register/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+        const data = await response.json();
+        
+        if (!response.ok) {
+            let errMsg = 'Registration failed.';
+            if (data.email) errMsg = data.email[0];
+            else if (data.password) errMsg = data.password[0];
+            return { success: false, message: errMsg };
+        }
+        return { success: true };
+    } catch (error) {
+        return { success: false, message: 'Network error. Please try again.' };
     }
 }
 
-// Get all registered users
-function getUsers() {
-    initUsers();
-    return JSON.parse(localStorage.getItem(USERS_STORAGE_KEY));
-}
+// Login user via JWT API
+async function loginUser(email, password) {
+    try {
+        // 1. Get Tokens
+        const response = await fetch(`${API_BASE_URL_AUTH}/auth/login/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
 
-// Save users array
-function saveUsers(users) {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-}
+        if (!response.ok) {
+            return { success: false, message: data.detail || 'Invalid email or password.' };
+        }
 
-// Register a new user
-function registerUser(name, email, password) {
-    const users = getUsers();
-    // Check if email already exists
-    const existing = users.find(u => u.email === email);
-    if (existing) {
-        return { success: false, message: 'Email already registered.' };
+        // Save tokens
+        localStorage.setItem(TOKEN_KEY, data.access);
+        localStorage.setItem(REFRESH_KEY, data.refresh);
+
+        // 2. Fetch User Profile Details
+        const profileRes = await fetch(`${API_BASE_URL_AUTH}/users/profile/`, {
+            headers: { 'Authorization': `Bearer ${data.access}` }
+        });
+        const userData = await profileRes.json();
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+
+        // 3. Sync User's Bookmarks from Backend
+        await syncBookmarks();
+
+        return { success: true, user: userData };
+    } catch (error) {
+        return { success: false, message: 'Network error. Please try again.' };
     }
-    const newUser = {
-        id: Date.now().toString(),
-        name,
-        email,
-        password, // In a real app, hash the password!
-        createdAt: new Date().toISOString()
-    };
-    users.push(newUser);
-    saveUsers(users);
-    return { success: true, user: newUser };
-}
-
-// Login user
-function loginUser(email, password) {
-    const users = getUsers();
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
-        // Remove password before storing in session
-        const { password, ...safeUser } = user;
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(safeUser));
-        return { success: true, user: safeUser };
-    }
-    return { success: false, message: 'Invalid email or password.' };
 }
 
 // Logout user
 function logoutUser() {
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+    localStorage.removeItem(BOOKMARKS_KEY);
 }
 
-// Get current logged in user (returns null if not logged in)
+// Get current logged in user (Local sync function for UI)
 function getCurrentUser() {
     const userJson = localStorage.getItem(AUTH_STORAGE_KEY);
     return userJson ? JSON.parse(userJson) : null;
 }
 
-// Check if user is authenticated
-function isAuthenticated() {
-    return getCurrentUser() !== null;
-}
-
+// Update Header UI based on login status
 function updateAuthUI() {
     const user = getCurrentUser();
     const authLinks = document.querySelectorAll('.auth-link-item');
     authLinks.forEach(link => {
         if (user) {
-            if (link.classList.contains('login-link')) link.style.display = 'none';
-            if (link.classList.contains('register-link')) link.style.display = 'none';
-            if (link.classList.contains('profile-link')) link.style.display = 'inline-block';
-            if (link.classList.contains('saved-link')) link.style.display = 'inline-block';
-            if (link.classList.contains('logout-link')) link.style.display = 'inline-block';
+            if (link.classList.contains('login-link') || link.classList.contains('register-link')) link.style.display = 'none';
+            if (link.classList.contains('profile-link') || link.classList.contains('saved-link') || link.classList.contains('logout-link')) link.style.display = 'inline-block';
         } else {
-            if (link.classList.contains('login-link')) link.style.display = 'inline-block';
-            if (link.classList.contains('register-link')) link.style.display = 'inline-block';
-            if (link.classList.contains('profile-link')) link.style.display = 'none';
-            if (link.classList.contains('saved-link')) link.style.display = 'none';
-            if (link.classList.contains('logout-link')) link.style.display = 'none';
+            if (link.classList.contains('login-link') || link.classList.contains('register-link')) link.style.display = 'inline-block';
+            if (link.classList.contains('profile-link') || link.classList.contains('saved-link') || link.classList.contains('logout-link')) link.style.display = 'none';
         }
     });
     const userNameSpan = document.getElementById('user-name');
@@ -94,10 +97,6 @@ function updateAuthUI() {
     }
 }
 
-
-
-
-// Attach logout handler if logout link exists
 document.addEventListener('DOMContentLoaded', () => {
     const logoutLink = document.getElementById('logout-link');
     if (logoutLink) {
@@ -105,62 +104,79 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             logoutUser();
             updateAuthUI();
-            window.location.href = 'index.html'; // redirect to home after logout
+            window.location.href = 'index.html';
         });
     }
     updateAuthUI();
 });
 
-
-
-
-
-
-
-
-
-
 // ==================== BOOKMARKS / SAVED ARTICLES ====================
 
-function getSavedKey() {
-    const user = getCurrentUser();
-    return user ? `savedArticles_${user.id}` : null;
+// Fetch bookmarks from Django and cache locally
+async function syncBookmarks() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+        const res = await fetch(`${API_BASE_URL_AUTH}/interactions/bookmarks/`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            // Store array of objects [{id: 1, article: 5}, ...]
+            const bookmarks = data.results || data; 
+            localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
+        }
+    } catch (e) { console.error("Bookmark sync failed", e); }
 }
 
-// Save an article (full article object)
-function saveArticle(article) {
-    const key = getSavedKey();
-    if (!key) return false; // not logged in
-    let saved = JSON.parse(localStorage.getItem(key)) || [];
-    // Check if already saved
-    if (!saved.some(a => a.id === article.id)) {
-        saved.push(article);
-        localStorage.setItem(key, JSON.stringify(saved));
-    }
-    return true;
-}
-
-// Remove an article by id
-function unsaveArticle(articleId) {
-    const key = getSavedKey();
-    if (!key) return false;
-    let saved = JSON.parse(localStorage.getItem(key)) || [];
-    saved = saved.filter(a => a.id !== articleId);
-    localStorage.setItem(key, JSON.stringify(saved));
-    return true;
-}
-
-// Check if an article is saved
+// Check if article is saved (Synchronous for fast UI rendering)
 function isArticleSaved(articleId) {
-    const key = getSavedKey();
-    if (!key) return false;
-    const saved = JSON.parse(localStorage.getItem(key)) || [];
-    return saved.some(a => a.id === articleId);
+    const bookmarks = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || '[]');
+    return bookmarks.some(b => b.article == articleId);
 }
 
-// Get all saved articles for current user
-function getSavedArticles() {
-    const key = getSavedKey();
-    if (!key) return [];
-    return JSON.parse(localStorage.getItem(key)) || [];
+// Save article to Django
+async function saveArticle(article) {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return false;
+    
+    const articleId = typeof article === 'object' ? article.id : article;
+
+    try {
+        const res = await fetch(`${API_BASE_URL_AUTH}/interactions/bookmarks/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ article: articleId })
+        });
+        if (res.ok) {
+            await syncBookmarks(); // Refresh local cache
+            return true;
+        }
+    } catch (e) { console.error(e); }
+    return false;
+}
+
+// Delete bookmark from Django
+async function unsaveArticle(articleId) {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return false;
+
+    const bookmarks = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || '[]');
+    const bookmark = bookmarks.find(b => b.article == articleId);
+    if (!bookmark) return false;
+
+    try {
+        const res = await fetch(`${API_BASE_URL_AUTH}/interactions/bookmarks/${bookmark.id}/`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            await syncBookmarks(); // Refresh local cache
+            return true;
+        }
+    } catch (e) { console.error(e); }
+    return false;
 }

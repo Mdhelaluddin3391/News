@@ -1,107 +1,6 @@
 // ==================== CONFIGURATION ====================
-// Must match the settings in script.js
-const USE_MOCK = true;                     // Change to false to use real API
-const API_BASE_URL = 'https://your-backend.com/api/article'; // Endpoint for single article
-const API_KEY = 'YOUR_API_KEY';
-
-// ==================== MOCK DATA (enriched with IDs and categories) ====================
-const mockArticlesById = {
-    // general
-    'gen-1': {
-        id: 'gen-1',
-        category: 'general',
-        title: 'Global Climate Summit Reaches Historic Agreement',
-        description: 'Nations commit to new carbon reduction targets in landmark deal.',
-        content: 'After two weeks of intense negotiations, delegates from nearly 200 countries have agreed to a landmark climate accord... (full article content would go here)',
-        url: '#',
-        urlToImage: 'https://picsum.photos/id/1015/1200/600',
-        publishedAt: new Date().toISOString(),
-        source: { name: 'BBC News' }
-    },
-    'gen-2': {
-        id: 'gen-2',
-        category: 'general',
-        title: 'Breakthrough in Renewable Energy Storage',
-        description: 'Scientists develop a new battery that could revolutionize solar power.',
-        content: 'Researchers at Stanford University have unveiled a new type of battery that stores solar energy at half the cost of current lithium-ion technology...',
-        url: '#',
-        urlToImage: 'https://picsum.photos/id/16/1200/600',
-        publishedAt: new Date(Date.now() - 86400000).toISOString(),
-        source: { name: 'TechCrunch' }
-    },
-    // technology
-    'tech-1': {
-        id: 'tech-1',
-        category: 'technology',
-        title: 'Apple Unveils Augmented Reality Glasses',
-        description: 'The new device blends digital content seamlessly with the real world.',
-        content: 'Apple today announced its long-rumored augmented reality glasses, called "Apple Vision"...',
-        url: '#',
-        urlToImage: 'https://picsum.photos/id/0/1200/600',
-        publishedAt: new Date().toISOString(),
-        source: { name: 'The Verge' }
-    },
-    // sports
-    'sport-1': {
-        id: 'sport-1',
-        category: 'sports',
-        title: 'Champions League Final: Underdog Victory',
-        description: 'A stunning match ends with a last-minute goal securing the trophy.',
-        content: 'In a final that will be remembered for decades, the underdog team snatched victory from the jaws of defeat...',
-        url: '#',
-        urlToImage: 'https://picsum.photos/id/28/1200/600',
-        publishedAt: new Date().toISOString(),
-        source: { name: 'ESPN' }
-    },
-    // business
-    'bus-1': {
-        id: 'bus-1',
-        category: 'business',
-        title: 'Stock Markets Hit All-Time High',
-        description: 'Tech shares lead the rally as earnings exceed expectations.',
-        content: 'Wall Street surged to record highs today as technology stocks continued their upward momentum...',
-        url: '#',
-        urlToImage: 'https://picsum.photos/id/21/1200/600',
-        publishedAt: new Date().toISOString(),
-        source: { name: 'Bloomberg' }
-    },
-    // entertainment
-    'ent-1': {
-        id: 'ent-1',
-        category: 'entertainment',
-        title: 'Oscars 2025: Full Winners List',
-        description: 'Surprises and historic wins at the 97th Academy Awards.',
-        content: 'The 2025 Oscars delivered unforgettable moments...',
-        url: '#',
-        urlToImage: 'https://picsum.photos/id/96/1200/600',
-        publishedAt: new Date().toISOString(),
-        source: { name: 'Variety' }
-    },
-    // health
-    'health-1': {
-        id: 'health-1',
-        category: 'health',
-        title: 'New Drug Shows Promise in Alzheimer’s Trial',
-        description: 'Phase 3 results indicate significant slowing of cognitive decline.',
-        content: 'A new drug developed by Biogen has shown remarkable results in slowing the progression of Alzheimer’s disease...',
-        url: '#',
-        urlToImage: 'https://picsum.photos/id/42/1200/600',
-        publishedAt: new Date().toISOString(),
-        source: { name: 'Medical News Today' }
-    },
-    // science
-    'sci-1': {
-        id: 'sci-1',
-        category: 'science',
-        title: 'Perseverance Rover Finds Organic Molecules on Mars',
-        description: 'New evidence supports possibility of ancient microbial life.',
-        content: 'NASA’s Perseverance rover has detected organic molecules in a rock sample collected from Jezero Crater...',
-        url: '#',
-        urlToImage: 'https://picsum.photos/id/104/1200/600',
-        publishedAt: new Date().toISOString(),
-        source: { name: 'NASA' }
-    }
-};
+// Real API Endpoint pointing to your Django backend
+const API_BASE_URL = `${CONFIG.API_BASE_URL}/news/articles`;
 
 // ==================== DOM Elements ====================
 const articleContainer = document.getElementById('article-detail');
@@ -147,15 +46,17 @@ function renderArticle(article) {
         return;
     }
 
-    const user = getCurrentUser();
+    const user = getCurrentUser(); // Assuming this comes from auth.js
     const isSaved = user ? isArticleSaved(article.id) : false;
-    const imageUrl = article.urlToImage || 'https://picsum.photos/1200/600?random=1';
+    
+    // Mapping Django backend fields to frontend variables
+    const imageUrl = article.featured_image || 'https://picsum.photos/1200/600?random=1';
     const title = article.title || 'Untitled';
-    const source = article.source?.name || 'Unknown source';
-    const date = article.publishedAt ? formatDate(article.publishedAt) : 'Unknown date';
+    const source = article.source_name || 'NewsHub';
+    const date = article.published_at ? formatDate(article.published_at) : 'Unknown date';
     const description = article.description || '';
     const content = article.content || article.description || 'Full content is not available.';
-    const category = article.category || 'general'; // fallback category
+    const categorySlug = article.category ? article.category.slug : 'general';
 
     const saveButton = user ? 
         `<button class="save-btn detail-save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save for Later'}</button>` 
@@ -200,6 +101,7 @@ function renderArticle(article) {
             <div class="detail-meta">
                 <span class="detail-source">${source}</span>
                 <span class="detail-date">${date}</span>
+                <span><i class="far fa-eye"></i> ${article.views || 0} views</span>
             </div>
             ${description ? `<p class="detail-description">${description}</p>` : ''}
             <div class="detail-body">
@@ -217,14 +119,14 @@ function renderArticle(article) {
 
     articleContainer.innerHTML = html;
 
-    // Load related articles
+    // Load related articles (calls function from related.js)
     if (typeof renderRelated === 'function') {
-        renderRelated('related-container', category, article.id);
+        renderRelated('related-container', categorySlug, article.id);
     } else {
         console.warn('renderRelated function not available. Make sure related.js is loaded.');
     }
 
-    // Load comments
+    // Load comments (calls function from comments.js)
     if (typeof renderComments === 'function') {
         renderComments(article.id, 'comments-list');
     } else {
@@ -257,25 +159,13 @@ async function fetchArticle(articleId) {
     clearError();
 
     try {
-        let article = null;
-
-        if (USE_MOCK) {
-            await new Promise(resolve => setTimeout(resolve, 500)); // simulate network
-            article = mockArticlesById[articleId];
-            if (!article) {
-                throw new Error('Article not found in mock data');
-            }
-        } else {
-            const url = new URL(API_BASE_URL);
-            url.searchParams.append('id', articleId);
-            if (API_KEY) url.searchParams.append('apiKey', API_KEY);
-
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-            article = await response.json();
-            // assume response is the article object
+        // Fetch specific article by ID from Django backend
+        const response = await fetch(`${API_BASE_URL}/${articleId}/`);
+        if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
         }
-
+        
+        const article = await response.json();
         renderArticle(article);
     } catch (error) {
         console.error('Failed to fetch article:', error);

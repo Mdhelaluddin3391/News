@@ -1,8 +1,10 @@
+// js/register.js
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('register-form');
     const errorDiv = document.getElementById('register-error');
+    const submitBtn = form.querySelector('.auth-btn');
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('name').value.trim();
         const email = document.getElementById('email').value.trim();
@@ -21,14 +23,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const result = registerUser(name, email, password);
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Registering...';
+
+        const result = await registerUser(name, email, password); // Async call from auth.js
         if (result.success) {
             // Auto-login after registration
-            loginUser(email, password);
+            await loginUser(email, password);
             window.location.href = 'index.html';
         } else {
             errorDiv.textContent = result.message;
             errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Register';
         }
     });
 });

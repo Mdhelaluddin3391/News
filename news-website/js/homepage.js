@@ -1,106 +1,28 @@
 // ==================== HOMEPAGE.JS ====================
 // Depends on auth.js, saved.js, script.js (for helpers)
 
-const USE_MOCK = true; // Set false for real API
-const API_BASE_URL = 'https://your-backend.com/api'; // Base URL for endpoints
-
-// Mock data extended with featured, trending, breaking flags
-const mockArticles = {
-    featured: [
-        {
-            id: 'gen-1',
-            category: 'world',
-            title: 'Global Climate Summit Reaches Historic Agreement',
-            description: 'Nations commit to new carbon reduction targets in landmark deal.',
-            urlToImage: 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
-            publishedAt: new Date().toISOString(),
-            author: 'Robert Chen',
-            commentsCount: 342,
-            source: { name: 'BBC News' }
-        }
-    ],
-    grid: [
-        {
-            id: 'gen-2',
-            category: 'business',
-            title: 'Stock Markets Surge to Record High Amid Economic Recovery',
-            description: 'Global markets show strong performance as investors react positively to new economic data and corporate earnings reports.',
-            urlToImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
-            publishedAt: new Date(Date.now() - 4 * 3600000).toISOString(),
-            views: 1200,
-            source: { name: 'Bloomberg' }
-        },
-        {
-            id: 'tech-1',
-            category: 'technology',
-            title: 'New AI Model Can Generate Realistic Videos from Text Descriptions',
-            description: 'Researchers unveil breakthrough in generative AI that could revolutionize content creation and raise new ethical questions.',
-            urlToImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
-            publishedAt: new Date(Date.now() - 6 * 3600000).toISOString(),
-            views: 2100,
-            source: { name: 'TechCrunch' }
-        },
-        {
-            id: 'sport-1',
-            category: 'sports',
-            title: 'National Team Secures Spot in World Championship Finals',
-            description: 'Dramatic semifinal match ends in victory for the home team, securing their place in the championship game this weekend.',
-            urlToImage: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
-            publishedAt: new Date(Date.now() - 8 * 3600000).toISOString(),
-            views: 3400,
-            source: { name: 'ESPN' }
-        },
-        {
-            id: 'health-1',
-            category: 'health',
-            title: 'Breakthrough in Cancer Treatment Shows 90% Success Rate in Trials',
-            description: 'New immunotherapy approach demonstrates remarkable effectiveness against previously untreatable forms of cancer.',
-            urlToImage: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
-            publishedAt: new Date(Date.now() - 10 * 3600000).toISOString(),
-            views: 4500,
-            source: { name: 'Medical News Today' }
-        }
-    ],
-    trending: [
-        { id: 'pol-1', title: 'Major Political Scandal Rocks Capital', category: 'politics' },
-        { id: 'tech-2', title: 'Revolutionary Battery Technology Announced', category: 'technology' },
-        { id: 'ent-1', title: 'Film Festival Announces This Year\'s Winners', category: 'entertainment' },
-        { id: 'health-2', title: 'New Study Reveals Benefits of Mediterranean Diet', category: 'health' },
-        { id: 'bus-2', title: 'Central Bank Announces Interest Rate Decision', category: 'business' }
-    ],
-    breaking: [
-        'Global Climate Summit reaches historic agreement on carbon emissions',
-        'Tech giant unveils revolutionary AI assistant',
-        'Major earthquake hits coastal region, rescue operations underway',
-        'Stock markets reach all-time high amid economic optimism'
-    ],
-    categories: [
-        { name: 'World', count: 42, slug: 'world' },
-        { name: 'Politics', count: 28, slug: 'politics' },
-        { name: 'Business', count: 35, slug: 'business' },
-        { name: 'Technology', count: 47, slug: 'technology' },
-        { name: 'Health', count: 23, slug: 'health' },
-        { name: 'Sports', count: 39, slug: 'sports' },
-        { name: 'Entertainment', count: 31, slug: 'entertainment' },
-        { name: 'Science', count: 19, slug: 'science' }
-    ]
-};
+const API_BASE_URL = `${CONFIG.API_BASE_URL}/news`; // Backend URL
 
 // ==================== Render Functions ====================
 function renderFeatured(article) {
     const container = document.getElementById('featured-news-container');
     if (!container || !article) return;
 
-    const timeAgo = formatTimeAgo(article.publishedAt);
+    const timeAgo = formatTimeAgo(article.published_at);
+    // Backend se image link aayega, warna placeholder show hoga
+    const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80';
+    const categoryName = article.category ? article.category.name : 'World';
+    const authorName = article.author ? article.author.name : 'Staff';
+
     container.innerHTML = `
-        <img src="${article.urlToImage}" alt="${article.title}" class="featured-image">
+        <img src="${imageUrl}" alt="${article.title}" class="featured-image">
         <div class="featured-overlay">
-            <span class="featured-category">${article.category.toUpperCase()}</span>
+            <span class="featured-category">${categoryName.toUpperCase()}</span>
             <h2 class="featured-title">${article.title}</h2>
             <div class="featured-meta">
                 <span><i class="far fa-clock"></i> ${timeAgo}</span>
-                <span><i class="far fa-user"></i> By ${article.author || 'Staff'}</span>
-                <span><i class="far fa-comment"></i> ${article.commentsCount || 0} comments</span>
+                <span><i class="far fa-user"></i> By ${authorName}</span>
+                <span><i class="far fa-eye"></i> ${article.views || 0} views</span>
             </div>
         </div>
     `;
@@ -116,12 +38,15 @@ function renderGrid(articles) {
 
     let html = '';
     articles.forEach(article => {
-        const timeAgo = formatTimeAgo(article.publishedAt);
+        const timeAgo = formatTimeAgo(article.published_at);
+        const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80';
+        const categoryName = article.category ? article.category.name : 'News';
+        
         html += `
             <div class="news-card" data-id="${article.id}">
-                <img src="${article.urlToImage}" alt="${article.title}">
+                <img src="${imageUrl}" alt="${article.title}">
                 <div class="news-card-content">
-                    <span class="news-category">${article.category.toUpperCase()}</span>
+                    <span class="news-category">${categoryName.toUpperCase()}</span>
                     <h3 class="news-title">${article.title}</h3>
                     <p class="news-excerpt">${article.description}</p>
                     <div class="news-meta">
@@ -150,12 +75,14 @@ function renderTrending(trending) {
     let html = '';
     trending.forEach((item, index) => {
         const number = (index + 1).toString().padStart(2, '0');
+        const categoryName = item.category ? item.category.name : 'News';
+        
         html += `
             <div class="trending-news-item" data-id="${item.id}">
                 <div class="trending-number">${number}</div>
                 <div class="trending-content">
                     <h4>${item.title}</h4>
-                    <div class="trending-category">${item.category.toUpperCase()}</div>
+                    <div class="trending-category">${categoryName.toUpperCase()}</div>
                 </div>
             </div>
         `;
@@ -176,8 +103,9 @@ function renderCategories(categories) {
 
     let html = '';
     categories.forEach(cat => {
+        // Backend doesn't have article count out-of-the-box, so we leave it clean
         html += `
-            <li><a href="index.html?category=${cat.slug}">${cat.name} <span class="category-count">${cat.count}</span></a></li>
+            <li><a href="index.html?category=${cat.slug}">${cat.name}</a></li>
         `;
     });
     container.innerHTML = html;
@@ -186,12 +114,18 @@ function renderCategories(categories) {
 function renderBreakingTicker(messages) {
     const container = document.getElementById('breaking-ticker-content');
     if (!container) return;
-    // Join messages with bullet
-    container.textContent = '• ' + messages.join(' • ');
+    
+    if (messages && messages.length > 0) {
+        // Join messages with bullet
+        container.textContent = '• ' + messages.join(' • ');
+    } else {
+        container.textContent = 'Welcome to NewsHub!';
+    }
 }
 
 // Helper: time ago
 function formatTimeAgo(isoString) {
+    if (!isoString) return 'Just now';
     const now = new Date();
     const past = new Date(isoString);
     const diffMs = now - past;
@@ -202,76 +136,100 @@ function formatTimeAgo(isoString) {
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
 }
 
-// ==================== Fetch Data (mock or real) ====================
-async function fetchHomepageData() {
-    if (USE_MOCK) {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        return mockArticles;
-    } else {
-        // Real API calls – you'd create endpoints for each section
-        const [featured, grid, trending, breaking, categories] = await Promise.all([
-            fetch(`${API_BASE_URL}/featured`).then(r => r.json()),
-            fetch(`${API_BASE_URL}/latest`).then(r => r.json()),
-            fetch(`${API_BASE_URL}/trending`).then(r => r.json()),
-            fetch(`${API_BASE_URL}/breaking`).then(r => r.json()),
-            fetch(`${API_BASE_URL}/categories`).then(r => r.json())
-        ]);
-        return { featured, grid, trending, breaking, categories };
-    }
-}
-
 // ==================== Initialize Homepage ====================
 async function initHomepage() {
-    const data = await fetchHomepageData();
-    renderFeatured(data.featured[0]); // assuming featured is an array with one item
-    renderGrid(data.grid);
-    renderTrending(data.trending);
-    renderCategories(data.categories);
-    renderBreakingTicker(data.breaking);
+    try {
+        // Real API calls – Fetching parallel data from Django backend
+        const [featuredRes, latestRes, trendingRes, breakingRes, categoriesRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/articles/?is_featured=true`),
+            fetch(`${API_BASE_URL}/articles/`),
+            fetch(`${API_BASE_URL}/articles/?is_trending=true`),
+            fetch(`${API_BASE_URL}/articles/?is_breaking=true`),
+            fetch(`${API_BASE_URL}/categories/`)
+        ]);
+
+        const featuredData = await featuredRes.json();
+        const latestData = await latestRes.json();
+        const trendingData = await trendingRes.json();
+        const breakingData = await breakingRes.json();
+        const categoriesData = await categoriesRes.json();
+
+        // Render Featured (Take the first featured article)
+        if (featuredData.results && featuredData.results.length > 0) {
+            renderFeatured(featuredData.results[0]); 
+        }
+
+        // Render Grid (If container exists in HTML)
+        renderGrid(latestData.results || []);
+
+        // Render Trending Sidebar
+        renderTrending(trendingData.results || []);
+
+        // Render Categories Sidebar
+        // If your DRF setup is paginated for categories it's categoriesData.results, else categoriesData
+        renderCategories(categoriesData.results || categoriesData);
+
+        // Render Breaking News Ticker (Extracting titles from breaking articles)
+        const breakingTitles = (breakingData.results || []).map(item => item.title);
+        renderBreakingTicker(breakingTitles);
+
+    } catch (error) {
+        console.error('Error fetching homepage data:', error);
+    }
 }
 
 // Run when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Update date/time (already in your HTML)
     // Initialize auth UI (if not already done in auth.js)
     if (typeof updateAuthUI === 'function') updateAuthUI();
 
     // Load homepage sections
     initHomepage();
 
-    // Search form handling
+    // Search form handling (if standalone search bar exists on homepage)
     const searchInput = document.querySelector('.search-bar input');
     const searchButton = document.querySelector('.search-bar button');
-    searchButton.addEventListener('click', () => {
-        const query = searchInput.value.trim();
-        if (query) {
-            window.location.href = `search.html?q=${encodeURIComponent(query)}`;
-        }
-    });
+    if (searchInput && searchButton) {
+        searchButton.addEventListener('click', () => {
+            const query = searchInput.value.trim();
+            if (query) {
+                window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+            }
+        });
+    }
 
     // Newsletter form
     const newsletterForm = document.getElementById('newsletterForm');
     if (newsletterForm) {
-        newsletterForm.addEventListener('submit', (e) => {
+        newsletterForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = newsletterForm.querySelector('input[type="email"]').value;
-            // Mock subscription – replace with real API call
-            alert(`Thank you for subscribing with: ${email}\nYou'll receive our newsletter shortly.`);
-            newsletterForm.reset();
+            const btn = newsletterForm.querySelector('button');
+            
+            btn.disabled = true;
+            btn.textContent = 'Subscribing...';
+            
+            try {
+                // Future Backend implementation space for newsletter
+                // await fetch(`${CONFIG.API_BASE_URL}/newsletter/subscribe/`, { method: 'POST', body: JSON.stringify({email}), headers: {'Content-Type': 'application/json'} });
+                
+                alert(`Thank you for subscribing with: ${email}\nYou'll receive our newsletter shortly.`);
+                newsletterForm.reset();
+            } catch(err) {
+                alert('Error subscribing. Please try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Subscribe Now';
+            }
         });
     }
 
-    // Mobile menu toggle (already in your HTML, but we'll keep it)
+    // Mobile menu toggle
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const navLinks = document.querySelector('.nav-links');
-    if (mobileMenuBtn) {
+    if (mobileMenuBtn && navLinks) {
         mobileMenuBtn.addEventListener('click', () => {
             navLinks.classList.toggle('active');
         });
     }
 });
-
-
-
-

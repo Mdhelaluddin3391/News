@@ -11,7 +11,6 @@
 <body>
     <div id="header-placeholder"></div>
 
-    <!-- BREAKING NEWS TICKER -->
     <div class="breaking">
         <div class="container breaking-flex">
             <div class="breaking-label">BREAKING</div>
@@ -21,56 +20,43 @@
         </div>
     </div>
 
-    <!-- MAIN CONTENT (TWO COLUMNS) -->
     <main class="container main-content">
-        <!-- LEFT COLUMN - MAIN NEWS -->
         <div class="left-column">
-            <!-- FEATURED NEWS (DYNAMIC) -->
             <section class="featured-news">
                 <div id="featured-news-container" class="featured-news-item">
-                    <!-- Will be populated by JavaScript -->
-                </div>
+                    </div>
             </section>
 
-            <!-- CATEGORY HEADING -->
-            <h1 class="category-heading" id="category-heading">General News</h1>
+            <div id="home-categories-container"></div>
 
-            <!-- LOADER -->
+            <h1 class="category-heading" id="category-heading" style="display: none;">General News</h1>
+
             <div class="loader" id="loader"></div>
 
-            <!-- ARTICLES GRID -->
-            <div class="articles-container" id="articles-container"></div>
+            <div class="articles-container" id="articles-container" style="display: none;"></div>
 
-            <!-- PAGINATION -->
-            <div class="pagination" id="pagination">
+            <div class="pagination" id="pagination" style="display: none;">
                 <button class="page-btn" id="prev-page" disabled>← Previous</button>
                 <span class="page-info" id="page-info">Page 1</span>
                 <button class="page-btn" id="next-page">Next →</button>
             </div>
 
-            <!-- ERROR MESSAGE -->
             <div class="error-message" id="error-message"></div>
         </div>
 
-        <!-- RIGHT COLUMN - SIDEBAR -->
         <div class="right-column">
-            <!-- TRENDING NOW -->
             <section class="sidebar-section">
                 <h3 class="sidebar-title">TRENDING NOW</h3>
                 <div id="trending-container" class="trending-news">
-                    <!-- Will be populated by JavaScript -->
-                </div>
+                    </div>
             </section>
 
-            <!-- CATEGORIES -->
             <section class="sidebar-section">
                 <h3 class="sidebar-title">CATEGORIES</h3>
                 <ul id="categories-container" class="category-list">
-                    <!-- Will be populated by JavaScript -->
-                </ul>
+                    </ul>
             </section>
 
-            <!-- NEWSLETTER -->
             <section class="sidebar-section">
                 <div class="newsletter-form">
                     <h3>Stay Updated</h3>
@@ -84,7 +70,6 @@
         </div>
     </main>
 
-    <!-- FOOTER -->
     <div id="footer-placeholder"></div>
 
     <script src="js/auth.js"></script>

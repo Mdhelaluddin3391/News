@@ -9,7 +9,6 @@ function renderFeatured(article) {
     if (!container || !article) return;
 
     const timeAgo = formatTimeAgo(article.published_at);
-    // Backend se image link aayega, warna placeholder show hoga
     const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80';
     const categoryName = article.category ? article.category.name : 'World';
     const authorName = article.author ? article.author.name : 'Staff';
@@ -29,42 +28,6 @@ function renderFeatured(article) {
     // Add click event to open article
     container.addEventListener('click', () => {
         window.location.href = `article.html?id=${article.id}`;
-    });
-}
-
-function renderGrid(articles) {
-    const container = document.getElementById('news-grid-container');
-    if (!container) return;
-
-    let html = '';
-    articles.forEach(article => {
-        const timeAgo = formatTimeAgo(article.published_at);
-        const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80';
-        const categoryName = article.category ? article.category.name : 'News';
-        
-        html += `
-            <div class="news-card" data-id="${article.id}">
-                <img src="${imageUrl}" alt="${article.title}">
-                <div class="news-card-content">
-                    <span class="news-category">${categoryName.toUpperCase()}</span>
-                    <h3 class="news-title">${article.title}</h3>
-                    <p class="news-excerpt">${article.description}</p>
-                    <div class="news-meta">
-                        <span><i class="far fa-clock"></i> ${timeAgo}</span>
-                        <span><i class="far fa-eye"></i> ${article.views || 0} views</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    container.innerHTML = html;
-
-    // Attach click events
-    container.querySelectorAll('.news-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const id = card.dataset.id;
-            window.location.href = `article.html?id=${id}`;
-        });
     });
 }
 
@@ -103,7 +66,6 @@ function renderCategories(categories) {
 
     let html = '';
     categories.forEach(cat => {
-        // Backend doesn't have article count out-of-the-box, so we leave it clean
         html += `
             <li><a href="index.html?category=${cat.slug}">${cat.name}</a></li>
         `;
@@ -116,7 +78,6 @@ function renderBreakingTicker(messages) {
     if (!container) return;
     
     if (messages && messages.length > 0) {
-        // Join messages with bullet
         container.textContent = '• ' + messages.join(' • ');
     } else {
         container.textContent = 'Welcome to NewsHub!';
@@ -136,42 +97,106 @@ function formatTimeAgo(isoString) {
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
 }
 
+// ==================== NEW: Render All Categories Top 5 ====================
+async function renderAllCategoriesTop5(categories) {
+    const container = document.getElementById('home-categories-container');
+    if (!container) return;
+    
+    let html = '';
+    
+    for (const cat of categories) {
+        try {
+            // Fetch latest articles for this category
+            const artRes = await fetch(`${API_BASE_URL}/articles/?category__slug=${cat.slug}`);
+            const artData = await artRes.json();
+            const articles = (artData.results || artData).slice(0, 5); // Take exactly up to 5
+            
+            if (articles.length === 0) continue; // Skip empty categories
+
+            const mainArticle = articles[0]; // 1 Featured post
+            const sideArticles = articles.slice(1, 5); // Next 4 posts
+
+            // Build side posts HTML
+            let sideHtml = sideArticles.map(a => `
+                <div class="side-post" onclick="window.location.href='article.html?id=${a.id}'">
+                    <img src="${a.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80'}" alt="${a.title}">
+                    <div class="side-post-content">
+                        <h4>${a.title}</h4>
+                        <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(a.published_at)}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            // Build full block HTML
+            html += `
+                <div class="category-block">
+                    <h2 class="category-heading" style="margin-top: 1rem; margin-bottom: 1.5rem; font-size: 1.8rem;">
+                        <a href="index.html?category=${cat.slug}" style="text-decoration:none; color:inherit; display:flex; justify-content:space-between; align-items:center;">
+                            ${cat.name} 
+                            <span style="font-size:0.9rem; color:var(--primary); font-family:'Roboto', sans-serif;">View All →</span>
+                        </a>
+                    </h2>
+                    <div class="category-grid">
+                        <div class="main-post" onclick="window.location.href='article.html?id=${mainArticle.id}'">
+                            <img src="${mainArticle.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80'}" alt="${mainArticle.title}">
+                            <div class="main-post-content">
+                                <h3>${mainArticle.title}</h3>
+                                <p>${mainArticle.description ? mainArticle.description.substring(0, 100) + '...' : ''}</p>
+                                <span class="main-meta"><i class="far fa-clock"></i> ${formatTimeAgo(mainArticle.published_at)}</span>
+                            </div>
+                        </div>
+                        <div class="side-posts">
+                            ${sideHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            console.error(`Error loading category ${cat.name}`, e);
+        }
+    }
+    
+    container.innerHTML = html;
+}
+
 // ==================== Initialize Homepage ====================
 async function initHomepage() {
     try {
-        // Real API calls – Fetching parallel data from Django backend
-        const [featuredRes, latestRes, trendingRes, breakingRes, categoriesRes] = await Promise.all([
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentCategory = urlParams.get('category') || 'general';
+
+        const [featuredRes, trendingRes, breakingRes, categoriesRes] = await Promise.all([
             fetch(`${API_BASE_URL}/articles/?is_featured=true`),
-            fetch(`${API_BASE_URL}/articles/`),
             fetch(`${API_BASE_URL}/articles/?is_trending=true`),
             fetch(`${API_BASE_URL}/articles/?is_breaking=true`),
             fetch(`${API_BASE_URL}/categories/`)
         ]);
 
         const featuredData = await featuredRes.json();
-        const latestData = await latestRes.json();
         const trendingData = await trendingRes.json();
         const breakingData = await breakingRes.json();
         const categoriesData = await categoriesRes.json();
+        const categoriesList = categoriesData.results || categoriesData;
 
-        // Render Featured (Take the first featured article)
+        // Render Top Featured
         if (featuredData.results && featuredData.results.length > 0) {
             renderFeatured(featuredData.results[0]); 
         }
-
-        // Render Grid (If container exists in HTML)
-        renderGrid(latestData.results || []);
 
         // Render Trending Sidebar
         renderTrending(trendingData.results || []);
 
         // Render Categories Sidebar
-        // If your DRF setup is paginated for categories it's categoriesData.results, else categoriesData
-        renderCategories(categoriesData.results || categoriesData);
+        renderCategories(categoriesList);
 
-        // Render Breaking News Ticker (Extracting titles from breaking articles)
+        // Render Breaking News Ticker
         const breakingTitles = (breakingData.results || []).map(item => item.title);
         renderBreakingTicker(breakingTitles);
+
+        // Render Category Blocks (Only if we are on the Homepage / General)
+        if (currentCategory === 'general') {
+            await renderAllCategoriesTop5(categoriesList);
+        }
 
     } catch (error) {
         console.error('Error fetching homepage data:', error);
@@ -180,25 +205,9 @@ async function initHomepage() {
 
 // Run when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize auth UI (if not already done in auth.js)
     if (typeof updateAuthUI === 'function') updateAuthUI();
-
-    // Load homepage sections
     initHomepage();
 
-    // Search form handling (if standalone search bar exists on homepage)
-    const searchInput = document.querySelector('.search-bar input');
-    const searchButton = document.querySelector('.search-bar button');
-    if (searchInput && searchButton) {
-        searchButton.addEventListener('click', () => {
-            const query = searchInput.value.trim();
-            if (query) {
-                window.location.href = `search.html?q=${encodeURIComponent(query)}`;
-            }
-        });
-    }
-
-    // Newsletter form
     const newsletterForm = document.getElementById('newsletterForm');
     if (newsletterForm) {
         newsletterForm.addEventListener('submit', async (e) => {
@@ -210,9 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.textContent = 'Subscribing...';
             
             try {
-                // Future Backend implementation space for newsletter
-                // await fetch(`${CONFIG.API_BASE_URL}/newsletter/subscribe/`, { method: 'POST', body: JSON.stringify({email}), headers: {'Content-Type': 'application/json'} });
-                
                 alert(`Thank you for subscribing with: ${email}\nYou'll receive our newsletter shortly.`);
                 newsletterForm.reset();
             } catch(err) {
@@ -224,7 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Mobile menu toggle
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const navLinks = document.querySelector('.nav-links');
     if (mobileMenuBtn && navLinks) {

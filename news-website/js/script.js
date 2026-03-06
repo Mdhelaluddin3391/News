@@ -215,13 +215,30 @@ if(categoryButtons) {
 
 // ==================== App Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Check if we are on a page that needs to fetch the grid (like category page)
     if(articlesContainer) {
         const urlParams = new URLSearchParams(window.location.search);
         const category = urlParams.get('category') || DEFAULT_CATEGORY;
         const page = parseInt(urlParams.get('page')) || 1;
         
         setActiveCategory(category);
-        fetchNews(category, page);
+
+        const homeContainer = document.getElementById('home-categories-container');
+        const paginationContainer = document.getElementById('pagination');
+        
+        if (category === 'general') {
+            // WE ARE ON THE HOME PAGE: Hide pagination and single category title.
+            // Let homepage.js handle rendering the category blocks.
+            articlesContainer.style.display = 'none';
+            if(paginationContainer) paginationContainer.style.display = 'none';
+            if(categoryHeading) categoryHeading.style.display = 'none';
+            if(homeContainer) homeContainer.style.display = 'block';
+        } else {
+            // WE ARE ON A CATEGORY PAGE (e.g. Technology): Show single paginated grid.
+            articlesContainer.style.display = 'grid'; 
+            if(paginationContainer) paginationContainer.style.display = 'flex';
+            if(categoryHeading) categoryHeading.style.display = 'block';
+            if(homeContainer) homeContainer.style.display = 'none';
+            fetchNews(category, page);
+        }
     }
 });

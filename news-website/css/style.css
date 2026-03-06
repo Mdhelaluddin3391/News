@@ -923,3 +923,125 @@ footer {
         justify-content: center;
     }
 }
+
+
+
+/* ==================== Category Block (Homepage Setup) ==================== */
+.category-block {
+    margin-bottom: 3rem;
+}
+
+.category-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.main-post {
+    position: relative;
+    cursor: pointer;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+}
+
+.main-post:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.15);
+}
+
+.main-post img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.main-post-content {
+    padding: 15px;
+}
+
+.main-post-content h3 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+    color: var(--dark);
+    line-height: 1.4;
+}
+
+.main-post-content p {
+    color: var(--gray);
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+}
+
+.main-meta {
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.side-posts {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.side-post {
+    display: flex;
+    gap: 15px;
+    cursor: pointer;
+    transition: var(--transition);
+    background: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.side-post:hover {
+    background-color: #f1f5f9;
+}
+
+.side-post img {
+    width: 100px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+.side-post-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.side-post-content h4 {
+    font-size: 1rem;
+    margin-bottom: 5px;
+    line-height: 1.3;
+    color: var(--dark);
+}
+
+.side-meta {
+    font-size: 0.8rem;
+    color: var(--gray);
+}
+
+/* Responsive adjustment for Category Grid */
+@media (max-width: 768px) {
+    .category-grid {
+        grid-template-columns: 1fr;
+    }
+    .main-post img {
+        height: 200px;
+    }
+    .side-post img {
+        width: 80px;
+        height: 80px;
+    }
+}

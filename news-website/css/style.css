@@ -160,11 +160,19 @@ nav {
     display: flex;
     align-items: center;
     gap: 20px;
+    flex-shrink: 0; /* Updated: Taki right side content dab kar tut na jaye */
 }
 
 /* ==================== Search & Auth (Navigation) ==================== */
 .search-box {
     display: flex;
+}
+
+/* Updated: New class to keep input and button inline */
+.search-form-inline {
+    display: flex;
+    align-items: center;
+    width: 100%;
 }
 
 .search-box input {
@@ -192,8 +200,9 @@ nav {
 .auth {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px; /* Updated: Thoda gap badhaya */
     color: white;
+    flex-wrap: nowrap; /* Updated: Items niche line me tutne se roke */
 }
 
 .auth a {
@@ -201,9 +210,12 @@ nav {
     text-decoration: none;
     font-weight: 500;
     font-size: 0.95rem;
+    white-space: nowrap; /* Updated: Link text wrap na ho */
 }
 
-.auth a.register {
+/* Updated: Logout link ko bhi register jaisa style diya taaki sundar lage */
+.auth a.register,
+.auth a.logout-link {
     background: var(--secondary);
     padding: 5px 12px;
     border-radius: 3px;
@@ -218,6 +230,12 @@ nav {
     color: white;
     font-size: 0.95rem;
     margin-left: 5px;
+    white-space: nowrap; /* Updated: Name do line me na toote */
+    /* Updated: Name ko ek badge jaisa sundar look diya */
+    background: rgba(255, 255, 255, 0.15);
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* ==================== Mobile Navigation Panel ==================== */
@@ -694,7 +712,7 @@ nav {
     background-color: var(--secondary-dark);
 }
 
-/* ==================== Old Footer Styles (Kept as requested) ==================== */
+/* ==================== Old Footer Styles ==================== */
 footer {
     background-color: var(--card-bg);
     text-align: center;
@@ -863,7 +881,7 @@ footer {
         font-size: 1.8rem;
     }
     
-    /* Old Footer Responsive (Kept as is) */
+    /* Old Footer Responsive */
     .footer-links {
         display: flex;
         flex-wrap: wrap;

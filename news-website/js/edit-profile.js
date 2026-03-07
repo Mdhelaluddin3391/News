@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Populate current data in the form fields
     document.getElementById('edit-name').value = user.name || '';
     document.getElementById('edit-email').value = user.email || '';
+    
+    // Yaha Bio populate kiya jayega (Aapko HTML mein id="edit-bio" ka textarea add karna hoga)
+    const bioElement = document.getElementById('edit-bio');
+    if (bioElement) {
+        bioElement.value = user.bio || '';
+    }
 
     const form = document.getElementById('edit-profile-form');
     const successDiv = document.getElementById('edit-success');
@@ -27,6 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const newName = document.getElementById('edit-name').value.trim();
         const newPassword = document.getElementById('new-password').value;
         const confirmNewPassword = document.getElementById('confirm-new-password').value;
+        
+        // Fetch new bio value
+        let newBio = '';
+        if (bioElement) {
+            newBio = bioElement.value.trim();
+        }
 
         errorDiv.style.display = 'none';
         successDiv.style.display = 'none';
@@ -40,8 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Saving...';
 
-        // Backend pe bhejne ke liye payload prepare karein
-        const payload = { name: newName };
+        // Backend pe bhejne ke liye payload prepare karein, bio ke saath
+        const payload = { 
+            name: newName,
+            bio: newBio
+        };
         
         // Agar naya password dala hai toh payload me include karein
         if (newPassword) {

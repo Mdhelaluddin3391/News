@@ -344,7 +344,7 @@ nav {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 30px;
-    margin: 40px 0;
+    margin: 40px auto; /* 0 ko auto kiya gaya hai taaki center ho jaye */
 }
 
 /* ==================== Featured News Section ==================== */
@@ -923,8 +923,6 @@ footer {
         justify-content: center;
     }
 }
-
-
 
 /* ==================== Category Block (Homepage Setup) ==================== */
 .category-block {

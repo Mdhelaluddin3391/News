@@ -2,6 +2,7 @@ from django.db import models
 from core.models import BaseModel
 from users.models import User
 from django.utils.text import slugify
+from tinymce.models import HTMLField
 
 class Category(BaseModel):
     name = models.CharField(max_length=100, unique=True)
@@ -45,7 +46,9 @@ class Article(BaseModel):
     source_name = models.CharField(max_length=100, blank=True, null=True)
     
     description = models.TextField(help_text="Short excerpt for homepage")
-    content = models.TextField(help_text="Full article content")
+    # content = models.TextField(help_text="Full article content")
+    content = HTMLField(help_text="Full article content with rich text editor")
+    
     featured_image = models.ImageField(upload_to='articles/images/', blank=True, null=True)
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')

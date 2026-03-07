@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'rest_framework_simplejwt',
+    'tinymce',
 
 
 
@@ -163,4 +164,15 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),   # Token ab 5 minute ki jagah 7 din chalega
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30), # Refresh token 30 din tak chalega
     'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+
+
+TINYMCE_DEFAULT_CONFIG = {
+    'height': 500,
+    'width': 'auto',
+    'menubar': 'file edit view insert format tools table help',
+    'plugins': 'advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount',
+    'toolbar': 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+    'custom_undo_redo_levels': 10,
 }

@@ -96,6 +96,7 @@ function renderArticle(article) {
         </section>
     `;
 
+    // HTML ko inject karna, 'content' ab directly use hoga kyunki wo HTML format me aayega
     const html = `
         <div class="detail-content" style="padding-bottom: 1rem;">
             <h1 class="detail-title">${title}</h1>
@@ -111,7 +112,7 @@ function renderArticle(article) {
         <div class="detail-content" style="padding-top: 2rem;">
             ${description ? `<p class="detail-description">${description}</p>` : ''}
             <div class="detail-body">
-                ${content.split('\n').map(para => `<p>${para}</p>`).join('')}
+                ${content}
             </div>
             ${shareHTML}
             ${relatedHTML}
@@ -122,8 +123,6 @@ function renderArticle(article) {
             </div>
         </div>
     `;
-
-    articleContainer.innerHTML = html;
 
     articleContainer.innerHTML = html;
 

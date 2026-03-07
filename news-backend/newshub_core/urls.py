@@ -22,6 +22,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('tinymce/', include('tinymce.urls')),
     
     # JWT Authentication Endpoints (Login)
     path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

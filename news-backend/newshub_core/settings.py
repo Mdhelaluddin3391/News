@@ -156,7 +156,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@newshub.com'
 
 # Change this to your frontend URL if you are hosting it elsewhere
-FRONTEND_URL = 'http://127.0.0.1:5500/news-website'
+FRONTEND_URL = 'http://127.0.0.1:5500'
 
 
 SIMPLE_JWT = {

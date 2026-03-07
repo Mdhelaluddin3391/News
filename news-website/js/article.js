@@ -1,36 +1,38 @@
+// js/article.js
 // ==================== CONFIGURATION ====================
 // Real API Endpoint pointing to your Django backend
 const ARTICLE_DETAIL_API_URL = `${CONFIG.API_BASE_URL}/news/articles`;
 
 // ==================== DOM Elements ====================
 const articleContainer = document.getElementById('article-detail');
-const loader = document.getElementById('loader');
-const errorDiv = document.getElementById('error-message');
+// Variable names changed to avoid collision with script.js
+const articleLoader = document.getElementById('loader');
+const articleErrorDiv = document.getElementById('error-message');
 
 // ==================== Helper Functions ====================
-function showLoader() {
-    loader.style.display = 'block';
+function showArticleLoader() {
+    articleLoader.style.display = 'block';
     if (articleContainer) articleContainer.style.display = 'none';
 }
 
-function hideLoader() {
-    loader.style.display = 'none';
+function hideArticleLoader() {
+    articleLoader.style.display = 'none';
     if (articleContainer) articleContainer.style.display = 'block';
 }
 
-function showError(message) {
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
+function showArticleError(message) {
+    articleErrorDiv.textContent = message;
+    articleErrorDiv.style.display = 'block';
     setTimeout(() => {
-        errorDiv.style.display = 'none';
+        articleErrorDiv.style.display = 'none';
     }, 5000);
 }
 
-function clearError() {
-    errorDiv.style.display = 'none';
+function clearArticleError() {
+    articleErrorDiv.style.display = 'none';
 }
 
-function formatDate(isoString) {
+function formatArticleDate(isoString) {
     const date = new Date(isoString);
     return date.toLocaleDateString('en-US', {
         month: 'long',
@@ -53,7 +55,7 @@ function renderArticle(article) {
     const imageUrl = article.featured_image || 'https://picsum.photos/1200/600?random=1';
     const title = article.title || 'Untitled';
     const source = article.source_name || 'NewsHub';
-    const date = article.published_at ? formatDate(article.published_at) : 'Unknown date';
+    const date = article.published_at ? formatArticleDate(article.published_at) : 'Unknown date';
     const description = article.description || '';
     const content = article.content || article.description || 'Full content is not available.';
     const categorySlug = article.category ? article.category.slug : 'general';
@@ -155,8 +157,8 @@ function renderArticle(article) {
 
 // ==================== Fetch Article ====================
 async function fetchArticle(articleId) {
-    showLoader();
-    clearError();
+    showArticleLoader();
+    clearArticleError();
 
     try {
         // Fetch specific article by ID from Django backend
@@ -169,10 +171,10 @@ async function fetchArticle(articleId) {
         renderArticle(article);
     } catch (error) {
         console.error('Failed to fetch article:', error);
-        showError('Could not load the article. Please try again later.');
+        showArticleError('Could not load the article. Please try again later.');
         articleContainer.innerHTML = ''; // clear any partial content
     } finally {
-        hideLoader();
+        hideArticleLoader();
     }
 }
 
@@ -186,7 +188,7 @@ function getArticleIdFromUrl() {
 document.addEventListener('DOMContentLoaded', () => {
     const articleId = getArticleIdFromUrl();
     if (!articleId) {
-        showError('No article ID specified.');
+        showArticleError('No article ID specified.');
         articleContainer.innerHTML = '<p style="text-align: center;">Please select an article from the homepage.</p>';
         return;
     }

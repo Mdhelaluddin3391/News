@@ -1,37 +1,37 @@
 // js/search.js
 // ==================== CONFIGURATION ====================
 // Real API Endpoint pointing to your Django backend's articles endpoint
-const API_BASE_URL = `${CONFIG.API_BASE_URL}/news/articles/`;
-const ARTICLES_PER_PAGE = 6;
+const SEARCH_API_BASE_URL = `${CONFIG.API_BASE_URL}/news/articles/`;
+const SEARCH_ARTICLES_PER_PAGE = 6;
 
 // ==================== DOM Elements ====================
-const heading = document.getElementById('search-query-heading');
-const articlesContainer = document.getElementById('articles-container');
-const loader = document.getElementById('loader');
-const errorDiv = document.getElementById('error-message');
+const searchHeading = document.getElementById('search-query-heading');
+const searchArticlesContainer = document.getElementById('articles-container');
+const searchLoader = document.getElementById('loader');
+const searchErrorDiv = document.getElementById('error-message');
 
 // ==================== Helper Functions ====================
-function showLoader() {
-    loader.style.display = 'block';
+function showSearchLoader() {
+    searchLoader.style.display = 'block';
 }
 
-function hideLoader() {
-    loader.style.display = 'none';
+function hideSearchLoader() {
+    searchLoader.style.display = 'none';
 }
 
-function showError(message) {
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
+function showSearchError(message) {
+    searchErrorDiv.textContent = message;
+    searchErrorDiv.style.display = 'block';
     setTimeout(() => {
-        errorDiv.style.display = 'none';
+        searchErrorDiv.style.display = 'none';
     }, 5000);
 }
 
-function clearError() {
-    errorDiv.style.display = 'none';
+function clearSearchError() {
+    searchErrorDiv.style.display = 'none';
 }
 
-function formatDate(isoString) {
+function formatSearchDate(isoString) {
     const date = new Date(isoString);
     return date.toLocaleDateString('en-US', {
         month: 'short',
@@ -41,9 +41,9 @@ function formatDate(isoString) {
 }
 
 // ==================== Rendering ====================
-function renderArticles(articles) {
+function renderSearchArticles(articles) {
     if (!articles || articles.length === 0) {
-        articlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">No articles found matching your query.</p>';
+        searchArticlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">No articles found matching your query.</p>';
         return;
     }
 
@@ -54,7 +54,7 @@ function renderArticles(articles) {
         const title = article.title || 'Untitled';
         const description = article.description || 'No description available.';
         const source = article.source_name || 'NewsHub';
-        const date = article.published_at ? formatDate(article.published_at) : 'Unknown date';
+        const date = article.published_at ? formatSearchDate(article.published_at) : 'Unknown date';
         const articleId = article.id || '';
         const isSaved = user ? isArticleSaved(articleId) : false;
         const saveButton = user ? 
@@ -78,7 +78,7 @@ function renderArticles(articles) {
         `;
     }).join('');
 
-    articlesContainer.innerHTML = html;
+    searchArticlesContainer.innerHTML = html;
 
     // Attach event listeners to save buttons if user is logged in
     if (user) {
@@ -105,12 +105,12 @@ function renderArticles(articles) {
 
 // ==================== Fetch Search Results ====================
 async function fetchSearchResults(query, page = 1) {
-    showLoader();
-    clearError();
-    articlesContainer.innerHTML = '';
+    showSearchLoader();
+    clearSearchError();
+    searchArticlesContainer.innerHTML = '';
 
     try {
-        const url = new URL(API_BASE_URL);
+        const url = new URL(SEARCH_API_BASE_URL);
         // Django Rest Framework SearchFilter default parameter is 'search'
         url.searchParams.append('search', query); 
         url.searchParams.append('page', page);
@@ -125,27 +125,27 @@ async function fetchSearchResults(query, page = 1) {
         const results = data.results || data; // Handle paginated DRF response
         const totalResults = data.count || results.length;
 
-        renderArticles(results);
-        updatePagination(page, totalResults, query);
-        heading.textContent = `Search Results for "${query}"`;
+        renderSearchArticles(results);
+        updateSearchPagination(page, totalResults, query);
+        searchHeading.textContent = `Search Results for "${query}"`;
         
     } catch (error) {
         console.error('Search failed:', error);
-        showError('Could not complete search. Please try again later.');
+        showSearchError('Could not complete search. Please try again later.');
     } finally {
-        hideLoader();
+        hideSearchLoader();
     }
 }
 
 // ==================== Pagination ====================
-function updatePagination(currentPage, totalItems, query) {
+function updateSearchPagination(currentPage, totalItems, query) {
     const prevBtn = document.getElementById('prev-page');
     const nextBtn = document.getElementById('next-page');
     const pageInfo = document.getElementById('page-info');
 
     if (!prevBtn || !nextBtn || !pageInfo) return;
 
-    const totalPages = Math.ceil(totalItems / ARTICLES_PER_PAGE) || 1;
+    const totalPages = Math.ceil(totalItems / SEARCH_ARTICLES_PER_PAGE) || 1;
 
     pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
 
@@ -190,8 +190,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!query) {
-        heading.textContent = 'Search Results';
-        articlesContainer.innerHTML = '<p style="text-align: center;">Enter a search term above.</p>';
+        searchHeading.textContent = 'Search Results';
+        searchArticlesContainer.innerHTML = '<p style="text-align: center;">Enter a search term above.</p>';
         return;
     }
 

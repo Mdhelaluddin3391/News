@@ -1,22 +1,22 @@
 // js/saved.js
-const articlesContainer = document.getElementById('articles-container');
-const loader = document.getElementById('loader');
-const errorDiv = document.getElementById('error-message');
+const savedArticlesContainer = document.getElementById('articles-container');
+const savedLoader = document.getElementById('loader');
+const savedErrorDiv = document.getElementById('error-message');
 
-function showLoader() { loader.style.display = 'block'; }
-function hideLoader() { loader.style.display = 'none'; }
-function showError(message) {
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-    setTimeout(() => { errorDiv.style.display = 'none'; }, 5000);
+function showSavedLoader() { savedLoader.style.display = 'block'; }
+function hideSavedLoader() { savedLoader.style.display = 'none'; }
+function showSavedError(message) {
+    savedErrorDiv.textContent = message;
+    savedErrorDiv.style.display = 'block';
+    setTimeout(() => { savedErrorDiv.style.display = 'none'; }, 5000);
 }
-function formatDate(isoString) {
+function formatSavedDate(isoString) {
     return new Date(isoString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function renderArticles(articles) {
+function renderSavedArticles(articles) {
     if (!articles || articles.length === 0) {
-        articlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">You have no saved articles.</p>';
+        savedArticlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">You have no saved articles.</p>';
         return;
     }
 
@@ -25,7 +25,7 @@ function renderArticles(articles) {
         const title = article.title || 'Untitled';
         const description = article.description || 'No description available.';
         const source = article.source_name || 'NewsHub';
-        const date = article.published_at ? formatDate(article.published_at) : 'Unknown date';
+        const date = article.published_at ? formatSavedDate(article.published_at) : 'Unknown date';
         const articleId = article.id || '';
 
         return `
@@ -45,7 +45,7 @@ function renderArticles(articles) {
         `;
     }).join('');
 
-    articlesContainer.innerHTML = html;
+    savedArticlesContainer.innerHTML = html;
 
     // Attach unsave functionality
     document.querySelectorAll('.save-btn').forEach(btn => {
@@ -56,8 +56,8 @@ function renderArticles(articles) {
             
             if (success) {
                 btn.closest('.article-card').remove();
-                if (articlesContainer.children.length === 0) {
-                    articlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">You have no saved articles.</p>';
+                if (savedArticlesContainer.children.length === 0) {
+                    savedArticlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">You have no saved articles.</p>';
                 }
             }
         });
@@ -65,13 +65,13 @@ function renderArticles(articles) {
 }
 
 async function fetchSavedArticlesData() {
-    showLoader();
+    showSavedLoader();
     // Bookmark IDs local cache se li jayengi jo auth.js fetch karta hai
     const bookmarks = JSON.parse(localStorage.getItem('newsHub_bookmarks') || '[]');
     
     if (bookmarks.length === 0) {
-        renderArticles([]);
-        hideLoader();
+        renderSavedArticles([]);
+        hideSavedLoader();
         return;
     }
 
@@ -83,11 +83,11 @@ async function fetchSavedArticlesData() {
         );
         
         const articles = await Promise.all(articlePromises);
-        renderArticles(articles.filter(a => a !== null));
+        renderSavedArticles(articles.filter(a => a !== null));
     } catch (e) {
-        showError("Failed to load saved articles.");
+        showSavedError("Failed to load saved articles.");
     } finally {
-        hideLoader();
+        hideSavedLoader();
     }
 }
 

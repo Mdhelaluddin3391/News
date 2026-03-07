@@ -39,7 +39,7 @@ function renderTrending(trending) {
     trending.forEach((item, index) => {
         const number = (index + 1).toString().padStart(2, '0');
         const categoryName = item.category ? item.category.name : 'News';
-        
+
         html += `
             <div class="trending-news-item" data-id="${item.id}">
                 <div class="trending-number">${number}</div>
@@ -76,7 +76,7 @@ function renderCategories(categories) {
 function renderBreakingTicker(messages) {
     const container = document.getElementById('breaking-ticker-content');
     if (!container) return;
-    
+
     if (messages && messages.length > 0) {
         container.textContent = '• ' + messages.join(' • ');
     } else {
@@ -101,16 +101,16 @@ function formatTimeAgo(isoString) {
 async function renderAllCategoriesTop5(categories) {
     const container = document.getElementById('home-categories-container');
     if (!container) return;
-    
+
     let html = '';
-    
+
     for (const cat of categories) {
         try {
             // Fetch latest articles for this category
-            const artRes = await fetch(`${HOME_API_URL}/articles/?category__slug=${cat.slug}`);
+            const artRes = await fetch(`${HOMEPAGE_API_URL}/articles/?category__slug=${cat.slug}`);
             const artData = await artRes.json();
             const articles = (artData.results || artData).slice(0, 5); // Take exactly up to 5
-            
+
             if (articles.length === 0) continue; // Skip empty categories
 
             const mainArticle = articles[0]; // 1 Featured post
@@ -155,7 +155,7 @@ async function renderAllCategoriesTop5(categories) {
             console.error(`Error loading category ${cat.name}`, e);
         }
     }
-    
+
     container.innerHTML = html;
 }
 
@@ -166,10 +166,10 @@ async function initHomepage() {
         const currentCategory = urlParams.get('category') || 'general';
 
         const [featuredRes, trendingRes, breakingRes, categoriesRes] = await Promise.all([
-            fetch(`${HOME_API_URL}/articles/?is_featured=true`),
-            fetch(`${HOME_API_URL}/articles/?is_trending=true`),
-            fetch(`${HOME_API_URL}/articles/?is_breaking=true`),
-            fetch(`${HOME_API_URL}/categories/`)
+            fetch(`${HOMEPAGE_API_URL}/articles/?is_featured=true`),
+            fetch(`${HOMEPAGE_API_URL}/articles/?is_trending=true`),
+            fetch(`${HOMEPAGE_API_URL}/articles/?is_breaking=true`),
+            fetch(`${HOMEPAGE_API_URL}/categories/`)
         ]);
 
         const featuredData = await featuredRes.json();
@@ -180,7 +180,7 @@ async function initHomepage() {
 
         // Render Top Featured
         if (featuredData.results && featuredData.results.length > 0) {
-            renderFeatured(featuredData.results[0]); 
+            renderFeatured(featuredData.results[0]);
         }
 
         // Render Trending Sidebar
@@ -214,14 +214,14 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const email = newsletterForm.querySelector('input[type="email"]').value;
             const btn = newsletterForm.querySelector('button');
-            
+
             btn.disabled = true;
             btn.textContent = 'Subscribing...';
-            
+
             try {
                 alert(`Thank you for subscribing with: ${email}\nYou'll receive our newsletter shortly.`);
                 newsletterForm.reset();
-            } catch(err) {
+            } catch (err) {
                 alert('Error subscribing. Please try again.');
             } finally {
                 btn.disabled = false;

@@ -44,7 +44,7 @@ async function postComment(articleId, text) {
     return await response.json();
 }
 
-// Delete a comment (Backend checks if user is authorized/admin, but we show the button only for the author)
+// Delete a comment
 async function deleteComment(commentId) {
     const token = localStorage.getItem('newsHub_accessToken');
     if (!token) throw new Error('You must be logged in.');
@@ -62,6 +62,51 @@ async function deleteComment(commentId) {
     return true;
 }
 
+// ==================== Custom Delete Confirmation Popup ====================
+function showCustomConfirm(message, onConfirmCallback) {
+    // Agar pehle se popup bana hua hai toh use nikal do
+    let existingOverlay = document.getElementById('custom-confirm-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+
+    // Naya popup HTML create karein
+    const overlay = document.createElement('div');
+    overlay.id = 'custom-confirm-overlay';
+    overlay.className = 'custom-modal-overlay';
+    
+    overlay.innerHTML = `
+        <div class="custom-modal-box">
+            <h3>Delete Comment</h3>
+            <p>${message}</p>
+            <div class="custom-modal-actions">
+                <button class="custom-modal-btn custom-modal-cancel" id="custom-modal-cancel-btn">Cancel</button>
+                <button class="custom-modal-btn custom-modal-delete" id="custom-modal-delete-btn">Delete</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+
+    // Cancel Button logic
+    document.getElementById('custom-modal-cancel-btn').addEventListener('click', () => {
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.remove(), 300); // Animation ke baad remove
+    });
+
+    // Delete Button logic
+    document.getElementById('custom-modal-delete-btn').addEventListener('click', () => {
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.remove(), 300);
+        onConfirmCallback(); // Delete action perform karein
+    });
+
+    // Thoda sa delay dekar animation trigger karein
+    setTimeout(() => {
+        overlay.classList.add('active');
+    }, 10);
+}
+
 // Render comments list and form
 async function renderComments(articleId, containerId) {
     const container = document.getElementById(containerId);
@@ -75,7 +120,6 @@ async function renderComments(articleId, containerId) {
     } else {
         let html = '';
         comments.forEach(c => {
-            // Django backend serializer mein user detail 'user_detail' object ke andar aati hai
             const authorId = c.user_detail ? c.user_detail.id : null;
             const authorName = c.user_detail ? c.user_detail.name : 'Unknown User';
             const isAuthor = user && authorId === user.id;
@@ -97,18 +141,22 @@ async function renderComments(articleId, containerId) {
         });
         container.innerHTML = html;
 
-        // Attach delete handlers
+        // Attach delete handlers with Custom Modal
         container.querySelectorAll('.delete-comment').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
+            btn.addEventListener('click', (e) => {
                 const commentId = e.target.dataset.commentId;
-                if (!confirm("Are you sure you want to delete this comment?")) return;
                 
-                try {
-                    await deleteComment(commentId);
-                    await renderComments(articleId, containerId); // Refresh comments after deleting
-                } catch (err) {
-                    alert(err.message);
-                }
+                // Puraana confirm box hata kar naya wala use kiya
+                showCustomConfirm("Are you sure you want to delete this comment? This action cannot be undone.", async () => {
+                    try {
+                        // Jab tak delete ho raha hai button text change kar do
+                        e.target.textContent = 'Deleting...';
+                        await deleteComment(commentId);
+                        await renderComments(articleId, containerId); // Refresh comments after deleting
+                    } catch (err) {
+                        alert(err.message);
+                    }
+                });
             });
         });
     }

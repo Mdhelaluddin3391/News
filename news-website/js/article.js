@@ -97,14 +97,18 @@ function renderArticle(article) {
     `;
 
     const html = `
-        <img src="${imageUrl}" alt="${title}" class="detail-image">
-        <div class="detail-content">
+        <div class="detail-content" style="padding-bottom: 1rem;">
             <h1 class="detail-title">${title}</h1>
-            <div class="detail-meta">
+            <div class="detail-meta" style="margin-bottom: 1rem; border-bottom: none;">
                 <span class="detail-source">${source}</span>
                 <span class="detail-date">${date}</span>
                 <span><i class="far fa-eye"></i> ${article.views || 0} views</span>
             </div>
+        </div>
+        
+        <img src="${imageUrl}" alt="${title}" class="detail-image">
+        
+        <div class="detail-content" style="padding-top: 2rem;">
             ${description ? `<p class="detail-description">${description}</p>` : ''}
             <div class="detail-body">
                 ${content.split('\n').map(para => `<p>${para}</p>`).join('')}
@@ -118,6 +122,8 @@ function renderArticle(article) {
             </div>
         </div>
     `;
+
+    articleContainer.innerHTML = html;
 
     articleContainer.innerHTML = html;
 

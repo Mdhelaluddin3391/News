@@ -13,24 +13,31 @@
     <div id="header-placeholder"></div>
 
     <main>
-        <div class="page-container">
-            <h1 class="page-title" style="text-align: center; border:none;">Unsubscribe from Newsletter</h1>
-            <p class="unsubscribe-message">Hume dukh hai ki aap ja rahe hain! Agar aap aage se daily news updates nahi chahte, toh apna email niche darj karein.</p>
-            
-            <div class="error-message" id="unsub-error" style="display:none; max-width: 500px; margin: 0 auto 1rem;"></div>
-            <div id="unsub-success" style="display:none; max-width: 500px; margin: 0 auto 1rem; background:#d1fae5; color:#065f46; padding:1rem; border-radius:8px; text-align:center;">
-                Aapko successfully unsubscribe kar diya gaya hai.
+    <div class="page-container">
+        <h1 class="page-title" style="text-align: center; border:none;">Unsubscribe from Newsletter</h1>
+
+        <p class="unsubscribe-message">
+            We're sorry to see you go! If you no longer wish to receive our daily news updates, please enter your email address below.
+        </p>
+        
+        <div class="error-message" id="unsub-error" style="display:none; max-width: 500px; margin: 0 auto 1rem;"></div>
+        
+        <div id="unsub-success" style="display:none; max-width: 500px; margin: 0 auto 1rem; background:#d1fae5; color:#065f46; padding:1rem; border-radius:8px; text-align:center;">
+            You have been successfully unsubscribed from our newsletter.
+        </div>
+
+        <form class="unsubscribe-form" id="unsubscribe-form">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email address" required>
             </div>
 
-            <form class="unsubscribe-form" id="unsubscribe-form">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
-                </div>
-                <button type="submit" class="submit-btn" style="align-self: center; width: 100%;">Unsubscribe Me</button>
-            </form>
-        </div>
-    </main>
+            <button type="submit" class="submit-btn" style="align-self: center; width: 100%;">
+                Unsubscribe Me
+            </button>
+        </form>
+    </div>
+</main>
 
     <div id="footer-placeholder"></div>
 

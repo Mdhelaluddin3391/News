@@ -107,3 +107,134 @@
 .back-home:hover {
     background-color: var(--primary-dark);
 }
+
+
+/* ==================== About Page Specific Styles ==================== */
+.about-container {
+    max-width: 1000px;
+}
+
+.page-section {
+    margin-bottom: 3rem;
+}
+
+.page-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 1.2rem;
+    color: var(--dark);
+    border-left: 5px solid var(--primary);
+    padding-left: 12px;
+    font-family: 'Playfair Display', serif;
+}
+
+.page-section p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #444;
+    margin-bottom: 1.2rem;
+}
+
+.about-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+/* Values Grid */
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.value-card {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+    border: 1px solid var(--border);
+}
+
+.value-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    border-color: var(--primary);
+}
+
+.value-card i {
+    font-size: 2rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.value-card h3 {
+    font-size: 1.2rem;
+    color: var(--dark);
+    margin-bottom: 0.8rem;
+    font-family: 'Roboto', sans-serif;
+}
+
+.value-card p {
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.stat-box {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem 1rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    border: 1px solid var(--border);
+}
+
+.stat-box h3 {
+    font-size: 2.5rem;
+    color: var(--secondary);
+    margin-bottom: 0.5rem;
+    font-family: 'Playfair Display', serif;
+}
+
+.stat-box p {
+    font-size: 1.05rem;
+    font-weight: 500;
+    margin-bottom: 0;
+}
+
+/* Contact Box */
+.contact-box {
+    background: #f1f5ff;
+    padding: 2rem;
+    border-radius: 12px;
+    border-left: 4px solid var(--primary);
+}
+
+.contact-box p {
+    margin-bottom: 0.8rem;
+    font-size: 1.1rem;
+    color: var(--dark);
+}
+
+.contact-box i {
+    color: var(--primary);
+    margin-right: 12px;
+    width: 20px;
+    text-align: center;
+}
+
+/* Responsive adjustment */
+@media (max-width: 768px) {
+    .about-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}

@@ -116,16 +116,7 @@ header {
     color: var(--gray);
 }
 
-.ad-banner {
-    width: 728px;
-    height: 90px;
-    background: #eee;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px dashed var(--gray);
-    color: var(--gray);
-}
+
 
 /* ==================== Desktop Navigation ==================== */
 nav {
@@ -872,8 +863,16 @@ footer {
 /* ==================== Responsive Design (Media Queries) ==================== */
 @media (max-width: 992px) {
     .ad-banner {
-        display: none;
+        margin-top: 15px; /* Mobile par thoda gap dene ke liye */
+        /* display: none; yahan se hata diya gaya hai */
     }
+
+    .header-flex {
+        flex-direction: column; /* Mobile par logo upar aur ad niche aayega */
+        text-align: center;
+    }
+
+
     .main-content {
         grid-template-columns: 1fr;
     }
@@ -1130,4 +1129,16 @@ footer {
 .ad-in-article {
     max-width: 100%;
     margin: 30px 0;
+}
+
+
+.ad-banner {
+    width: 100%;
+    max-width: 728px; /* Fixed width ki jagah max-width use karenge */
+    min-height: 90px; /* height ko min-height kar diya */
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray);
 }

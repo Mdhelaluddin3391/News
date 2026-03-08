@@ -204,11 +204,7 @@ async function initHomepage() {
 }
 
 // Run when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-    if (typeof updateAuthUI === 'function') updateAuthUI();
-    initHomepage();
-
-    const newsletterForm = document.getElementById('newsletterForm');
+const newsletterForm = document.getElementById('newsletterForm');
     if (newsletterForm) {
         newsletterForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -219,22 +215,29 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.textContent = 'Subscribing...';
 
             try {
-                alert(`Thank you for subscribing with: ${email}\nYou'll receive our newsletter shortly.`);
-                newsletterForm.reset();
+                // Backend API ko request bhej rahe hain
+                const response = await fetch(`${CONFIG.API_BASE_URL}/newsletter/subscribe/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.message || 'Thank you for subscribing!');
+                    newsletterForm.reset();
+                } else {
+                    alert(data.error || 'Subscription failed. Please try again.');
+                }
             } catch (err) {
-                alert('Error subscribing. Please try again.');
+                console.error(err);
+                alert('Network Error. Please try again later.');
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Subscribe Now';
             }
         });
     }
-
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const navLinks = document.querySelector('.nav-links');
-    if (mobileMenuBtn && navLinks) {
-        mobileMenuBtn.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
-    }
-});

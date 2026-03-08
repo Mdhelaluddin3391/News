@@ -26,3 +26,12 @@ class Comment(BaseModel):
 
     def __str__(self):
         return f"Comment by {self.user.name} on {self.article.title}"
+    
+
+class NewsletterSubscriber(BaseModel):
+    """Newsletter subscribe karne wale users ke emails"""
+    email = models.EmailField(unique=True)
+    is_active = models.BooleanField(default=True, help_text="False means user ne unsubscribe kar diya hai")
+
+    def __str__(self):
+        return self.email

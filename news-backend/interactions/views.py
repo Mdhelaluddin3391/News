@@ -1,6 +1,10 @@
 from rest_framework import viewsets, permissions
 from .models import Bookmark, Comment
 from .serializers import BookmarkSerializer, CommentSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import NewsletterSubscriber
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
@@ -36,3 +40,39 @@ class BookmarkViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class SubscribeNewsletterView(APIView):
+    permission_classes = [permissions.AllowAny] # Koi bhi subscribe kar sakta hai
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check karein agar email pehle se hai
+        subscriber, created = NewsletterSubscriber.objects.get_or_create(email=email)
+        
+        if not created and subscriber.is_active:
+            return Response({"message": "You are already subscribed!"}, status=status.HTTP_200_OK)
+        
+        # Agar user ne pehle unsubscribe kiya tha, toh wapas active kar do
+        subscriber.is_active = True
+        subscriber.save()
+        return Response({"message": "Successfully subscribed to the newsletter!"}, status=status.HTTP_201_CREATED)
+
+class UnsubscribeNewsletterView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            subscriber = NewsletterSubscriber.objects.get(email=email)
+            subscriber.is_active = False # Email delete nahi karenge, bas inactive kar denge
+            subscriber.save()
+            return Response({"message": "Successfully unsubscribed."})
+        except NewsletterSubscriber.DoesNotExist:
+            return Response({"error": "This email is not registered in our subscriber list."}, status=status.HTTP_404_NOT_FOUND)

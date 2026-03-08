@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NewsHub - Premium News</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
     <div id="header-placeholder"></div>
 
@@ -24,7 +28,7 @@
         <div class="left-column">
             <section class="featured-news">
                 <div id="featured-news-container" class="featured-news-item">
-                    </div>
+                </div>
             </section>
 
             <div id="home-categories-container"></div>
@@ -48,14 +52,27 @@
             <section class="sidebar-section">
                 <h3 class="sidebar-title">TRENDING NOW</h3>
                 <div id="trending-container" class="trending-news">
-                    </div>
+                </div>
             </section>
 
             <section class="sidebar-section">
                 <h3 class="sidebar-title">CATEGORIES</h3>
                 <ul id="categories-container" class="category-list">
-                    </ul>
+                </ul>
             </section>
+
+            <section class="sidebar-section">
+                <div class="ad-slot ad-sidebar" id="sidebar-ad-1">
+                    <span class="ad-label">Advertisement</span>
+                    <a href="https://your-sponsor.com" target="_blank">
+                        <img src="https://via.placeholder.com/300x250?text=Brand+Sponsor" alt="Ad"
+                            style="max-width:100%; height:auto;">
+                    </a>
+                </div>
+            </section>
+
+            <div id="article-top-ad" class="ad-slot ad-banner"></div>
+
 
             <section class="sidebar-section">
                 <div class="newsletter-form">
@@ -75,8 +92,9 @@
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/script.js"></script>
-    <script src="js/homepage.js"></script> 
+    <script src="js/homepage.js"></script>
     <script src="js/index-ui.js"></script>
     <script src="js/loadComponents.js"></script>
 </body>
+
 </html>

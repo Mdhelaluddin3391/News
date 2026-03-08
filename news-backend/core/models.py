@@ -25,3 +25,33 @@ class ContactMessage(models.Model):
         return f"Message from {self.name} - {self.subject}"
     
 
+
+class Advertisement(models.Model):
+    SLOT_CHOICES = (
+        ('header', 'Header Banner'),
+        ('sidebar', 'Sidebar Top'),
+        ('in_article', 'In-Article (Article ke beech mein)'), # Ek aur ad placement!
+    )
+    
+    TYPE_CHOICES = (
+        ('brand', 'Brand Collab (Image + Link)'),
+        ('google', 'Google AdSense (Script)'),
+    )
+    is_mobile_only = models.BooleanField(default=False) 
+    priority = models.IntegerField(default=1)
+    title = models.CharField(max_length=150, help_text="Internal reference ke liye naam")
+    slot = models.CharField(max_length=20, choices=SLOT_CHOICES)
+    ad_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    
+    # === Brand Ads Ke Liye ===
+    image = models.ImageField(upload_to='ads/', blank=True, null=True, help_text="Brand ad image upload karein")
+    url = models.URLField(blank=True, null=True, help_text="Brand ki website ka link")
+    
+    # === Google Ads Ke Liye ===
+    google_ad_code = models.TextField(blank=True, null=True, help_text="Google Adsense ka HTML snippet yahan paste karein")
+    
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.title} - {self.get_slot_display()} ({self.ad_type})"

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tag Results - NewsHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/search.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="container main-content" style="display: block;">
+        <h1 class="category-heading" id="tag-heading">Articles tagged with #...</h1>
+        <div class="loader" id="loader"></div>
+        <div class="error-message" id="error-message"></div>
+        
+        <div class="articles-container" id="articles-container"></div>
+        
+        <div class="pagination" id="pagination" style="display: none;">
+            <button class="page-btn" id="prev-page" disabled>← Previous</button>
+            <span class="page-info" id="page-info">Page 1</span>
+            <button class="page-btn" id="next-page">Next →</button>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/homepage.js"></script>
+    <script src="js/loadComponents.js"></script>
+    <script src="js/index-ui.js"></script>
+    <script src="js/article.js"></script>
+    <script src="js/comments.js"></script>
+    <script src="js/related.js"></script>
+    <script src="js/poll.js"></script>
+    <script src="js/tag.js"></script> 
+</body>
+</html>

@@ -32,8 +32,9 @@
             </section>
 
             <div id="home-categories-container"></div>
-            <div class="loader" id="category-scroll-loader" style="display: none; margin: 30px auto; border-top-color: var(--secondary);"></div>
-            
+            <div class="loader" id="category-scroll-loader"
+                style="display: none; margin: 30px auto; border-top-color: var(--secondary);"></div>
+
 
             <h1 class="category-heading" id="category-heading" style="display: none;">General News</h1>
 
@@ -50,7 +51,18 @@
             <div class="error-message" id="error-message"></div>
         </div>
 
+
         <div class="right-column">
+
+
+            <section class="sidebar-section">
+                <h3 class="sidebar-title">EDITOR'S PICKS</h3>
+                <div id="editors-picks-container" class="trending-news">
+                    <p style="color: var(--gray); font-size: 0.9rem;">Loading picks...</p>
+                </div>
+            </section>
+
+
             <section class="sidebar-section">
                 <h3 class="sidebar-title">TRENDING NOW</h3>
                 <div id="trending-container" class="trending-news">
@@ -61,6 +73,12 @@
                 <h3 class="sidebar-title">CATEGORIES</h3>
                 <ul id="categories-container" class="category-list">
                 </ul>
+            </section>
+
+            <section class="sidebar-section" id="poll-widget-section" style="display: none;">
+                <h3 class="sidebar-title">POLL OF THE WEEK</h3>
+                <div id="poll-container" class="poll-container">
+                </div>
             </section>
 
             <section class="sidebar-section">
@@ -91,6 +109,7 @@
     <script src="js/homepage.js"></script>
     <script src="js/index-ui.js"></script>
     <script src="js/loadComponents.js"></script>
+    <script src="js/poll.js"></script>
 </body>
 
 </html>

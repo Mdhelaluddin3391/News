@@ -60,6 +60,18 @@ function renderArticle(article) {
     const content = article.content || article.description || 'Full content is not available.';
     const categorySlug = article.category ? article.category.slug : 'general';
 
+    // --- NAYA TAGS HTML BLOCK ---
+    let tagsHTML = '';
+    if (article.tags && article.tags.length > 0) {
+        tagsHTML = '<div class="article-tags">';
+        article.tags.forEach(tag => {
+            // Jab user tag par click kare, toh search.html par le jayenge
+            tagsHTML += `<a href="tag.html?slug=${tag.slug}&name=${encodeURIComponent(tag.name)}" class="tag-pill">#${tag.name}</a>`;
+        });
+        tagsHTML += '</div>';
+    }
+    // ----------------------------
+
     const saveButton = user ? 
         `<button class="save-btn detail-save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save for Later'}</button>` 
         : '';
@@ -114,7 +126,8 @@ function renderArticle(article) {
             <div class="detail-body">
                 ${content}
             </div>
-            ${shareHTML}
+            
+            ${tagsHTML} ${shareHTML}
             ${relatedHTML}
             ${commentsHTML}
             <div class="detail-actions">
@@ -197,5 +210,35 @@ document.addEventListener('DOMContentLoaded', () => {
         articleContainer.innerHTML = '<p style="text-align: center;">Please select an article from the homepage.</p>';
         return;
     }
+    
+    // Pehle article fetch aur render karo
     fetchArticle(articleId);
+    
+    // NAYA CODE: View count ko silently badhao!
+    incrementArticleView(articleId);
 });
+
+// ==================== Increment Views ====================
+async function incrementArticleView(articleId) {
+    // 1. Check karein ki kya is session mein pehle hi view count ho chuka hai?
+    const viewedKey = `viewed_article_${articleId}`;
+    if (sessionStorage.getItem(viewedKey)) {
+        console.log("View already counted for this session.");
+        return; // Agar pehle hi count ho gaya, toh yahin se wapas laut jao
+    }
+
+    try {
+        await fetch(`${ARTICLE_DETAIL_API_URL}/${articleId}/increment_view/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        // 2. API call success hone ke baad, browser ki memory mein likh do ki view count ho gaya
+        sessionStorage.setItem(viewedKey, 'true');
+        
+    } catch (error) {
+        console.error('Failed to increment views:', error);
+    }
+}

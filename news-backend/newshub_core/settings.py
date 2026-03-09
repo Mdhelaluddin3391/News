@@ -176,3 +176,14 @@ TINYMCE_DEFAULT_CONFIG = {
     'toolbar': 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
     'custom_undo_redo_levels': 10,
 }
+
+
+# ==========================================
+# CACHING SETUP (Performance Optimization)
+# ==========================================
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'newshub-cache',
+    }
+}

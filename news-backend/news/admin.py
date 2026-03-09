@@ -1,10 +1,16 @@
 from django.contrib import admin
-from .models import Category, Author, Article
+from .models import Category, Author, Article, Tag
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug', 'created_at')
     prepopulated_fields = {'slug': ('name',)}
+
+@admin.register(Tag)
+class TagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'created_at')
+    prepopulated_fields = {'slug': ('name',)}
+
 
 @admin.register(Author)
 class AuthorAdmin(admin.ModelAdmin):
@@ -12,7 +18,9 @@ class AuthorAdmin(admin.ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'author', 'status', 'published_at', 'views')
+    list_display = ('title', 'category', 'author', 'status', 'published_at', 'views', 'is_editors_pick')
     list_filter = ('status', 'category', 'is_featured', 'is_trending')
     search_fields = ('title', 'content')
     prepopulated_fields = {'slug': ('title',)}
+    list_editable = ('is_editors_pick',)
+    filter_horizontal = ('tags',)

@@ -13,48 +13,42 @@
 <body>
     <div id="header-placeholder"></div>
 
-    <main>
-        <div class="loader" id="loader"></div>
-        <div class="error-message" id="error-message"></div>
-        <article class="article-detail" id="article-detail">
+    <main class="container main-content">
+        <div class="left-column">
+            <div class="loader" id="loader"></div>
+            <div class="error-message" id="error-message"></div>
 
-            <section class="sidebar-section">
-                <div id="sidebar-sticky-ad" class="ad-slot" style="position: sticky; top: 20px; display: none;"></div>
+            <article class="article-detail" id="article-detail">
+            </article>
+        </div>
+
+        <div class="right-column">
+            <section class="sidebar-section" id="poll-widget-section" style="display: none;">
+                <h3 class="sidebar-title">POLL OF THE WEEK</h3>
+                <div id="poll-container" class="poll-container">
                 </div>
             </section>
 
-            <div id="article-top-ad" class="ad-slot ad-banner" style="display: none;"></div>
-
-            <!-- Social Sharing Buttons -->
-            <div class="social-share">
-                <h3>Share this article</h3>
-                <div class="share-buttons" id="share-buttons"></div>
-            </div>
-
-            <!-- Related Articles -->
-            <section class="related-articles">
-                <h3>Related Articles</h3>
-                <div class="related-container" id="related-container"></div>
+            <section class="sidebar-section">
+                <div id="sidebar-sticky-ad" class="ad-slot" style="position: sticky; top: 20px; display: none;"></div>
             </section>
-
-            <!-- Comments Section -->
-            <section class="comments-section">
-                <h3>Comments</h3>
-                <div id="comments-list"></div>
-                <div id="comment-form-container"></div>
-            </section>
-        </article>
+        </div>
     </main>
 
     <div id="footer-placeholder"></div>
 
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/index-ui.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/homepage.js"></script>
     <script src="js/loadComponents.js"></script>
+    <script src="js/index-ui.js"></script>
     <script src="js/article.js"></script>
     <script src="js/comments.js"></script>
     <script src="js/related.js"></script>
+    <script src="js/poll.js"></script>
+
+
 </body>
 
 </html>

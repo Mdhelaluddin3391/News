@@ -35,3 +35,21 @@ class NewsletterSubscriber(BaseModel):
 
     def __str__(self):
         return self.email
+    
+class Poll(BaseModel):
+    """Admin dwara banaye gaye polls/surveys"""
+    question = models.CharField(max_length=255, help_text="Poll ka sawal likhein")
+    description = models.TextField(blank=True, null=True, help_text="Thoda context ya description poll ke liye (Optional)")
+    is_active = models.BooleanField(default=False, help_text="Keval ek poll ko active rakhein jo frontend par dikhega")
+
+    def __str__(self):
+        return self.question
+
+class PollOption(BaseModel):
+    """Poll ke options (e.g., Option A, Option B)"""
+    poll = models.ForeignKey(Poll, related_name='options', on_delete=models.CASCADE)
+    text = models.CharField(max_length=255, help_text="Option ka naam")
+    votes = models.IntegerField(default=0, help_text="Total votes received")
+
+    def __str__(self):
+        return f"{self.text} ({self.votes} votes)"

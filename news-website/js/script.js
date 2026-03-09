@@ -45,7 +45,7 @@ function renderArticles(articles) {
         // Map backend fields
         const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
         const title = article.title || 'Untitled';
-        const description = article.description || 'No description available.';
+        const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';
         const source = article.source_name || 'NewsHub';
         const date = article.published_at ? formatDate(article.published_at) : 'Unknown date';
         const articleId = article.id || '';
@@ -88,10 +88,12 @@ function renderArticles(articles) {
                     unsaveArticle(articleId);
                     btn.classList.remove('saved');
                     btn.textContent = 'Save';
+                    showToast('Removed from saved articles', 'info'); // NAYA: Toast Alert
                 } else {
                     saveArticle(article);
                     btn.classList.add('saved');
                     btn.textContent = 'Saved';
+                    showToast('Article saved successfully!', 'success'); // NAYA: Toast Alert
                 }
             });
         });
@@ -213,43 +215,79 @@ if(categoryButtons) {
     });
 }
 
-// ==================== App Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Check karega ki hum Index (Home) page par hain ya nahi
     const homeContainer = document.getElementById('home-categories-container');
     
-    // NAYI CONDITION: Sirf tabhi ye logic chalega jab articlesContainer AUR homeContainer dono page par maujood hon
-    if(articlesContainer && homeContainer) {
+    if(articlesContainer) {
         const urlParams = new URLSearchParams(window.location.search);
         const category = urlParams.get('category') || DEFAULT_CATEGORY;
         const page = parseInt(urlParams.get('page')) || 1;
         
         setActiveCategory(category);
 
+        // --- GLOBAL SIDEBAR DATA (Har page ke liye) ---
+        // Yeh functions homepage.js mein hain, inhein yahan bahar call karein
+        if (typeof loadEditorsPicks === 'function') loadEditorsPicks();
+        if (typeof loadTrendingNews === 'function') loadTrendingNews();
+        if (typeof loadCategoriesSidebar === 'function') loadCategoriesSidebar();
+        // ----------------------------------------------
+
         const paginationContainer = document.getElementById('pagination');
         const featuredSection = document.querySelector('.featured-news'); 
         
-        if (category === 'general') {
-            // WE ARE ON THE HOME PAGE
+        if (category === 'general' && homeContainer) {
+            // Homepage logic
             articlesContainer.style.display = 'none';
             if(paginationContainer) paginationContainer.style.display = 'none';
             if(categoryHeading) categoryHeading.style.display = 'none';
             if(homeContainer) homeContainer.style.display = 'block';
             if(featuredSection) featuredSection.style.display = 'block'; 
             
-            // 👇 YEH NAYI LINE ADD KAREIN 👇
             if (typeof initHomepage === 'function') {
                 initHomepage();
             }
-            
-        } else { // 👈 YEH ELSE YAHAN HONA CHAHIYE
-            // WE ARE ON A CATEGORY PAGE (e.g. Technology)
+        } else { 
+            // Category Page logic
             articlesContainer.style.display = 'grid'; 
             if(paginationContainer) paginationContainer.style.display = 'flex';
             if(categoryHeading) categoryHeading.style.display = 'block';
             if(homeContainer) homeContainer.style.display = 'none';
             if(featuredSection) featuredSection.style.display = 'none'; 
+            
             fetchNews(category, page);
         }
     }
 });
+
+// ==================== TOAST NOTIFICATION SYSTEM ====================
+function showToast(message, type = 'success') {
+    // Check agar container pehle se hai, nahi toh banao
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    // Naya toast element banao
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    // Icon set karein type ke hisaab se
+    let icon = 'fa-info-circle';
+    if (type === 'success') icon = 'fa-check-circle';
+    if (type === 'error') icon = 'fa-exclamation-circle';
+
+    // FIX: icon aur toast-icon ke beech space diya gaya hai
+    toast.innerHTML = `<i class="fas ${icon} toast-icon" style="font-size: 1.2rem;"></i> <span>${message}</span>`;
+    container.appendChild(toast);
+
+    // Slide In animation
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // 3 second baad Slide Out aur remove kar do
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 400); // Animation khatam hone ka wait
+    }, 3000);
+}

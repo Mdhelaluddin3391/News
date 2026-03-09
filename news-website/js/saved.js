@@ -23,7 +23,7 @@ function renderSavedArticles(articles) {
     const html = articles.map(article => {
         const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
         const title = article.title || 'Untitled';
-        const description = article.description || 'No description available.';
+        const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';
         const source = article.source_name || 'NewsHub';
         const date = article.published_at ? formatSavedDate(article.published_at) : 'Unknown date';
         const articleId = article.id || '';

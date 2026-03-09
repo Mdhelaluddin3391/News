@@ -365,3 +365,30 @@
 .login-prompt a:hover {
     text-decoration: underline;
 }
+
+
+/* ==================== TAGS STYLING ==================== */
+.article-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 2rem 0;
+}
+
+.tag-pill {
+    background-color: #f1f5f9;
+    color: var(--primary);
+    padding: 6px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: var(--transition);
+    border: 1px solid var(--border);
+}
+
+.tag-pill:hover {
+    background-color: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}

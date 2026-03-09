@@ -43,7 +43,14 @@ function formatSearchDate(isoString) {
 // ==================== Rendering ====================
 function renderSearchArticles(articles) {
     if (!articles || articles.length === 0) {
-        searchArticlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">No articles found matching your query.</p>';
+        // NAYA: Better "No Results" UI with Icon
+        searchArticlesContainer.innerHTML = `
+            <div style="text-align: center; padding: 50px 20px; grid-column: 1 / -1;">
+                <i class="fas fa-search" style="font-size: 3rem; color: var(--border); margin-bottom: 20px;"></i>
+                <h3 style="color: var(--dark);">No articles found</h3>
+                <p style="color: var(--gray);">Try different keywords or check your spelling.</p>
+            </div>
+        `;
         return;
     }
 
@@ -52,11 +59,16 @@ function renderSearchArticles(articles) {
         // Map backend fields
         const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
         const title = article.title || 'Untitled';
-        const description = article.description || 'No description available.';
+        
+        // Truncation logic (User's requirement)
+        const rawDescription = article.description || '';
+        const description = rawDescription.length > 110 ? rawDescription.substring(0, 110) + '...' : rawDescription;
+        
         const source = article.source_name || 'NewsHub';
         const date = article.published_at ? formatSearchDate(article.published_at) : 'Unknown date';
         const articleId = article.id || '';
         const isSaved = user ? isArticleSaved(articleId) : false;
+        
         const saveButton = user ? 
             `<button class="save-btn ${isSaved ? 'saved' : ''}" data-id="${articleId}">${isSaved ? 'Saved' : 'Save'}</button>` 
             : '';
@@ -93,10 +105,12 @@ function renderSearchArticles(articles) {
                     unsaveArticle(articleId);
                     btn.classList.remove('saved');
                     btn.textContent = 'Save';
+                    if(typeof showToast === 'function') showToast('Removed from saved articles', 'info');
                 } else {
                     saveArticle(article);
                     btn.classList.add('saved');
                     btn.textContent = 'Saved';
+                    if(typeof showToast === 'function') showToast('Article saved successfully!', 'success');
                 }
             });
         });
@@ -127,7 +141,16 @@ async function fetchSearchResults(query, page = 1) {
 
         renderSearchArticles(results);
         updateSearchPagination(page, totalResults, query);
-        searchHeading.textContent = `Search Results for "${query}"`;
+        
+        // NAYA: Badge Look for search heading
+        searchHeading.innerHTML = `
+            <i class="fas fa-search" style="font-size: 1rem; color: var(--primary); opacity: 0.7;"></i> 
+            Results for <span class="highlight-search">${query}</span>
+        `;
+
+        // Optional: Count display
+        const countDiv = document.getElementById('results-count');
+        if(countDiv) countDiv.textContent = `Found ${totalResults} articles matching your query`;
         
     } catch (error) {
         console.error('Search failed:', error);
@@ -142,46 +165,58 @@ function updateSearchPagination(currentPage, totalItems, query) {
     const prevBtn = document.getElementById('prev-page');
     const nextBtn = document.getElementById('next-page');
     const pageInfo = document.getElementById('page-info');
+    const paginationBox = document.getElementById('pagination');
 
     if (!prevBtn || !nextBtn || !pageInfo) return;
 
     const totalPages = Math.ceil(totalItems / SEARCH_ARTICLES_PER_PAGE) || 1;
 
-    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    // Sirf tabhi pagination dikhao jab 1 se zyada page hon
+    if(totalPages > 1) {
+        if(paginationBox) paginationBox.style.display = 'flex';
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
 
-    prevBtn.disabled = currentPage <= 1;
-    nextBtn.disabled = currentPage >= totalPages;
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
 
-    // Remove old listeners and add new ones
-    prevBtn.replaceWith(prevBtn.cloneNode(true));
-    nextBtn.replaceWith(nextBtn.cloneNode(true));
+        // Remove old listeners and add new ones
+        prevBtn.replaceWith(prevBtn.cloneNode(true));
+        nextBtn.replaceWith(nextBtn.cloneNode(true));
 
-    document.getElementById('prev-page').addEventListener('click', () => {
-        if (currentPage > 1) {
-            fetchSearchResults(query, currentPage - 1);
-            const url = new URL(window.location);
-            url.searchParams.set('page', currentPage - 1);
-            window.history.pushState({}, '', url);
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-    });
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentPage > 1) {
+                fetchSearchResults(query, currentPage - 1);
+                const url = new URL(window.location);
+                url.searchParams.set('page', currentPage - 1);
+                window.history.pushState({}, '', url);
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            }
+        });
 
-    document.getElementById('next-page').addEventListener('click', () => {
-        if (currentPage < totalPages) {
-            fetchSearchResults(query, currentPage + 1);
-            const url = new URL(window.location);
-            url.searchParams.set('page', currentPage + 1);
-            window.history.pushState({}, '', url);
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-    });
+        document.getElementById('next-page').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                fetchSearchResults(query, currentPage + 1);
+                const url = new URL(window.location);
+                url.searchParams.set('page', currentPage + 1);
+                window.history.pushState({}, '', url);
+                window.scrollTo({top: 0, behavior: 'smooth'});
+            }
+        });
+    } else {
+        if(paginationBox) paginationBox.style.display = 'none';
+    }
 }
 
 // ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const query = urlParams.get('q') || '';
+    const query = urlParams.get('q') || urlParams.get('search') || '';
     const page = parseInt(urlParams.get('page')) || 1;
+
+    // Sidebar Data Load karein (Global functions from homepage.js)
+    if (typeof loadEditorsPicks === 'function') loadEditorsPicks();
+    if (typeof loadTrendingNews === 'function') loadTrendingNews();
+    if (typeof loadCategoriesSidebar === 'function') loadCategoriesSidebar();
 
     // Populate search input in the header if it exists
     const searchInput = document.querySelector('input[name="q"]');
@@ -191,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!query) {
         searchHeading.textContent = 'Search Results';
-        searchArticlesContainer.innerHTML = '<p style="text-align: center;">Enter a search term above.</p>';
+        searchArticlesContainer.innerHTML = '<p style="text-align: center; margin-top: 50px;">Please enter a search term to find articles.</p>';
         return;
     }
 

@@ -5,6 +5,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import NewsletterSubscriber
+from .models import Poll, PollOption
+from .serializers import PollSerializer
+from rest_framework import permissions, status
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
@@ -76,3 +79,25 @@ class UnsubscribeNewsletterView(APIView):
             return Response({"message": "Successfully unsubscribed."})
         except NewsletterSubscriber.DoesNotExist:
             return Response({"error": "This email is not registered in our subscriber list."}, status=status.HTTP_404_NOT_FOUND)
+        
+class ActivePollView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # Sirf wo poll bhejo jo 'is_active=True' hai
+        poll = Poll.objects.filter(is_active=True).first()
+        if poll:
+            return Response(PollSerializer(poll).data)
+        return Response({"error": "No active poll found"}, status=status.HTTP_404_NOT_FOUND)
+
+class VotePollView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, option_id):
+        try:
+            option = PollOption.objects.get(id=option_id)
+            option.votes += 1
+            option.save()
+            return Response({"message": "Vote successfully counted!", "votes": option.votes})
+        except PollOption.DoesNotExist:
+            return Response({"error": "Option not found"}, status=status.HTTP_404_NOT_FOUND)

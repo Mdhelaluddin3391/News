@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,19 +8,39 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/search.css">
 </head>
-
 <body>
     <div id="header-placeholder"></div>
 
-    <main>
-        <h1 class="category-heading" id="search-query-heading">Search Results</h1>
-        <div class="loader" id="loader"></div>
-        <div class="error-message" id="error-message"></div>
-        <div class="articles-container" id="articles-container"></div>
-        <div class="pagination" id="pagination">
-            <button class="page-btn" id="prev-page" disabled>← Previous</button>
-            <span class="page-info" id="page-info">Page 1</span>
-            <button class="page-btn" id="next-page">Next →</button>
+    <main class="container main-content">
+        <div class="left-column">
+            <div class="search-header-container">
+                <h1 id="search-heading">Searching for...</h1>
+                <p id="results-count" class="results-meta">Finding best matches for you</p>
+            </div>
+
+            <div class="loader" id="loader"></div>
+            <div class="error-message" id="error-message"></div>
+            
+            <div class="articles-container" id="articles-container">
+                </div>
+            
+            <div class="pagination" id="pagination" style="display: none;">
+                <button class="page-btn" id="prev-page" disabled>← Previous</button>
+                <span class="page-info" id="page-info">Page 1</span>
+                <button class="page-btn" id="next-page">Next →</button>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <section class="sidebar-section">
+                <h3 class="sidebar-title">EDITOR'S PICKS</h3>
+                <div id="editors-picks-container" class="trending-news"></div>
+            </section>
+
+            <section class="sidebar-section">
+                <h3 class="sidebar-title">TRENDING NOW</h3>
+                <div id="trending-container" class="trending-news"></div>
+            </section>
         </div>
     </main>
 
@@ -31,9 +50,7 @@
     <script src="js/auth.js"></script>
     <script src="js/script.js"></script>
     <script src="js/homepage.js"></script> 
-    <script src="js/index-ui.js"></script>
-    <script src="js/search.js"></script> </body>
     <script src="js/loadComponents.js"></script>
+    <script src="js/search.js"></script> 
 </body>
-
 </html>

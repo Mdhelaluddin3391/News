@@ -83,7 +83,8 @@ function renderArticle(article) {
         : '';
 
     // Social sharing buttons (using current page URL)
-    const shareUrl = encodeURIComponent(window.location.href);
+    const backendShareUrl = `${CONFIG.API_BASE_URL}/news/articles/${article.id}/share/`;
+    const shareUrl = encodeURIComponent(backendShareUrl);
     const shareTitle = encodeURIComponent(title);
     const shareHTML = `
         <div class="social-share">

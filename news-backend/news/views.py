@@ -2,8 +2,9 @@ from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-
-# NAYE IMPORTS CACHING KE LIYE ⚡
+from django.http import HttpResponse
+from django.conf import settings
+from django.utils.html import escape
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
@@ -67,6 +68,53 @@ class ArticleViewSet(viewsets.ModelViewSet):
         article.views += 1
         article.save(update_fields=['views'])
         return Response({'message': 'View count updated', 'views': article.views})
+    
+    @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
+    def share(self, request, pk=None):
+        article = self.get_object()
+        
+        # Frontend ka actual URL jahan user ko redirect karna hai
+        frontend_url = f"{settings.FRONTEND_URL}/article.html?id={article.id}"
+        
+        # Article ki Image (Agar nahi hai toh default lagayein)
+        if article.featured_image:
+            image_url = request.build_absolute_uri(article.featured_image.url)
+        else:
+            image_url = "https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80"
+        
+        # Safe Text
+        safe_title = escape(article.title)
+        safe_desc = escape(article.description[:200]) if article.description else ""
+
+        # Facebook, WhatsApp aur Twitter ko jo HTML format samajh aata hai
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <title>{safe_title} - NewsHub</title>
+            
+            <meta property="og:type" content="article">
+            <meta property="og:title" content="{safe_title}">
+            <meta property="og:description" content="{safe_desc}">
+            <meta property="og:image" content="{image_url}">
+            <meta property="og:url" content="{frontend_url}">
+            <meta property="og:site_name" content="NewsHub">
+            
+            <meta name="twitter:card" content="summary_large_image">
+            <meta name="twitter:title" content="{safe_title}">
+            <meta name="twitter:description" content="{safe_desc}">
+            <meta name="twitter:image" content="{image_url}">
+            
+            <meta http-equiv="refresh" content="0; url={frontend_url}">
+            <script>window.location.href = "{frontend_url}";</script>
+        </head>
+        <body>
+            <p>Redirecting to article... <a href="{frontend_url}">Click here</a> if not redirected automatically.</p>
+        </body>
+        </html>
+        """
+        return HttpResponse(html_content)
 
 class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
     """Frontend par sabhi authors ki list dikhane ke liye (ReadOnly)"""

@@ -21,11 +21,21 @@ from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from interactions.views import SubscribeNewsletterView, UnsubscribeNewsletterView
 from core.views import ContactMessageCreateView
+from django.contrib.sitemaps.views import sitemap
+from news.sitemaps import ArticleSitemap, CategorySitemap
+from news.feeds import LatestArticlesFeed
 
+sitemaps = {
+    'articles': ArticleSitemap,
+    'categories': CategorySitemap,
+}
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('tinymce/', include('tinymce.urls')),
+
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+    path('rss/', LatestArticlesFeed(), name='rss_feed'),
     
     # JWT Authentication Endpoints (Login)
     path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

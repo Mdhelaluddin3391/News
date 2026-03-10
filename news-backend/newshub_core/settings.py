@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework_simplejwt',
     'tinymce',
+    'django.contrib.sites',   
+    'django.contrib.sitemaps',
 
 
 
@@ -194,3 +196,5 @@ CACHES = {
 
 
 GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'
+
+SITE_ID = 1

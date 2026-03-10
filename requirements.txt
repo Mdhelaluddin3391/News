@@ -1,3 +1,6 @@
+aiohappyeyeballs==2.6.1
+aiohttp==3.13.3
+aiosignal==1.4.0
 asgiref==3.11.1
 asttokens==3.0.1
 attrs==25.4.0
@@ -20,8 +23,10 @@ djangorestframework_simplejwt==5.5.1
 docopt==0.6.2
 executing==2.2.1
 fastjsonschema==2.21.2
+frozenlist==1.8.0
 google-auth==2.49.0
 gunicorn==21.2.0
+http_ece==1.2.1
 idna==3.11
 ipython==8.12.3
 jedi==0.19.2
@@ -34,6 +39,7 @@ jupyterlab_pygments==0.3.0
 MarkupSafe==3.0.3
 matplotlib-inline==0.2.1
 mistune==3.2.0
+multidict==6.7.1
 nbclient==0.10.4
 nbconvert==7.17.0
 nbformat==5.10.4
@@ -46,14 +52,17 @@ pillow==12.1.1
 pipreqs==0.5.0
 platformdirs==4.9.4
 prompt_toolkit==3.0.52
+propcache==0.4.1
 ptyprocess==0.7.0
 pure_eval==0.2.3
+py-vapid==1.9.4
 pyasn1==0.6.2
 pyasn1_modules==0.4.2
 pycparser==3.0
 Pygments==2.19.2
 PyJWT==2.11.0
 python-dateutil==2.9.0.post0
+pywebpush==2.3.0
 pyzmq==27.1.0
 redis==7.3.0
 referencing==0.37.0
@@ -72,3 +81,4 @@ urllib3==2.6.3
 wcwidth==0.6.0
 webencodings==0.5.1
 yarg==0.1.9
+yarl==1.23.0

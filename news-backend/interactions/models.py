@@ -53,3 +53,14 @@ class PollOption(BaseModel):
 
     def __str__(self):
         return f"{self.text} ({self.votes} votes)"
+    
+class PushSubscription(BaseModel):
+    """Users ke browser ki push notification subscription details"""
+    endpoint = models.URLField(max_length=500, unique=True)
+    auth = models.CharField(max_length=100)
+    p256dh = models.CharField(max_length=100)
+    # Optional: Agar user logged in hai toh usko link kar sakte hain
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return f"Push Sub - {self.id}"

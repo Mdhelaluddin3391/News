@@ -198,3 +198,15 @@ CACHES = {
 GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'
 
 SITE_ID = 1
+
+
+WEBPUSH_SETTINGS = {
+    # Yahan apni PUBLIC key paste karein (Quotes " " ke andar)
+    "VAPID_PUBLIC_KEY": "BI2oUZpcEccIW7PjnkjdgvxNxOro5G-abRV4Zn2jzVZDyseAtkaBF2OCYfqy1xHtdGEbjv4MXwza8rgJjAiKl1g", 
+    
+    # Yahan apni PRIVATE key paste karein (Quotes " " ke andar)
+    "VAPID_PRIVATE_KEY": "rkZghoXeOTAzBKt6Nveq5-HiDubLJvfXSd0BbEDDclw", 
+    
+    # Yahan apna koi bhi admin email daal dein (e.g., admin@yoursite.com)
+    "VAPID_ADMIN_EMAIL": "admin@dharmanagarlive.com" 
+}

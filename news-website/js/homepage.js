@@ -295,7 +295,6 @@ async function initHomepage() {
                 setupScrollObserver();
             }
             
-            // === NAYA CODE YAHAN ADD KAREIN ===
             // Homepage SEO Update
             if (typeof updateSEOMetaTags === 'function') {
                 updateSEOMetaTags(
@@ -305,12 +304,82 @@ async function initHomepage() {
                     window.location.href
                 );
             }
-            // ===================================
+            
+            // === NAYA: Custom Push Notification Prompt ===
+            // Page load hone ke 4 second baad custom popup dikhayenge
+            setTimeout(() => {
+                showCustomPushPrompt();
+            }, 4000); 
+            // ============================================
         }
 
     } catch (error) {
         console.error('Error fetching homepage data:', error);
     }
+}
+
+// ==================== Custom Push Notification Prompt ====================
+function showCustomPushPrompt() {
+    // 1. Agar browser support nahi karta, toh wapas jao
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    
+    // 2. Agar permission pehle se Granted ya Denied hai, toh popup mat dikhao
+    if (Notification.permission !== 'default') return;
+
+    // 3. Agar user ne pehle "Maybe Later" click kiya tha, toh usko pareshaan mat karo
+    if (localStorage.getItem('push_prompt_dismissed') === 'true') return;
+
+    // 4. Custom HTML Popup Banayein (Jo bottom-left corner me smoothly aayega)
+    const promptDiv = document.createElement('div');
+    promptDiv.id = 'custom-push-prompt';
+    promptDiv.innerHTML = `
+        <div style="position: fixed; bottom: 20px; left: 20px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 9999; max-width: 350px; border-left: 5px solid var(--primary); font-family: 'Roboto', sans-serif; animation: slideInUp 0.5s ease-out;">
+            <h4 style="margin: 0 0 10px 0; color: var(--dark); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-bell" style="color: var(--secondary);"></i> 
+                Get Breaking News Alerts!
+            </h4>
+            <p style="margin: 0 0 15px 0; font-size: 0.95rem; color: var(--gray); line-height: 1.5;">
+                Subscribe to get notified instantly about major breaking news and featured stories.
+            </p>
+            <div style="display: flex; gap: 10px;">
+                <button id="push-allow-btn" style="background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: 600; flex: 1; transition: background 0.3s;">
+                    Allow Alerts
+                </button>
+                <button id="push-dismiss-btn" style="background: #f1f5f9; color: #475569; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: 500; flex: 1; transition: background 0.3s;">
+                    Maybe Later
+                </button>
+            </div>
+        </div>
+        <style>
+            @keyframes slideInUp {
+                from { transform: translateY(100px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            #push-allow-btn:hover { background: var(--primary-dark) !important; }
+            #push-dismiss-btn:hover { background: #e2e8f0 !important; }
+        </style>
+    `;
+    
+    document.body.appendChild(promptDiv);
+
+    // 5. Jab user "Allow Alerts" par click kare
+    document.getElementById('push-allow-btn').addEventListener('click', () => {
+        promptDiv.remove(); // Custom UI hatao
+        
+        // Ab actual browser ka notification prompt trigger hoga jo push-notifications.js mein hai
+        if (typeof subscribeToPush === 'function') {
+            subscribeToPush(); 
+        } else {
+            console.error("subscribeToPush function is not defined. Make sure push-notifications.js is loaded.");
+        }
+    });
+
+    // 6. Jab user "Maybe Later" par click kare
+    document.getElementById('push-dismiss-btn').addEventListener('click', () => {
+        promptDiv.remove(); // Custom UI hatao
+        // Local storage mein save kar lo taaki baar-baar user ko pareshaan na karein
+        localStorage.setItem('push_prompt_dismissed', 'true'); 
+    });
 }
 
 // ==================== Newsletter Form Listener ====================

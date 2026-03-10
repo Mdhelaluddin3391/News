@@ -10,6 +10,9 @@ from .serializers import PollSerializer
 from rest_framework import permissions, status
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from .models import PushSubscription
+from .serializers import PushSubscriptionSerializer
+
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
@@ -103,3 +106,24 @@ class VotePollView(APIView):
             return Response({"message": "Vote successfully counted!", "votes": option.votes})
         except PollOption.DoesNotExist:
             return Response({"error": "Option not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+
+
+class SavePushSubscriptionView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = PushSubscriptionSerializer(data=request.data)
+        if serializer.is_valid():
+            # Agar endpoint pehle se hai, toh update kar do, nahi toh naya banao
+            sub, created = PushSubscription.objects.update_or_create(
+                endpoint=serializer.validated_data['endpoint'],
+                defaults={
+                    'auth': serializer.validated_data['auth'],
+                    'p256dh': serializer.validated_data['p256dh'],
+                    'user': request.user if request.user.is_authenticated else None
+                }
+            )
+            return Response({"message": "Subscription saved successfully!"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

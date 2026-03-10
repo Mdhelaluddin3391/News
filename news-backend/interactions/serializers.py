@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Bookmark, Comment
 from users.serializers import UserSerializer
 from .models import Poll, PollOption
+from .models import PushSubscription
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -35,3 +36,10 @@ class PollSerializer(serializers.ModelSerializer):
 
     def get_total_votes(self, obj):
         return sum(option.votes for option in obj.options.all())
+    
+
+
+class PushSubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PushSubscription
+        fields = ['endpoint', 'auth', 'p256dh']

@@ -84,14 +84,19 @@ function renderCategories(categories) {
     container.innerHTML = html;
 }
 
-function renderBreakingTicker(messages) {
+function renderBreakingTicker(articles) {
     const container = document.getElementById('breaking-ticker-content');
     if (!container) return;
 
-    if (messages && messages.length > 0) {
-        container.textContent = '• ' + messages.join(' • ');
+    if (articles && articles.length > 0) {
+        // Har article ke liye ek clickable link banayein
+        const html = articles.map(article => 
+            `<a href="article.html?id=${article.id}" class="breaking-link">${article.title}</a>`
+        ).join(' &nbsp;&bull;&nbsp; '); // Beech mein ek dot (•) laga rahe hain
+        
+        container.innerHTML = html;
     } else {
-        container.textContent = 'Welcome to NewsHub!';
+        container.innerHTML = 'Welcome to NewsHub!';
     }
 }
 
@@ -285,8 +290,8 @@ async function initHomepage() {
         }
 
         // Render Breaking News Ticker
-        const breakingTitles = (breakingData.results || []).map(item => item.title);
-        renderBreakingTicker(breakingTitles);
+        const breakingArticles = breakingData.results || breakingData;
+        renderBreakingTicker(breakingArticles);
 
         // === NAYA CODE: Render 5 Recent News ===
         if (recentData.results) {

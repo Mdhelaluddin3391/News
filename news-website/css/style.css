@@ -374,6 +374,22 @@ nav {
     animation: ticker 25s linear infinite;
     font-weight: 500;
 }
+.breaking-link {
+    color: white;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.breaking-link:hover {
+    text-decoration: underline;
+    color: #f1f5f9;
+}
+
+/* Jab mouse ticker par aaye toh scrolling rook de, taaki user aasaani se click kar sake */
+.ticker:hover span {
+    animation-play-state: paused;
+}
+
 
 @keyframes ticker {
     from { transform: translateX(0); }

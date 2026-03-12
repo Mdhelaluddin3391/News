@@ -1,3 +1,5 @@
+import requests
+import tweepy
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.core.cache import cache
@@ -5,7 +7,6 @@ from django.conf import settings
 from .models import Article, Category, Author
 import json
 from pywebpush import webpush, WebPushException
-import requests
 from interactions.models import PushSubscription
 import threading
 from django.core.mail import send_mail
@@ -157,3 +158,69 @@ def auto_send_newsletter_on_publish(sender, instance, created, **kwargs):
         # Database mein update kar dein ki is article ka email ja chuka hai
         # .update() ka use isliye kiya hai taaki wapas save() call na ho aur infinite loop na bane
         Article.objects.filter(pk=instance.pk).update(newsletter_sent=True)
+
+
+@receiver(post_save, sender=Article)
+def handle_social_media_autopost(sender, instance, created, **kwargs):
+    # Check karein ki article published hai ya nahi
+    if instance.status == 'published':
+        article_url = f"{settings.FRONTEND_URL}/article.html?id={instance.id}"
+        short_desc = instance.description[:100] + "..." if instance.description else ""
+        message = f"🚨 {instance.title}\n\n📝 {short_desc}\n\n🔗 Pura padhne ke liye click karein:\n{article_url}\n\n#NewsHub #DharmanagarLive #LatestNews"
+
+        # 1. FACEBOOK AUTO POST
+        if instance.post_to_facebook:
+            print("🚀 Posting to Facebook...")
+            try:
+                fb_url = f"https://graph.facebook.com/v18.0/{settings.FACEBOOK_PAGE_ID}/feed"
+                payload = {
+                    "message": message,
+                    "access_token": settings.FACEBOOK_ACCESS_TOKEN
+                }
+                # Agar image bhi bhejni hai (Optional, uske liye endpoint /photos hota hai)
+                response = requests.post(fb_url, data=payload)
+                if response.status_code == 200:
+                    print("✅ Facebook par post successfully ho gaya!")
+                else:
+                    print(f"❌ Facebook post failed: {response.json()}")
+            except Exception as e:
+                print(f"❌ Facebook error: {e}")
+            finally:
+                Article.objects.filter(pk=instance.pk).update(post_to_facebook=False)
+
+        # 2. TWITTER (X) AUTO POST
+        if instance.post_to_twitter:
+            print("🚀 Posting to Twitter...")
+            try:
+                client = tweepy.Client(
+                    consumer_key=settings.TWITTER_API_KEY,
+                    consumer_secret=settings.TWITTER_API_SECRET,
+                    access_token=settings.TWITTER_ACCESS_TOKEN,
+                    access_token_secret=settings.TWITTER_ACCESS_TOKEN_SECRET
+                )
+                response = client.create_tweet(text=message)
+                print(f"✅ Twitter par post successfully ho gaya! Tweet ID: {response.data['id']}")
+            except Exception as e:
+                print(f"❌ Twitter error: {e}")
+            finally:
+                Article.objects.filter(pk=instance.pk).update(post_to_twitter=False)
+
+        # 3. TELEGRAM AUTO POST
+        if instance.post_to_telegram:
+            print("🚀 Posting to Telegram...")
+            try:
+                tg_url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
+                payload = {
+                    "chat_id": settings.TELEGRAM_CHANNEL_ID,
+                    "text": message,
+                    "parse_mode": "HTML" # Optional: Agar aap bold/italic formatting chahte hain
+                }
+                response = requests.post(tg_url, data=payload)
+                if response.status_code == 200:
+                    print("✅ Telegram par post successfully ho gaya!")
+                else:
+                    print(f"❌ Telegram post failed: {response.json()}")
+            except Exception as e:
+                print(f"❌ Telegram error: {e}")
+            finally:
+                Article.objects.filter(pk=instance.pk).update(post_to_telegram=False)

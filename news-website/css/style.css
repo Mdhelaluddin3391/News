@@ -1275,3 +1275,50 @@ footer {
     margin-top: 10px;
 
 }
+
+
+/* ==================== Responsive Design (Media Queries) ==================== */
+@media (max-width: 992px) {
+    .ad-banner {
+        margin-top: 15px; 
+    }
+
+    .header-flex {
+        flex-direction: column; 
+        text-align: center;
+    }
+
+    /* 🔴 NEW REORDERING LOGIC FOR MOBILE 🔴 */
+    .main-content {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Ye trick columns ki boundaries hata degi taaki left/right mix ho sakein */
+    .left-column, .right-column {
+        display: contents; 
+    }
+
+    /* Yahan hum apni marzi ka order set kar rahe hain jaisa aapne pucha */
+    .featured-news { order: 1; }
+    #top-stories-section { order: 2; }
+    #trending-section { order: 3; }
+    .recent-news-section { order: 4; }
+    #home-categories-container { order: 5; }
+    #category-scroll-loader { order: 6; }
+    #editors-picks-section { order: 7; }
+    #poll-widget-section { order: 8; }
+    #ad-section { order: 9; }
+    #article-top-ad { order: 10; }
+    #newsletter-section { order: 11; }
+    #categories-list-section { order: 12; }
+
+    .featured-image {
+        height: 350px;
+    }
+    
+    /* Enhanced Footer Responsive */
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}

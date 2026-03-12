@@ -343,3 +343,23 @@ function updateSEOMetaTags(title, description, imageUrl, pageUrl) {
     setMetaTag('name', 'twitter:description', description);
     setMetaTag('name', 'twitter:image', imageUrl);
 }
+
+
+
+// ==================== SCHEMA MARKUP (JSON-LD) INJECTOR ====================
+function injectSchema(schemaData) {
+    // Agar pehle se koi dynamically added schema hai, toh use remove karein
+    const existingSchema = document.getElementById('dynamic-schema');
+    if (existingSchema) {
+        existingSchema.remove();
+    }
+
+    // Naya script tag banayein
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'dynamic-schema';
+    script.text = JSON.stringify(schemaData);
+    
+    // Head mein inject karein
+    document.head.appendChild(script);
+}

@@ -79,6 +79,13 @@ class Article(BaseModel):
     is_trending = models.BooleanField(default=False, help_text="Show in trending sidebar")
     is_breaking = models.BooleanField(default=False, help_text="Show in breaking news ticker")
     is_editors_pick = models.BooleanField(default=False, help_text="Show in Editor's Picks section")
+    is_top_story = models.BooleanField(default=False, help_text="Show in Top Stories section")
+
+    post_to_facebook = models.BooleanField(default=False, help_text="Tick karein Facebook par post karne ke liye")
+    post_to_twitter = models.BooleanField(default=False, help_text="Tick karein Twitter (X) par post karne ke liye")
+    post_to_telegram = models.BooleanField(default=False, help_text="Tick karein Telegram channel par post karne ke liye")
+
+
 
     def save(self, *args, **kwargs):
         # 1. Slug banayein

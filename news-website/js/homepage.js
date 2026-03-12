@@ -259,19 +259,23 @@ async function initHomepage() {
         const currentCategory = urlParams.get('category') || 'general';
 
         // Sidebar data ab hamare global functions se load hoga (Clean code)
+        window.loadTopStories()
         window.loadEditorsPicks();
         window.loadTrendingNews();
         window.loadCategoriesSidebar();
 
-        const [featuredRes, breakingRes, categoriesRes] = await Promise.all([
+        // NAYA: 4th API call 'recentRes' add kiya gaya hai latest articles ke liye
+        const [featuredRes, breakingRes, categoriesRes, recentRes] = await Promise.all([
             fetch(`${HOMEPAGE_API_URL}/articles/?is_featured=true`),
             fetch(`${HOMEPAGE_API_URL}/articles/?is_breaking=true`),
-            fetch(`${HOMEPAGE_API_URL}/categories/`)
+            fetch(`${HOMEPAGE_API_URL}/categories/`),
+            fetch(`${HOMEPAGE_API_URL}/articles/`) // Default list returns the latest articles
         ]);
 
         const featuredData = await featuredRes.json();
         const breakingData = await breakingRes.json();
         const categoriesData = await categoriesRes.json();
+        const recentData = await recentRes.json(); // NAYA: Recent news data
         
         const categoriesList = categoriesData.results || categoriesData;
 
@@ -283,6 +287,14 @@ async function initHomepage() {
         // Render Breaking News Ticker
         const breakingTitles = (breakingData.results || []).map(item => item.title);
         renderBreakingTicker(breakingTitles);
+
+        // === NAYA CODE: Render 5 Recent News ===
+        if (recentData.results) {
+            renderRecentNews(recentData.results.slice(0, 5));
+        } else if (Array.isArray(recentData)) {
+            renderRecentNews(recentData.slice(0, 5));
+        }
+        // =======================================
 
         // Render Category Blocks (Lazy Loading Setup)
         if (currentCategory === 'general') {
@@ -304,13 +316,42 @@ async function initHomepage() {
                     window.location.href
                 );
             }
+
+            // === NAYA CODE: HOMEPAGE SCHEMA MARKUP ===
+            if (typeof injectSchema === 'function') {
+                const homepageSchema = {
+                    "@context": "https://schema.org",
+                    "@graph": [
+                        {
+                            "@type": "WebSite",
+                            "name": "NewsHub",
+                            "url": "https://www.dharmanagarlive.com/", // Apna actual domain use karein
+                            "potentialAction": {
+                                "@type": "SearchAction",
+                                "target": "https://www.dharmanagarlive.com/search.html?q={search_term_string}",
+                                "query-input": "required name=search_term_string"
+                            }
+                        },
+                        {
+                            "@type": "Organization",
+                            "name": "NewsHub by Dharmanagar Live",
+                            "url": "https://www.dharmanagarlive.com/",
+                            "logo": "https://www.dharmanagarlive.com/images/logo.png", // Apne logo ka sahi URL daalein
+                            "sameAs": [
+                                "https://www.facebook.com/dharmanagarlive",
+                                "https://twitter.com/dharmanagarlive"
+                            ]
+                        }
+                    ]
+                };
+                injectSchema(homepageSchema);
+            }
+            // ===========================================
             
-            // === NAYA: Custom Push Notification Prompt ===
-            // Page load hone ke 4 second baad custom popup dikhayenge
+            // Custom Push Notification Prompt
             setTimeout(() => {
                 showCustomPushPrompt();
             }, 4000); 
-            // ============================================
         }
 
     } catch (error) {
@@ -419,3 +460,102 @@ if (newsletterForm) {
         }
     });
 }
+
+
+
+
+// ==================== NAYA CODE: Render Recent News ====================
+function renderRecentNews(articles) {
+    const section = document.getElementById('recent-news-section');
+    const container = document.getElementById('recent-news-container');
+    if (!container || !section) return;
+
+    if (!articles || articles.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    let html = '';
+
+    articles.forEach(article => {
+        const timeAgo = formatTimeAgo(article.published_at);
+        const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80';
+        
+        html += `
+            <div class="recent-news-card" onclick="window.location.href='article.html?id=${article.id}'" style="min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
+                <img src="${imageUrl}" alt="${article.title}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);">
+                <div style="padding: 12px 10px;">
+                    <h4 style="font-size: 0.85rem; margin-bottom: 8px; line-height: 1.4; color: var(--dark); font-family: 'Roboto', sans-serif; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${article.title}</h4>
+                    <span style="font-size: 0.75rem; color: var(--secondary); font-weight: 600;"><i class="far fa-clock"></i> ${timeAgo}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+    
+    // Hover effect dynamically add karne ke liye
+    const cards = container.querySelectorAll('.recent-news-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-3px)';
+            card.style.boxShadow = '0 6px 12px rgba(0,0,0,0.15)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'none';
+            card.style.boxShadow = '0 2px 5px rgba(0,0,0,0.1)';
+        });
+    });
+}
+// =========================================================================
+
+
+// ==================== NAYA CODE: Render Top Stories ====================
+function renderTopStories(stories) {
+    const container = document.getElementById('top-stories-container');
+    if (!container) return;
+
+    if (!stories || stories.length === 0) {
+        container.innerHTML = '<p style="color: var(--gray); font-size: 0.9rem;">No top stories at the moment.</p>';
+        return;
+    }
+
+    let html = '';
+    stories.forEach((item, index) => {
+        const number = (index + 1).toString().padStart(2, '0');
+        const categoryName = item.category ? item.category.name : 'News';
+
+        // Isko Trending jaisa ek sundar numbered list format diya hai
+        html += `
+            <div class="trending-news-item" data-id="${item.id}" style="cursor: pointer;">
+                <div class="trending-number" style="color: var(--primary); font-size: 1.8rem;">${number}</div>
+                <div class="trending-content">
+                    <h4 style="font-size: 0.95rem; margin-bottom: 5px;">${item.title}</h4>
+                    <div class="trending-category" style="font-size: 0.75rem;">${categoryName.toUpperCase()}</div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+
+    // Click event add karne ke liye
+    container.querySelectorAll('.trending-news-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const id = item.dataset.id;
+            window.location.href = `article.html?id=${id}`;
+        });
+    });
+}
+
+// Global fetch function for Top Stories
+window.loadTopStories = async function() {
+    try {
+        const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_top_story=true`);
+        const data = await res.json();
+        renderTopStories(data.results || data);
+    } catch (err) {
+        console.error("Error loading Top Stories:", err);
+    }
+};
+// =========================================================================

@@ -61,17 +61,45 @@ function renderArticle(article) {
     const categorySlug = article.category ? article.category.slug : 'general';
 
     if (typeof updateSEOMetaTags === 'function') {
-        // Description lamba ho sakta hai, isliye hum use SEO ke liye thoda chota (truncate) kar lenge (approx 150 chars)
+        // Description lamba ho sakta hai, isliye hum use SEO ke liye thoda chota (truncate) kar lenge
         const seoDescription = description.length > 150 ? description.substring(0, 150) + '...' : description;
         updateSEOMetaTags(title, seoDescription, imageUrl, window.location.href);
     }
+
+    // === NAYA CODE: ARTICLE SCHEMA MARKUP ===
+    if (typeof injectSchema === 'function') {
+        const authorName = article.author ? article.author.name : 'NewsHub Staff';
+        const articleSchema = {
+            "@context": "https://schema.org",
+            "@type": "NewsArticle",
+            "headline": title,
+            "image": [imageUrl],
+            "datePublished": article.published_at || new Date().toISOString(),
+            "dateModified": article.updated_at || article.published_at || new Date().toISOString(),
+            "author": [{
+                "@type": "Person",
+                "name": authorName,
+                "url": article.author ? `https://www.dharmanagarlive.com/author.html?id=${article.author.id}` : "https://www.dharmanagarlive.com/"
+            }],
+            "publisher": {
+                "@type": "Organization",
+                "name": "NewsHub",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://www.dharmanagarlive.com/images/logo.png"
+                }
+            },
+            "description": description.substring(0, 150)
+        };
+        injectSchema(articleSchema);
+    }
+    // ========================================
 
     // --- NAYA TAGS HTML BLOCK ---
     let tagsHTML = '';
     if (article.tags && article.tags.length > 0) {
         tagsHTML = '<div class="article-tags">';
         article.tags.forEach(tag => {
-            // Jab user tag par click kare, toh search.html par le jayenge
             tagsHTML += `<a href="tag.html?slug=${tag.slug}&name=${encodeURIComponent(tag.name)}" class="tag-pill">#${tag.name}</a>`;
         });
         tagsHTML += '</div>';
@@ -82,7 +110,7 @@ function renderArticle(article) {
         `<button class="save-btn detail-save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save for Later'}</button>` 
         : '';
 
-    // Social sharing buttons (using current page URL)
+    // Social sharing buttons
     const backendShareUrl = `${CONFIG.API_BASE_URL}/news/articles/${article.id}/share/`;
     const shareUrl = encodeURIComponent(backendShareUrl);
     const shareTitle = encodeURIComponent(title);
@@ -115,7 +143,7 @@ function renderArticle(article) {
         </section>
     `;
 
-    // HTML ko inject karna, 'content' ab directly use hoga kyunki wo HTML format me aayega
+    // HTML ko inject karna
     const html = `
         <div class="detail-content" style="padding-bottom: 1rem;">
             <h1 class="detail-title">${title}</h1>
@@ -146,21 +174,17 @@ function renderArticle(article) {
 
     articleContainer.innerHTML = html;
 
-    // Load related articles (calls function from related.js)
+    // Load related articles
     if (typeof renderRelated === 'function') {
         renderRelated('related-container', categorySlug, article.id);
-    } else {
-        console.warn('renderRelated function not available. Make sure related.js is loaded.');
     }
 
-    // Load comments (calls function from comments.js)
+    // Load comments
     if (typeof renderComments === 'function') {
         renderComments(article.id, 'comments-list');
-    } else {
-        console.warn('renderComments function not available. Make sure comments.js is loaded.');
     }
 
-    // Attach save button listener if user is logged in
+    // Attach save button listener
     if (user) {
         const saveBtn = document.querySelector('.detail-save-btn');
         if (saveBtn) {

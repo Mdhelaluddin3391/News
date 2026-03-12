@@ -30,7 +30,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     
     # 'is_editors_pick' aur 'tags__slug' yahan filter mein hain
-    filterset_fields = ['category__slug', 'author', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'tags__slug']
+    filterset_fields = ['category__slug', 'author', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'tags__slug', 'is_top_story']
     search_fields = ['title', 'content', 'description', 'author__user__name', 'category__name', 'tags__name']
     
     def get_permissions(self):

@@ -38,7 +38,7 @@ async function fetchAuthorAndArticles() {
         const twitterHtml = author.twitter_url ? `<a href="${author.twitter_url}" target="_blank"><i class="fab fa-twitter"></i></a>` : '';
         const linkedinHtml = author.linkedin_url ? `<a href="${author.linkedin_url}" target="_blank"><i class="fab fa-linkedin"></i></a>` : '';
 
-        // Render Author Profile (Ab yeh hamesha dikhega, chahe articles na bhi hon)
+        // Render Author Profile
         authorCard.innerHTML = `
             <img src="${avatar}" alt="${author.name}" class="author-avatar">
             <div class="author-info">
@@ -52,7 +52,7 @@ async function fetchAuthorAndArticles() {
             </div>
         `;
 
-        // === NAYA CODE YAHAN ADD KAREIN (Dynamic SEO for Author) ===
+        // Dynamic SEO for Author
         if (typeof updateSEOMetaTags === 'function') {
             const seoBio = bio.length > 150 ? bio.substring(0, 150) + '...' : bio;
             updateSEOMetaTags(
@@ -62,6 +62,30 @@ async function fetchAuthorAndArticles() {
                 window.location.href
             );
         }
+
+        // === NAYA CODE: AUTHOR SCHEMA MARKUP ===
+        if (typeof injectSchema === 'function') {
+            const personSchema = {
+                "@context": "https://schema.org",
+                "@type": "Person",
+                "name": author.name,
+                "jobTitle": role,
+                "worksFor": {
+                    "@type": "Organization",
+                    "name": "NewsHub"
+                },
+                "image": avatar,
+                "description": bio,
+                "url": window.location.href,
+                "sameAs": []
+            };
+
+            if (author.twitter_url) personSchema.sameAs.push(author.twitter_url);
+            if (author.linkedin_url) personSchema.sameAs.push(author.linkedin_url);
+
+            injectSchema(personSchema);
+        }
+        // =======================================
 
         // 2. Ab is author ke likhe hue Articles fetch karenge
         const articlesResponse = await fetch(`${API_BASE_URL}/articles/?author=${authorId}`);

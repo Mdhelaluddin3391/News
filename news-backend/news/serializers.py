@@ -31,5 +31,5 @@ class ArticleSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'title', 'slug', 'category', 'author', 'source_name', 
             'description', 'content', 'featured_image', 'published_at', 
-            'views', 'is_featured', 'is_trending', 'is_breaking','is_editors_pick', 'tags'
+            'views', 'is_featured', 'is_trending', 'is_breaking','is_editors_pick', 'tags', 'is_top_story' # <-- is_top_story yahan add kiya
         )

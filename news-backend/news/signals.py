@@ -5,7 +5,7 @@ from django.conf import settings
 from .models import Article, Category, Author
 import json
 from pywebpush import webpush, WebPushException
-
+import requests
 from interactions.models import PushSubscription
 
 # 1. Article Save (Create/Update) hone par
@@ -67,3 +67,39 @@ def handle_article_publish(sender, instance, created, **kwargs):
                 # Agar subscription invalid ho chuki hai (e.g., user ne permission hata di), toh DB se delete kar do
                 if ex.response and ex.response.status_code in [404, 410]:
                     sub.delete()
+
+
+@receiver(post_save, sender=Article)
+def handle_social_media_autopost(sender, instance, created, **kwargs):
+    # Check karein ki article published hai ya nahi
+    if instance.status == 'published':
+        article_url = f"{settings.FRONTEND_URL}/article.html?id={instance.id}"
+        message = f"📰 Naya Article: {instance.title}\n\nPadhne ke liye yahan click karein: {article_url}"
+
+        # 1. FACEBOOK AUTO POST
+        if instance.post_to_facebook:
+            print("🚀 Posting to Facebook...")
+            # Yahan Facebook Graph API ka code aayega
+            # requests.post(f"https://graph.facebook.com/PAGE_ID/feed?message={message}&access_token=YOUR_TOKEN")
+            
+            # Post hone ke baad checkbox wapas untick kar do taaki edit karne par dobara post na ho
+            Article.objects.filter(pk=instance.pk).update(post_to_facebook=False)
+
+        # 2. TWITTER AUTO POST
+        if instance.post_to_twitter:
+            print("🚀 Posting to Twitter...")
+            # Yahan Twitter API v2 (Tweepy) ka code aayega
+            
+            # Untick checkbox
+            Article.objects.filter(pk=instance.pk).update(post_to_twitter=False)
+
+        # 3. TELEGRAM AUTO POST
+        if instance.post_to_telegram:
+            print("🚀 Posting to Telegram...")
+            # Telegram bot API (Sabse aasan hoti hai)
+            # BOT_TOKEN = 'your_bot_token'
+            # CHANNEL_ID = '@your_channel_username'
+            # requests.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage?chat_id={CHANNEL_ID}&text={message}")
+            
+            # Untick checkbox
+            Article.objects.filter(pk=instance.pk).update(post_to_telegram=False)

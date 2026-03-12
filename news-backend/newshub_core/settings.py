@@ -245,8 +245,16 @@ TWITTER_ACCESS_TOKEN_SECRET = 'YOUR_TWITTER_ACCESS_TOKEN_SECRET'
 
 
 
-
-
+WEBPUSH_SETTINGS = {
+    # Yahan apni nayi PUBLIC key paste karein
+    "VAPID_PUBLIC_KEY": "BL_wQ4AU0MABrcB7uQc5dX7d725RZmGktXdlp9YD6m1MWopxpFcFMLjiBdF8pMjuAKOJmwX4a596wC0mj4HlMQ8", 
+    
+    # Yahan apni nayi PRIVATE key paste karein
+    "VAPID_PRIVATE_KEY": "1OY3gtDLCwMMsnUB2gBxSBtEtQACsl7GMmrDnTz_sew", 
+    
+    # Apna admin email
+    "VAPID_ADMIN_EMAIL": "admin@dharmanagarlive.com" 
+}
 
 
 

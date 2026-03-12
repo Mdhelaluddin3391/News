@@ -4,7 +4,7 @@ from django.conf import settings
 from .models import Bookmark, Comment, NewsletterSubscriber
 from news.models import Article
 from .models import Poll, PollOption
-
+from .models import Bookmark, Comment, NewsletterSubscriber, Poll, PollOption, PushSubscription  # <-- PushSubscription add karein
 
 @admin.register(Bookmark)
 class BookmarkAdmin(admin.ModelAdmin):
@@ -84,3 +84,9 @@ class PollAdmin(admin.ModelAdmin):
     list_display = ('question', 'is_active', 'created_at')
     list_editable = ('is_active',)
     inlines = [PollOptionInline]
+
+# ================== PUSH SUBSCRIPTION ADMIN ==================
+@admin.register(PushSubscription)
+class PushSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'endpoint', 'user', 'created_at')
+    search_fields = ('endpoint',)

@@ -87,7 +87,7 @@ class Article(BaseModel):
     post_to_twitter = models.BooleanField(default=False, help_text="Tick karein Twitter (X) par post karne ke liye")
     post_to_telegram = models.BooleanField(default=False, help_text="Tick karein Telegram channel par post karne ke liye")
     newsletter_sent = models.BooleanField(default=False, help_text="Tick ho jayega jab subscribers ko email bhej diya jayega")
-
+    push_sent = models.BooleanField(default=False, help_text="Tick ho jayega jab push notification bhej diya jayega")
 
     def save(self, *args, **kwargs):
         # 1. Slug banayein

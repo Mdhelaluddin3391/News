@@ -39,15 +39,14 @@ def clear_cache_on_author_change(sender, instance, **kwargs):
     print("Author updated. Clearing cache...")
     cache.clear()
 
+
 @receiver(post_save, sender=Article)
 def handle_article_publish(sender, instance, created, **kwargs):
     cache.clear()
     
-    # Check if article is published AND is either breaking or featured
-    if instance.status == 'published' and (instance.is_breaking or instance.is_featured):
-        
-        # Ye check karna zaroori hai taaki baar baar edit karne pe push na jaye.
-        # Aap chahein toh ek naya field 'push_sent = models.BooleanField(default=False)' Article mein add karke handle kar sakte hain.
+    # 🔴 NAYA: 'not instance.push_sent' add kiya gaya hai 
+    # Taaki check ho sake ki is article ka notification pehle toh nahi ja chuka
+    if instance.status == 'published' and (instance.is_breaking or instance.is_featured) and not instance.push_sent:
         
         payload = {
             "title": "🚨 Breaking News" if instance.is_breaking else "⭐ Featured Article",
@@ -72,6 +71,14 @@ def handle_article_publish(sender, instance, created, **kwargs):
                 # Agar subscription invalid ho chuki hai (e.g., user ne permission hata di), toh DB se delete kar do
                 if ex.response and ex.response.status_code in [404, 410]:
                     sub.delete()
+            except Exception as e:
+                # Any other general exceptions
+                print(f"Push error for subscription {sub.id}: {e}")
+
+        # 🔴 NAYA: Sabko notification bhejne ke baad database mein push_sent ko True kar dein.
+        # Hum `.update()` use kar rahe hain taaki wapas save() trigger na ho aur infinite loop na bane.
+        Article.objects.filter(pk=instance.pk).update(push_sent=True)
+        print(f"✅ Push notifications sent successfully for article: {instance.title}")
 
 
 @receiver(post_save, sender=Article)

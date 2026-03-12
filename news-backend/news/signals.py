@@ -7,6 +7,10 @@ import json
 from pywebpush import webpush, WebPushException
 import requests
 from interactions.models import PushSubscription
+import threading
+from django.core.mail import send_mail
+from interactions.models import NewsletterSubscriber
+
 
 # 1. Article Save (Create/Update) hone par
 @receiver(post_save, sender=Article)
@@ -103,3 +107,53 @@ def handle_social_media_autopost(sender, instance, created, **kwargs):
             
             # Untick checkbox
             Article.objects.filter(pk=instance.pk).update(post_to_telegram=False)
+
+
+def send_bulk_emails_in_background(subject, message, recipient_list):
+    """Ye function background mein chalega taaki website slow na ho"""
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=recipient_list,
+            fail_silently=False,
+        )
+        print(f"✅ Automatically sent emails to {len(recipient_list)} subscribers!")
+    except Exception as e:
+        print(f"❌ Email sending error: {e}")
+
+@receiver(post_save, sender=Article)
+def auto_send_newsletter_on_publish(sender, instance, created, **kwargs):
+    # Check karein: Status 'published' hona chahiye aur pehle email nahi gaya hona chahiye
+    if instance.status == 'published' and not instance.newsletter_sent:
+        
+        # Sirf 'Active' subscribers ki email list nikalein
+        subscribers = NewsletterSubscriber.objects.filter(is_active=True).values_list('email', flat=True)
+        recipient_list = list(subscribers)
+        
+        if recipient_list:
+            article_url = f"{settings.FRONTEND_URL}/article.html?id={instance.id}"
+            subject = f"📰 Naya Article: {instance.title}"
+            
+            # Email ka body (Message)
+            message = (
+                f"Hello!\n\n"
+                f"NewsHub par ek naya article publish hua hai:\n\n"
+                f"📌 {instance.title}\n\n"
+                f"Pura article padhne ke liye yahan click karein:\n"
+                f"{article_url}\n\n"
+                f"Thank you for subscribing!\n"
+                f"Unsubscribe karne ke liye visit karein: {settings.FRONTEND_URL}/unsubscribe.html"
+            )
+            
+            # Threading ka use karke email bhejne ka process start karein
+            email_thread = threading.Thread(
+                target=send_bulk_emails_in_background, 
+                args=(subject, message, recipient_list)
+            )
+            email_thread.start()
+
+        # Database mein update kar dein ki is article ka email ja chuka hai
+        # .update() ka use isliye kiya hai taaki wapas save() call na ho aur infinite loop na bane
+        Article.objects.filter(pk=instance.pk).update(newsletter_sent=True)

@@ -161,8 +161,13 @@ AUTH_USER_MODEL = 'users.User'
 # newshub_core/settings.py
 
 # Print emails to the terminal for testing purposes
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'noreply@newshub.com'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'muhammadhelal228@gmail.com' # Apna Gmail address daalein
+EMAIL_HOST_PASSWORD = 'quiq ictq xhhi gwmf' # Gmail ka 'App Password' daalein
+DEFAULT_FROM_EMAIL = 'NewsHub <muhammadhelal228@gmail.com>'
 
 # Change this to your frontend URL if you are hosting it elsewhere
 FRONTEND_URL = 'http://127.0.0.1:5500'

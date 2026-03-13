@@ -13,13 +13,14 @@ let isLoadingCategory = false;
 function renderFeatured(article) {
     const container = document.getElementById('featured-news-container');
     if (!container || !article) return;
-
     const timeAgo = formatTimeAgo(article.published_at);
     const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80';
     const categoryName = article.category ? article.category.name : 'World';
     const authorName = article.author ? article.author.name : 'Staff';
+    const liveBadgeHTML = article.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
 
     container.innerHTML = `
+        ${liveBadgeHTML}
         <img src="${imageUrl}" alt="${article.title}" class="featured-image">
         <div class="featured-overlay">
             <span class="featured-category">${categoryName.toUpperCase()}</span>
@@ -198,15 +199,24 @@ async function loadNextCategories(count = 1) {
             const mainArticle = articles[0];
             const sideArticles = articles.slice(1, 5);
 
-            let sideHtml = sideArticles.map(a => `
-                <div class="side-post" onclick="window.location.href='article.html?id=${a.id}'">
+            let sideHtml = sideArticles.map(a => {
+                const sideLiveBadge = a.is_live ? `<div class="live-badge-card" style="padding: 2px 5px; font-size: 0.6rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
+                return `
+                <div class="side-post" onclick="window.location.href='article.html?id=${a.id}'" style="position: relative;">
+                    ${sideLiveBadge}
                     <img src="${a.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80'}" alt="${a.title}">
                     <div class="side-post-content">
                         <h4>${a.title}</h4>
                         <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(a.published_at)}</span>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
+
+
+            const mainLiveBadge = mainArticle.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
+
+
 
             html += `
                 <div class="category-block">
@@ -218,6 +228,7 @@ async function loadNextCategories(count = 1) {
                     </h2>
                     <div class="category-grid">
                         <div class="main-post" onclick="window.location.href='article.html?id=${mainArticle.id}'">
+                            ${mainLiveBadge}
                             <img src="${mainArticle.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80'}" alt="${mainArticle.title}">
                             <div class="main-post-content">
                                 <h3>${mainArticle.title}</h3>
@@ -286,7 +297,16 @@ async function initHomepage() {
 
         // Render Top Featured
         if (featuredData.results && featuredData.results.length > 0) {
-            renderFeatured(featuredData.results[0]);
+            // 1. Pehle check karo ki featured list mein koi aisi news hai kya jo LIVE bhi ho?
+            const liveFeaturedArticle = featuredData.results.find(article => article.is_live === true);
+            
+            if (liveFeaturedArticle) {
+                // Agar LIVE + FEATURED news mili, toh usko sabse top priority do
+                renderFeatured(liveFeaturedArticle);
+            } else {
+                // Agar koi LIVE news nahi hai, toh bas normal sabse latest featured news dikha do
+                renderFeatured(featuredData.results[0]);
+            }
         }
 
         // Render Breaking News Ticker
@@ -486,9 +506,11 @@ function renderRecentNews(articles) {
     articles.forEach(article => {
         const timeAgo = formatTimeAgo(article.published_at);
         const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80';
-        
+        const liveBadge = article.is_live ? `<div class="live-badge-card" style="padding: 2px 4px; font-size: 0.65rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
+
         html += `
-            <div class="recent-news-card" onclick="window.location.href='article.html?id=${article.id}'" style="min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
+            <div class="recent-news-card" onclick="window.location.href='article.html?id=${article.id}'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
+                ${liveBadge}
                 <img src="${imageUrl}" alt="${article.title}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);">
                 <div style="padding: 12px 10px;">
                     <h4 style="font-size: 0.85rem; margin-bottom: 8px; line-height: 1.4; color: var(--dark); font-family: 'Roboto', sans-serif; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${article.title}</h4>

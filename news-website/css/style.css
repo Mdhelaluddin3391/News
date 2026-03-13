@@ -1338,3 +1338,35 @@ footer {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+
+
+/* ==================== LIVE BADGE FOR CARDS ==================== */
+.live-badge-card {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: #e11d48; /* Red */
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    animation: blink 2s infinite;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.live-badge-card i {
+    font-size: 8px; /* Chota sa dot */
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}

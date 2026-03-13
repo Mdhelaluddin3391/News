@@ -10,6 +10,9 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from .models import ContactMessage, Advertisement
 from .serializers import ContactMessageSerializer, AdvertisementSerializer
+from .models import ContactMessage, Advertisement, SiteSetting
+from .serializers import ContactMessageSerializer, AdvertisementSerializer, SiteSettingSerializer
+
 
 
 class ContactMessageCreateView(generics.CreateAPIView):
@@ -36,3 +39,12 @@ class ActiveAdsAPIView(APIView):
                 ads_data[slot] = AdvertisementSerializer(google_ad).data
 
         return Response(ads_data)
+    
+class SiteSettingAPIView(APIView):
+    # Settings jaldi change nahi hoti, toh 1 ghante tak cache karenge
+    @method_decorator(cache_page(60 * 60))
+    def get(self, request):
+        setting = SiteSetting.objects.first()
+        if setting and setting.ga4_tracking_id:
+            return Response(SiteSettingSerializer(setting).data)
+        return Response({"ga4_tracking_id": None})

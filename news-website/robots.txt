@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Admin panel aur private APIs ko crawl hone se rokein
+Disallow: /admin/
+Disallow: /api/
+
+# Search result pages ko index hone se rokein taaki duplicate content ka issue na ho
+Disallow: /*?q=*
+Disallow: /search.html?*
+
+# Apni website ka Sitemap path daalein
+Sitemap: https://www.dharmanagarlive.com/sitemap.xml

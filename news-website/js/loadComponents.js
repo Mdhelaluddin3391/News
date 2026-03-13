@@ -195,3 +195,43 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
 }
 
 document.addEventListener('DOMContentLoaded', loadComponents);
+
+
+// ==================== GOOGLE ANALYTICS (GA4) INJECTOR ====================
+async function injectGoogleAnalytics() {
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/settings/`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const trackingId = data.ga4_tracking_id;
+
+        if (trackingId) {
+            // 1. GTAG external script add karein
+            const script1 = document.createElement('script');
+            script1.async = true;
+            script1.src = `https://www.googletagmanager.com/gtag/js?id=${trackingId}`;
+            document.head.appendChild(script1);
+
+            // 2. GTAG inline configuration add karein
+            const script2 = document.createElement('script');
+            script2.innerHTML = `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${trackingId}');
+            `;
+            document.head.appendChild(script2);
+            
+            console.log(`✅ Google Analytics Initialized with ID: ${trackingId}`);
+        }
+    } catch (error) {
+        console.error('Failed to load Google Analytics:', error);
+    }
+}
+
+// Ye ensure karega ki DOM load hone ke baad GA4 load ho
+document.addEventListener('DOMContentLoaded', () => {
+    loadComponents();
+    injectGoogleAnalytics(); // GA4 load karne ke liye function call
+});

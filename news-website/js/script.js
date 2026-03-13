@@ -55,8 +55,11 @@ function renderArticles(articles) {
             `<button class="save-btn ${isSaved ? 'saved' : ''}" data-id="${articleId}">${isSaved ? 'Saved' : 'Save'}</button>`
             : '';
 
+        const liveBadgeHTML = article.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
+
         return `
-            <div class="article-card">
+            <div class="article-card" style="position: relative;">
+                ${liveBadgeHTML}
                 <img src="${imageUrl}" alt="${title}" class="article-image" loading="lazy">
                 <div class="article-content">
                     <h3 class="article-title">${title}</h3>

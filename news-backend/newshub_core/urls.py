@@ -24,6 +24,7 @@ from core.views import ContactMessageCreateView
 from django.contrib.sitemaps.views import sitemap
 from news.sitemaps import ArticleSitemap, CategorySitemap
 from news.feeds import LatestArticlesFeed
+from core.views import ContactMessageCreateView, SiteSettingAPIView
 
 sitemaps = {
     'articles': ArticleSitemap,
@@ -49,6 +50,7 @@ urlpatterns = [
     path('api/newsletter/subscribe/', SubscribeNewsletterView.as_view(), name='newsletter_subscribe'),
     path('api/newsletter/unsubscribe/', UnsubscribeNewsletterView.as_view(), name='newsletter_unsubscribe'),
     path('api/contact/', ContactMessageCreateView.as_view(), name='contact_api'),
+    path('api/settings/', SiteSettingAPIView.as_view(), name='site_settings'),
 
     
 ]

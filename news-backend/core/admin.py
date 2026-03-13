@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ContactMessage, Advertisement
+from .models import ContactMessage, Advertisement, SiteSetting
 
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
@@ -36,3 +36,13 @@ class AdvertisementAdmin(admin.ModelAdmin):
             'description': 'Fill this if Ad Type is "Google AdSense". Leave Image and URL empty.'
         }),
     )
+
+@admin.register(SiteSetting)
+class SiteSettingAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'ga4_tracking_id')
+    
+    # Ye ensure karega ki admin galti se multiple settings add na kar de
+    def has_add_permission(self, request):
+        if self.model.objects.exists():
+            return False
+        return super().has_add_permission(request)

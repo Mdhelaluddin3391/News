@@ -55,3 +55,18 @@ class Advertisement(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.get_slot_display()} ({self.ad_type})"
+    
+class SiteSetting(models.Model):
+    ga4_tracking_id = models.CharField(
+        max_length=50, 
+        blank=True, 
+        null=True, 
+        help_text="Google Analytics 4 Measurement ID (e.g., G-XXXXXXXXXX) yahan daalein."
+    )
+
+    class Meta:
+        verbose_name = "Site Setting"
+        verbose_name_plural = "Site Settings"
+
+    def __str__(self):
+        return "Global Site Settings"

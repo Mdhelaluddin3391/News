@@ -57,6 +57,53 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
         message += "Thank you for subscribing to NewsHub!\n"
         message += f"To unsubscribe, visit: {settings.FRONTEND_URL}/unsubscribe.html"
 
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }}
+                .container {{ max-width: 650px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }}
+                .header {{ background-color: #1a365d; padding: 25px; text-align: center; color: #ffffff; border-bottom: 5px solid #d32f2f; }}
+                .content {{ padding: 30px; color: #333333; }}
+                .story {{ padding: 20px; border-radius: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 15px; }}
+                .story-title {{ font-size: 18px; color: #1a365d; font-weight: bold; margin: 0 0 10px 0; line-height: 1.4; }}
+                .read-more {{ display: inline-block; color: #ffffff; background-color: #d32f2f; padding: 8px 15px; border-radius: 4px; text-decoration: none; font-size: 14px; font-weight: bold; margin-top: 5px; }}
+                .footer {{ background-color: #f1f5f9; padding: 20px; text-align: center; color: #666666; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1 style="margin: 0; font-size: 26px;">📰 NewsHub</h1>
+                    <p style="margin: 5px 0 0 0; font-size: 15px; color: #cbd5e1;">Today's Top Stories</p>
+                </div>
+                <div class="content">
+                    <p style="font-size: 16px; margin-bottom: 25px;">Hello there, <br><br>Here is your daily roundup of the most important stories curated just for you:</p>
+        """
+        
+        # Loop chalakar har article ko HTML blocks mein convert kar rahe hain
+        for article in latest_articles:
+            article_url = f"{settings.FRONTEND_URL}/article.html?id={article.id}"
+            html_content += f"""
+                    <div class="story">
+                        <h3 class="story-title">{article.title}</h3>
+                        <a href="{article_url}" class="read-more" style="color: #ffffff;">Read Full Story &rarr;</a>
+                    </div>
+            """
+            
+        html_content += f"""
+                </div>
+                <div class="footer">
+                    Thank you for staying updated with NewsHub!<br><br>
+                    Don't want these daily roundups? <a href="{settings.FRONTEND_URL}/unsubscribe.html" style="color: #d32f2f;">Unsubscribe here</a>.
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+
         # 4. Sabhi active subscribers ke emails ki list banayein
         recipient_list = [sub.email for sub in active_subscribers]
 
@@ -68,8 +115,8 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=recipient_list,
                 fail_silently=False,
+                html_message=html_content # <--- NAYA PARAMETER
             )
-            # Success message admin panel par dikhayein
             self.message_user(request, f"✅ Newsletter successfully sent to {active_subscribers.count()} subscribers!")
         except Exception as e:
             self.message_user(request, f"❌ Error sending email: {str(e)}", level='error')

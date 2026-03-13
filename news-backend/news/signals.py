@@ -117,7 +117,7 @@ def handle_social_media_autopost(sender, instance, created, **kwargs):
             Article.objects.filter(pk=instance.pk).update(post_to_telegram=False)
 
 
-def send_bulk_emails_in_background(subject, message, recipient_list):
+def send_bulk_emails_in_background(subject, message, recipient_list, html_message=None):
     """Ye function background mein chalega taaki website slow na ho"""
     try:
         send_mail(
@@ -126,6 +126,7 @@ def send_bulk_emails_in_background(subject, message, recipient_list):
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=recipient_list,
             fail_silently=False,
+            html_message=html_message # <--- NAYA
         )
         print(f"✅ Automatically sent emails to {len(recipient_list)} subscribers!")
     except Exception as e:
@@ -151,14 +152,53 @@ def auto_send_newsletter_on_publish(sender, instance, created, **kwargs):
                 f"📌 {instance.title}\n\n"
                 f"Pura article padhne ke liye yahan click karein:\n"
                 f"{article_url}\n\n"
-                f"Thank you for subscribing!\n"
-                f"Unsubscribe karne ke liye visit karein: {settings.FRONTEND_URL}/unsubscribe.html"
             )
+
+
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body {{ font-family: Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }}
+                    .container {{ max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }}
+                    .header {{ background-color: #d32f2f; padding: 20px; text-align: center; color: white; }}
+                    .content {{ padding: 30px; color: #334155; line-height: 1.6; font-size: 16px; }}
+                    .article-title {{ font-size: 20px; color: #1a365d; margin-bottom: 10px; font-weight: bold; line-height: 1.4; }}
+                    .btn {{ display: inline-block; background-color: #1a365d; color: #ffffff; text-decoration: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; margin-top: 15px; }}
+                    .footer {{ background-color: #f1f5f9; padding: 15px; text-align: center; color: #64748b; font-size: 12px; }}
+                    .footer a {{ color: #d32f2f; text-decoration: none; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1 style="margin:0; font-size: 22px;">🚨 Breaking News Alert</h1>
+                    </div>
+                    <div class="content">
+                        <p>Hello Reader,</p>
+                        <p>A new story has just been published on <strong>NewsHub</strong>!</p>
+                        
+                        <div style="background: #f8fafc; padding: 20px; border-left: 4px solid #d32f2f; margin: 25px 0;">
+                            <div class="article-title">{instance.title}</div>
+                            <a href="{article_url}" class="btn" style="color: #ffffff;">Read Full Article &rarr;</a>
+                        </div>
+                        
+                        <p>Stay informed and keep reading!</p>
+                    </div>
+                    <div class="footer">
+                        You are receiving this because you subscribed to NewsHub.<br><br>
+                        <a href="{settings.FRONTEND_URL}/unsubscribe.html">Click here to Unsubscribe</a>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
             
             # Threading ka use karke email bhejne ka process start karein
             email_thread = threading.Thread(
                 target=send_bulk_emails_in_background, 
-                args=(subject, message, recipient_list)
+                args=(subject, message, recipient_list, html_content) # html_content yahan bheja gaya hai
             )
             email_thread.start()
 

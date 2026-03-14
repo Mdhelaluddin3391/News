@@ -80,9 +80,8 @@ def handle_article_publish(sender, instance, created, **kwargs):
                     data=json.dumps(payload),
                     vapid_private_key=settings.WEBPUSH_SETTINGS['VAPID_PRIVATE_KEY'],
                     vapid_claims={"sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}"},
-                    ttl=86400  # 🔴 NAYA: TTL (Time To Live) - 86400 seconds (24 ghante)
-                    # Iska matlab agar device 24 ghante tak band raha, toh server wait karega. 
-                    # Jaise hi device 24 ghante ke andar on hoga, notification aa jayegi!
+                    ttl=86400, # 24 hours
+                    headers={"urgency": "high"}
                 )
             except WebPushException as ex:
                 if ex.response and ex.response.status_code in [404, 410]:

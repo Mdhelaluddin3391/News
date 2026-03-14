@@ -121,10 +121,34 @@ header {
 /* ==================== Desktop Navigation ==================== */
 nav {
     background: var(--primary);
-    position: sticky;  /* relative ko hatakar sticky kar dein */
-    top: 0;            /* ye batata hai ki top se kitna chipakna hai */
+    /* yahan se position: sticky aur top: 0 hata diya gaya hai */
     z-index: 1001;
+    transition: all 0.3s ease; /* Smooth effect ke liye */
 }
+
+
+.sticky-nav {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 2000 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    animation: slideDown 0.3s ease-in-out;
+}
+
+/* Nav ke fixed hone par jo jhatka (layout jump) lagta hai, usko rokne ke liye */
+.nav-placeholder {
+    display: none;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+}
+
+
+
 
 .nav-flex {
     display: flex;

@@ -62,6 +62,28 @@ function initHeaderScripts() {
     fetchAndRenderNavCategories();
     setupSearchAutocomplete('desktop-search-input', 'desktop-suggestions');
     setupSearchAutocomplete('mobile-search-input', 'mobile-suggestions');
+
+    // ==================== STICKY NAVBAR LOGIC ====================
+    const nav = document.querySelector('nav');
+    const topBar = document.querySelector('.top-bar');
+    const mainHeader = document.querySelector('.main-header');
+
+    if (nav && mainHeader) {
+        // Calculate karte hain ki nav kab top par pahuchega
+        const topBarHeight = topBar ? topBar.offsetHeight : 0;
+        const scrollThreshold = topBarHeight + mainHeader.offsetHeight;
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY >= scrollThreshold) {
+                nav.classList.add('sticky-nav');
+                // Layout ko tootne se bachane ke liye mainHeader ke niche space dete hain
+                mainHeader.style.marginBottom = nav.offsetHeight + 'px';
+            } else {
+                nav.classList.remove('sticky-nav');
+                mainHeader.style.marginBottom = '0px';
+            }
+        });
+    }
 }
 
 // 🔴 NAYA FUNCTION: Categories ko backend se laakar Header me set karne ke liye 🔴

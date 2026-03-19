@@ -11,7 +11,7 @@ from interactions.models import PushSubscription
 import threading
 from django.core.mail import send_mail
 from interactions.models import NewsletterSubscriber
-
+from core.tasks import send_async_email
 
 # 1. Article Save (Create/Update) hone par
 @receiver(post_save, sender=Article)
@@ -159,11 +159,7 @@ def auto_send_newsletter_on_publish(sender, instance, created, **kwargs):
             </html>
             """
             
-            # Background me bhejein
-            threading.Thread(
-                target=send_bulk_emails_in_background, 
-                args=(subject, message, recipient_list, html_content) 
-            ).start()
+            send_async_email.delay(subject, message, recipient_list, html_content)
 
         # Update database so we don't send it again
         Article.objects.filter(pk=instance.pk).update(newsletter_sent=True)

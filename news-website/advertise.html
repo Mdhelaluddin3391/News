@@ -4,55 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advertise With Us - NewsHub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <meta name="description" content="Partner with NewsHub to reach millions of readers worldwide. Explore our advertising opportunities.">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/extra-pages.css"> 
+    <link rel="stylesheet" href="css/pages.css">
     <link rel="stylesheet" href="css/search.css">
     
     <style>
-        
-        
-
-        .coming-soon-container {
+        .advertise-hero {
             text-align: center;
-            padding: 100px 20px;
-            min-height: 60vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--bg-color, #f8f9fa);
-        }
-        .coming-soon-icon {
-            font-size: 4rem;
-            color: var(--primary-color, #e63946);
-            margin-bottom: 20px;
-        }
-        .coming-soon-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            color: var(--text-color, #333);
-        }
-        .coming-soon-text {
-            color: var(--text-light, #666);
-            max-width: 500px;
-            font-size: 1.1rem;
-            line-height: 1.6;
-        }
-        .back-home-btn {
-            margin-top: 30px;
-            padding: 12px 25px;
-            background-color: var(--primary-color, #e63946);
+            padding: 3rem 0;
+            background-color: var(--primary);
             color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 500;
-            transition: background-color 0.3s;
+            border-radius: 12px;
+            margin-bottom: 3rem;
         }
-        .back-home-btn:hover {
-            background-color: #c1121f;
+        .advertise-hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        .ad-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        .ad-slot-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+        .ad-slot-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--secondary);
+        }
+        .ad-slot-card i {
+            font-size: 3rem;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+        }
+        .ad-slot-card h3 {
+            font-family: 'Roboto', sans-serif;
+            color: var(--primary);
+        }
+        .ad-form-container {
+            background: #f8fafc;
+            padding: 2.5rem;
+            border-radius: 12px;
+            border-top: 4px solid var(--primary);
         }
     </style>
 </head>
@@ -60,11 +65,79 @@
 
     <div id="header-placeholder"></div>
 
-    <main class="coming-soon-container">
-        <i class="fas fa-bullhorn coming-soon-icon"></i>
-        <h1 class="coming-soon-title">Advertising Opportunities</h1>
-        <p class="coming-soon-text">We are currently working on our advertising portal. Soon, you will be able to partner with us to reach millions of readers worldwide. Stay tuned!</p>
-        <a href="index.html" class="back-home-btn">Return to Homepage</a>
+    <main class="container page-container" style="max-width: 1000px;">
+        
+        <div class="advertise-hero">
+            <h1>Grow Your Brand With NewsHub</h1>
+            <p style="font-size: 1.1rem; max-width: 600px; margin: 0 auto; opacity: 0.9;">
+                Reach a highly engaged audience through our premium digital news platform. We offer strategic ad placements to maximize your visibility.
+            </p>
+        </div>
+
+        <h2 style="text-align: center; margin-bottom: 2rem; color: var(--dark);">Available Ad Slots</h2>
+        <div class="ad-slots-grid">
+            <div class="ad-slot-card">
+                <i class="fas fa-rectangle-ad"></i>
+                <h3>Header Banner</h3>
+                <p style="color: var(--gray); font-size: 0.95rem; margin-top: 10px;">
+                    Premium visibility at the very top of our website. Appears on all pages. Highly recommended for maximum reach.
+                </p>
+            </div>
+            <div class="ad-slot-card">
+                <i class="fas fa-border-all"></i>
+                <h3>Sidebar Top</h3>
+                <p style="color: var(--gray); font-size: 0.95rem; margin-top: 10px;">
+                    Sticky advertisement on the right sidebar. Stays visible as users scroll through breaking news and articles.
+                </p>
+            </div>
+            <div class="ad-slot-card">
+                <i class="fas fa-newspaper"></i>
+                <h3>In-Article Ad</h3>
+                <p style="color: var(--gray); font-size: 0.95rem; margin-top: 10px;">
+                    Placed directly inside our news articles. Great for capturing the attention of highly engaged readers.
+                </p>
+            </div>
+        </div>
+
+        <div class="ad-form-container">
+            <h2 style="margin-bottom: 1rem; color: var(--primary);">Advertisement Inquiry</h2>
+            <p style="color: var(--gray); margin-bottom: 2rem;">Fill out the form below and our advertising team will get back to you with pricing and analytics details.</p>
+            
+            <div id="ad-status" style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;"></div>
+
+            <form class="contact-form" id="advertise-form">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label for="company-name">Company / Brand Name</label>
+                        <input type="text" id="company-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" required>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="interested-slot">Interested Ad Slot</label>
+                    <select id="interested-slot" style="padding: 0.8rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: white;" required>
+                        <option value="">-- Select an option --</option>
+                        <option value="Header Banner">Header Banner</option>
+                        <option value="Sidebar Ad">Sidebar Ad</option>
+                        <option value="In-Article Ad">In-Article Ad</option>
+                        <option value="Brand Collaboration">Brand Collaboration / Sponsored Post</option>
+                        <option value="Not Sure yet">Not sure yet, need consultation</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="message">Tell us about your campaign</label>
+                    <textarea id="message" rows="5" placeholder="What are you looking to promote? Do you have a specific budget or timeline in mind?" required></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" style="margin-top: 1.5rem; width: 100%; text-align: center; display: block;">Submit Inquiry</button>
+            </form>
+        </div>
+
     </main>
 
     <div id="footer-placeholder"></div>
@@ -73,5 +146,6 @@
     <script src="js/loadComponents.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/search.js"></script>
+    <script src="js/advertise.js"></script>
 </body>
 </html>

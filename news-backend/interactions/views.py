@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-
+from core.tasks import send_async_email
 from .models import Bookmark, Comment, NewsletterSubscriber, Poll, PollOption, PushSubscription
 from .serializers import BookmarkSerializer, CommentSerializer, PollSerializer, PushSubscriptionSerializer
 
@@ -120,7 +120,7 @@ class SubscribeNewsletterView(APIView):
             """
             
             # Email ko background mein bhejein taaki UI slow na ho
-            threading.Thread(target=send_email_in_background, args=(subject, message, [email], html_content)).start()
+            send_async_email.delay(subject, message, [email], html_content)
 
         return Response({"message": "Successfully subscribed to the newsletter!"}, status=status.HTTP_201_CREATED)
 

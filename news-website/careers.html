@@ -4,52 +4,76 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Careers - NewsHub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <meta name="description" content="Join the NewsHub team. We are hiring passionate journalists, editors, and developers.">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/extra-pages.css">
+    <link rel="stylesheet" href="css/pages.css">
     <link rel="stylesheet" href="css/search.css">
     
     <style>
-        .coming-soon-container {
+        .careers-hero {
             text-align: center;
-            padding: 100px 20px;
-            min-height: 60vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background-color: var(--bg-color, #f8f9fa);
-        }
-        .coming-soon-icon {
-            font-size: 4rem;
-            color: var(--primary-color, #e63946);
-            margin-bottom: 20px;
-        }
-        .coming-soon-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            color: var(--text-color, #333);
-        }
-        .coming-soon-text {
-            color: var(--text-light, #666);
-            max-width: 500px;
-            font-size: 1.1rem;
-            line-height: 1.6;
-        }
-        .back-home-btn {
-            margin-top: 30px;
-            padding: 12px 25px;
-            background-color: var(--primary-color, #e63946);
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #2a5298 100%);
             color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 500;
-            transition: background-color 0.3s;
+            border-radius: 12px;
+            margin-bottom: 3rem;
         }
-        .back-home-btn:hover {
-            background-color: #c1121f;
+        .careers-hero h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        
+        .jobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+        .job-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            transition: var(--transition);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+        }
+        .job-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .job-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+        }
+        .job-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+        .job-meta i { color: var(--secondary); }
+        .job-desc {
+            font-size: 0.95rem;
+            color: #475569;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .application-form-container {
+            background: #f8fafc;
+            padding: 3rem;
+            border-radius: 12px;
+            border-top: 4px solid var(--secondary);
+            box-shadow: var(--shadow);
         }
     </style>
 </head>
@@ -57,11 +81,98 @@
 
     <div id="header-placeholder"></div>
 
-    <main class="coming-soon-container">
-        <i class="fas fa-briefcase coming-soon-icon"></i>
-        <h1 class="coming-soon-title">Join Our Team</h1>
-        <p class="coming-soon-text">We are currently building our careers page. Open positions for journalists, editors, and developers will be listed here soon!</p>
-        <a href="index.html" class="back-home-btn">Return to Homepage</a>
+    <main class="container page-container" style="max-width: 1000px; padding: 1rem;">
+        
+        <div class="careers-hero">
+            <h1>Shape the Future of News</h1>
+            <p style="font-size: 1.15rem; max-width: 700px; margin: 0 auto; opacity: 0.9;">
+                At NewsHub, we are always looking for passionate storytellers, sharp editors, and brilliant tech minds to join our mission of delivering the truth to the world.
+            </p>
+        </div>
+
+        <h2 style="margin-bottom: 1.5rem; color: var(--dark); border-left: 4px solid var(--primary); padding-left: 10px;">Open Positions</h2>
+        
+        <div class="jobs-grid">
+            <div class="job-card">
+                <div class="job-title">Senior Political Journalist</div>
+                <div class="job-meta">
+                    <span><i class="fas fa-map-marker-alt"></i> Tripura (Hybrid)</span>
+                    <span><i class="fas fa-briefcase"></i> Full-Time</span>
+                </div>
+                <div class="job-desc">We are looking for an experienced political journalist to cover state and national politics. Must have 5+ years of reporting experience.</div>
+                <a href="#apply-section" class="read-more" style="font-weight: bold;">Apply Now &rarr;</a>
+            </div>
+
+            <div class="job-card">
+                <div class="job-title">Content Editor (English)</div>
+                <div class="job-meta">
+                    <span><i class="fas fa-map-marker-alt"></i> Remote</span>
+                    <span><i class="fas fa-briefcase"></i> Full-Time</span>
+                </div>
+                <div class="job-desc">Seeking a sharp-eyed editor to review, fact-check, and format daily news articles. Excellent command over English grammar is required.</div>
+                <a href="#apply-section" class="read-more" style="font-weight: bold;">Apply Now &rarr;</a>
+            </div>
+
+            <div class="job-card">
+                <div class="job-title">Freelance Tech Writer</div>
+                <div class="job-meta">
+                    <span><i class="fas fa-map-marker-alt"></i> Remote</span>
+                    <span><i class="fas fa-briefcase"></i> Contract</span>
+                </div>
+                <div class="job-desc">Tech enthusiast? Write about the latest gadgets, AI trends, and software updates. Payment per published article.</div>
+                <a href="#apply-section" class="read-more" style="font-weight: bold;">Apply Now &rarr;</a>
+            </div>
+        </div>
+
+        <div id="apply-section" class="application-form-container">
+            <h2 style="margin-bottom: 0.5rem; color: var(--primary);">Submit Your Application</h2>
+            <p style="color: var(--gray); margin-bottom: 2rem;">Don't see your role above? You can still drop your details. We are always hiring good talent.</p>
+            
+            <div id="career-status" style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;"></div>
+
+            <form class="contact-form" id="career-form">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label for="applicant-name">Full Name</label>
+                        <input type="text" id="applicant-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="applicant-email">Email Address</label>
+                        <input type="email" id="applicant-email" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                    <div class="form-group">
+                        <label for="applicant-phone">Phone Number</label>
+                        <input type="tel" id="applicant-phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="applied-role">Applying For</label>
+                        <select id="applied-role" style="padding: 0.8rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: white;" required>
+                            <option value="">-- Select a role --</option>
+                            <option value="Senior Political Journalist">Senior Political Journalist</option>
+                            <option value="Content Editor (English)">Content Editor (English)</option>
+                            <option value="Freelance Tech Writer">Freelance Tech Writer</option>
+                            <option value="General / Other">General Application (Other)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="portfolio-link">Portfolio / LinkedIn Profile Link</label>
+                    <input type="url" id="portfolio-link" placeholder="https://linkedin.com/in/yourprofile" required>
+                </div>
+
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="cover-letter">Cover Letter / Short Intro</label>
+                    <textarea id="cover-letter" rows="6" placeholder="Tell us why you'd be a great fit for NewsHub..." required></textarea>
+                </div>
+
+                <button type="submit" class="submit-btn" style="margin-top: 1.5rem; width: 100%; text-align: center; display: block; background-color: var(--secondary);">Submit Application</button>
+            </form>
+        </div>
+
     </main>
 
     <div id="footer-placeholder"></div>
@@ -70,5 +181,6 @@
     <script src="js/loadComponents.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/search.js"></script>
+    <script src="js/careers.js"></script>
 </body>
 </html>

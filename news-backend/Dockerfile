@@ -1,22 +1,20 @@
-# Python ka official slim image use karenge
+# news-backend/Dockerfile
 FROM python:3.10-slim
 
-# Environment variables set karenge taaki Python output buffer na kare
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Container ke andar working directory set karenge
 WORKDIR /app
 
-# Requirements file copy karenge aur packages install karenge
-COPY ../requirements.txt /app/
+# Requirements file root directory se aayegi (Docker context ke through)
+COPY requirements.txt /app/
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Pura backend code copy karenge
-COPY . /app/
+# Backend ka code copy karein
+COPY news-backend/ /app/
 
-# Port expose karenge
-EXPOSE 8000
+# Static files collect karein (Django admin aur Nginx ke liye zaroori hai)
+RUN python manage.py collectstatic --noinput
 
-# Django server run karne ka command (Production me gunicorn use karna better hota hai, par abhi runserver use kar rahe hain)
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Gunicorn ke through server run karein
+CMD ["gunicorn", "newshub_core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

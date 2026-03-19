@@ -70,8 +70,12 @@ WSGI_APPLICATION = 'newshub_core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'newshub_db'),
+        'USER': os.getenv('POSTGRES_USER', 'newshub_user'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'newshub_password'),
+        'HOST': os.getenv('POSTGRES_HOST', 'db'), # Ye Docker compose service ka naam hoga
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
     }
 }
 

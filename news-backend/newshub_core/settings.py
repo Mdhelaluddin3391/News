@@ -173,6 +173,24 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+
+
+# settings.py mein changes:
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1", # 127.0.0.1 ki jagah redis
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": True,
+        }
+    }
+}
+
+CELERY_BROKER_URL = 'redis://redis:6379/2' # 127.0.0.1 ki jagah redis
+CELERY_RESULT_BACKEND = 'redis://redis:6379/2' # 127.0.0.1 ki jagah redis
+
+
 # Jazzmin Admin Settings
 JAZZMIN_SETTINGS = {
     "site_title": "NewsHub Admin",

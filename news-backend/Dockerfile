@@ -5,14 +5,18 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
 
-# Ab requirements.txt same folder mein hai, isliye directly copy kar sakte hain
+# Requirements copy aur install karein
 COPY requirements.txt /app/
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Pura backend ka code current directory se /app/ mein copy karein
+# Pura backend ka code copy karein
 COPY . /app/
 
-# Static files collect karein (Django admin aur Nginx ke liye zaroori hai)
+# Build time error se bachne ke liye dummy SECRET_KEY set karein
+ARG SECRET_KEY="dummy-key-for-build-only"
+ENV SECRET_KEY=${SECRET_KEY}
+
+# Static files collect karein
 RUN python manage.py collectstatic --noinput
 
 # Gunicorn ke through server run karein

@@ -18,8 +18,8 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: news-backend/Dockerfile
+      context: . # Ab current directory hi news-backend hai
+      dockerfile: Dockerfile
     restart: always
     environment:
       POSTGRES_DB: newshub_db
@@ -36,8 +36,8 @@ services:
 
   celery:
     build:
-      context: .
-      dockerfile: news-backend/Dockerfile
+      context: . # Ab current directory hi news-backend hai
+      dockerfile: Dockerfile
     command: celery -A newshub_core worker --loglevel=info
     restart: always
     environment:
@@ -59,6 +59,7 @@ services:
     ports:
       - "8000:80" # Bahar se localhost:8000 hit karne par request Nginx par aayegi
     volumes:
+      # Nginx config ab news-backend ke andar wale nginx folder se uthayega
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - static_volume:/app/staticfiles
       - media_volume:/app/media

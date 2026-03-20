@@ -108,6 +108,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CORS & Custom Auth
 CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:5501/news-website",
+      "http://127.0.0.1:5501",  # Aapke backend ka live domain
+      # Local testing ke liye
+]
 AUTH_USER_MODEL = 'users.User'
 
 # Email Settings

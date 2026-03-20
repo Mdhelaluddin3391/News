@@ -120,7 +120,7 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
 # URLs and IDs
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://127.0.0.1:5500')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://127.0.0.1:5501/news-website')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 SITE_ID = 1
 

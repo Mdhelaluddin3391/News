@@ -25,6 +25,7 @@ services:
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
+      REDIS_HOST: redis  # <-- ADD THIS LINE
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
@@ -43,6 +44,7 @@ services:
     environment:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
+      REDIS_HOST: redis  # <-- ADD THIS LINE TOO
     volumes:
       - media_volume:/app/media
     depends_on:

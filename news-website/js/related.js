@@ -45,8 +45,8 @@ async function renderRelated(containerId, categorySlug, currentArticleId) {
 
     let html = '';
     related.forEach(a => {
-        // Backend se image url set karna
-        const imageUrl = a.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
+        // NAYA CODE: Global helper function for image URL (Production ready)
+        const imageUrl = window.getFullImageUrl(a.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');
         
         html += `
             <div class="related-card">

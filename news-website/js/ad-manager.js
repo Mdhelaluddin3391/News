@@ -48,10 +48,13 @@ function renderAd(container, adData) {
     container.style.display = 'flex'; 
 
     if (adData.ad_type === 'brand') {
+        // NAYA CODE: Global helper function for ad image URL (Production ready)
+        const imageUrl = window.getFullImageUrl(adData.image);
+
         container.innerHTML = `
             <span class="ad-label" style="font-size: 10px; color: gray; display:block; text-align:center; margin-bottom: 5px; text-transform: uppercase;">Advertisement</span>
             <a href="${adData.url}" target="_blank" style="display:block; text-align:center;">
-                <img src="${adData.image}" alt="Advertisement" style="max-width:100%; height:auto; border-radius: 5px; object-fit:contain;">
+                <img src="${imageUrl}" alt="Advertisement" style="max-width:100%; height:auto; border-radius: 5px; object-fit:contain;">
             </a>
         `;
         

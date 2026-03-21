@@ -288,6 +288,7 @@ nav {
     color: white;
     font-size: 22px;
     cursor: pointer;
+    padding-left: 20px;
 }
 
 .mobile-menu {

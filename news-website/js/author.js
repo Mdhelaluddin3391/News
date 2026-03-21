@@ -32,7 +32,8 @@ async function fetchAuthorAndArticles() {
         const author = await authorResponse.json();
 
         // Extract author details
-        const avatar = author.profile_picture || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80';
+        // NAYA CODE: Global helper function for profile picture
+        const avatar = window.getFullImageUrl(author.profile_picture, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80');
         const role = author.role || 'Contributor';
         const bio = author.bio || 'This author has not added a bio yet.';
         
@@ -103,7 +104,8 @@ async function fetchAuthorAndArticles() {
         let articlesHtml = '';
         articles.forEach(article => {
             const date = article.published_at ? formatDate(article.published_at) : 'Unknown Date';
-            const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=300&q=80';
+            // NAYA CODE: Global helper function for article image
+            const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=300&q=80');
             
             articlesHtml += `
                 <div class="article-card">

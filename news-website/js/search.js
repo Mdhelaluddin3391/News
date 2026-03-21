@@ -72,7 +72,8 @@ function renderSearchArticles(articles, query) {
     const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null; // from auth.js
     const html = articles.map(article => {
         // Map backend fields
-        const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
+        // NAYA CODE: Global helper function use kiya gaya image URL ke liye
+        const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');
         
         // Fetch Title & Description and apply Truncation and Highlighting
         const rawTitle = article.title || 'Untitled';

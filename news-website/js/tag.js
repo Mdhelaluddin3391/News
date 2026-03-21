@@ -16,7 +16,9 @@ function renderTagArticles(articles) {
 
     const user = getCurrentUser(); 
     const html = articles.map(article => {
-        const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80';
+        // NAYA CODE: Global helper function for image URL (Production ready)
+        const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80');
+        
         const isSaved = user ? isArticleSaved(article.id) : false;
         const saveBtn = user ? `<button class="save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save'}</button>` : '';
 

@@ -12,6 +12,34 @@ const loader = document.getElementById('loader');
 const errorMessageDiv = document.getElementById('error-message');
 const categoryButtons = document.querySelectorAll('.category-btn');
 
+// ==================== GLOBAL HELPER FUNCTION (For Images) ====================
+// Ye function hum baaki sabhi files mein bhi use kar sakte hain image URLs ko production-ready banane ke liye.
+// Isse backend aur frontend alag alag host hone par image broken ka issue nahi aayega.
+window.getFullImageUrl = function(imagePath, fallbackImage = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80') {
+    if (!imagePath) return fallbackImage;
+    
+    // Agar config.js mein BACKEND_URL nahi hai, toh API_BASE_URL se nikal lenge (safe fallback)
+    const backendBase = CONFIG.BACKEND_URL || CONFIG.API_BASE_URL.replace('/api', '');
+
+    // Agar path relative hai (e.g., /media/articles/...)
+    if (imagePath.startsWith('/')) {
+        return `${backendBase}${imagePath}`;
+    }
+    
+    // Agar Django ne Docker ka internal URL de diya hai (e.g., http://backend:8000/...)
+    if (imagePath.includes('backend:8000') || imagePath.includes('localhost:8000')) {
+        try {
+            const pathOnly = new URL(imagePath).pathname;
+            return `${backendBase}${pathOnly}`;
+        } catch (e) {
+            return imagePath; // Agar URL parse fail ho jaye toh original hi return kardo taaki code na fate
+        }
+    }
+    
+    // Agar pehle se hi valid external/absolute URL hai (e.g., Unsplash ya S3 bucket ka link)
+    return imagePath;
+};
+
 // ==================== Helper Functions ====================
 function showLoader() { loader.style.display = 'block'; }
 function hideLoader() { loader.style.display = 'none'; }
@@ -42,8 +70,9 @@ function renderArticles(articles) {
 
     const user = getCurrentUser(); // from auth.js
     const html = articles.map(article => {
-        // Map backend fields
-        const imageUrl = article.featured_image || 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
+        // NAYA CODE: Yahan global helper use kiya gaya hai production-ready image URL ke liye
+        const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');
+        
         const title = article.title || 'Untitled';
         const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';
         const source = article.source_name || 'NewsHub';

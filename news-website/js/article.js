@@ -66,7 +66,9 @@ function renderArticle(article) {
     const user = getCurrentUser(); 
     const isSaved = user ? isArticleSaved(article.id) : false;
     
-    const imageUrl = article.featured_image || 'https://picsum.photos/1200/600?random=1';
+    // NAYA CODE: Global helper function for image URL (Production Ready)
+    const imageUrl = window.getFullImageUrl(article.featured_image, 'https://picsum.photos/1200/600?random=1');
+    
     const title = article.title || 'Untitled';
     const source = article.source_name || 'NewsHub';
     const date = article.published_at ? formatArticleDate(article.published_at) : 'Unknown date';

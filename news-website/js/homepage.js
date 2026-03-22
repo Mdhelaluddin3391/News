@@ -283,6 +283,7 @@ async function initHomepage() {
         window.loadEditorsPicks();
         window.loadTrendingNews();
         window.loadCategoriesSidebar();
+        window.loadWebStories();
 
         // NAYA: 4th API call 'recentRes' add kiya gaya hai latest articles ke liye
         const [featuredRes, breakingRes, categoriesRes, recentRes] = await Promise.all([
@@ -595,3 +596,136 @@ window.loadTopStories = async function() {
 
 
 
+// ==================== DYNAMIC WEB STORIES (SHORTS) ====================
+
+let dynamicStories = [];
+let currentStoryIndex = 0;
+let storyTimer;
+const STORY_DURATION = 5000; // 5 seconds per story
+
+// 1. Backend se Web Stories Fetch karna
+window.loadWebStories = async function() {
+    try {
+        const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_web_story=true`);
+        const data = await res.json();
+        dynamicStories = data.results || data;
+
+        // Agar koi story nahi hai toh section hide kar do
+        const storySection = document.querySelector('.web-stories-section');
+        if (dynamicStories.length === 0) {
+            if (storySection) storySection.style.display = 'none';
+            return;
+        } else {
+            if (storySection) storySection.style.display = 'block';
+        }
+
+        renderStoryThumbnails();
+    } catch (err) {
+        console.error("Error loading Web Stories:", err);
+    }
+};
+
+// 2. Thumbnails Render karna
+function renderStoryThumbnails() {
+    const container = document.getElementById('story-thumbnails-container');
+    if (!container) return;
+
+    let html = '';
+    dynamicStories.forEach((story, index) => {
+        // Production ready image URL
+        const imageUrl = window.getFullImageUrl(story.featured_image, 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?w=400&q=80');
+        
+        html += `
+            <div class="story-thumb" onclick="openStoryModal(${index})">
+                <div class="story-thumb-inner">
+                    <img src="${imageUrl}" alt="${story.title}">
+                    <div class="story-thumb-overlay">
+                        <div class="story-thumb-title">${story.title}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+}
+
+// 3. Modal Open karna
+function openStoryModal(index) {
+    currentStoryIndex = index;
+    document.getElementById('story-modal').style.display = 'flex';
+    document.body.classList.add('no-scroll');
+    showStory();
+}
+
+// 4. Modal Close karna
+function closeStoryModal() {
+    document.getElementById('story-modal').style.display = 'none';
+    document.body.classList.remove('no-scroll');
+    clearTimeout(storyTimer);
+    document.getElementById('story-progress-bar').style.transition = 'none';
+    document.getElementById('story-progress-bar').style.width = '0%';
+}
+
+// 5. Story Show karna
+function showStory() {
+    if (dynamicStories.length === 0) return;
+    
+    const story = dynamicStories[currentStoryIndex];
+    const display = document.getElementById('story-display');
+    const progressBar = document.getElementById('story-progress-bar');
+    
+    const imageUrl = window.getFullImageUrl(story.featured_image, 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?w=800&q=80');
+    const categoryName = story.category ? story.category.name : 'News';
+    const shortDesc = story.description ? (story.description.length > 100 ? story.description.substring(0, 100) + '...' : story.description) : '';
+    
+    display.innerHTML = `
+        <img src="${imageUrl}" alt="Story">
+        <div class="story-text-container">
+            <span class="story-badge">${categoryName}</span>
+            <h2 class="story-modal-title">${story.title}</h2>
+            <p class="story-modal-desc">${shortDesc}</p>
+            <a href="article.html?id=${story.id}" class="story-read-more">Swipe up or Click to Read More</a>
+        </div>
+    `;
+
+    // Progress Bar Animation Reset & Start
+    progressBar.style.transition = 'none';
+    progressBar.style.width = '0%';
+    
+    setTimeout(() => {
+        progressBar.style.transition = `width ${STORY_DURATION}ms linear`;
+        progressBar.style.width = '100%';
+    }, 50);
+
+    clearTimeout(storyTimer);
+    storyTimer = setTimeout(() => {
+        nextStory();
+    }, STORY_DURATION);
+}
+
+// 6. Navigation
+function nextStory() {
+    if (currentStoryIndex < dynamicStories.length - 1) {
+        currentStoryIndex++;
+        showStory();
+    } else {
+        closeStoryModal();
+    }
+}
+
+function prevStory() {
+    if (currentStoryIndex > 0) {
+        currentStoryIndex--;
+        showStory();
+    } else {
+        showStory(); // Restart same story
+    }
+}
+
+// Setup Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('close-story-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeStoryModal);
+    }
+});

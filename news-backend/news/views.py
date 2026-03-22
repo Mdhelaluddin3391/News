@@ -7,7 +7,8 @@ from django.conf import settings
 from django.utils.html import escape
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-
+from django.utils import timezone
+from datetime import timedelta
 from .models import Article, Category, Author
 from .serializers import ArticleSerializer, CategorySerializer, AuthorSerializer
 from users.permissions import IsReporterAuthorOrAbove, IsOwnerOrEditorOrAdmin
@@ -30,8 +31,21 @@ class ArticleViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     
     # 'is_editors_pick' aur 'tags__slug' yahan filter mein hain
-    filterset_fields = ['category__slug', 'author', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'tags__slug', 'is_top_story']
+    filterset_fields = ['category__slug', 'author', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'tags__slug', 'is_top_story', 'is_web_story']
     search_fields = ['title', 'content', 'description', 'author__user__name', 'category__name', 'tags__name']
+
+    def get_queryset(self):
+        queryset = Article.objects.all().order_by('-published_at')
+        
+        # --- 24 HOURS STORY EXPIRY LOGIC ---
+        is_web_story = self.request.query_params.get('is_web_story')
+        if is_web_story == 'true':
+            # Current time se exactly 24 ghante (24 hours) piche ka time nikalein
+            time_threshold = timezone.now() - timedelta(hours=24)
+            # Sirf wahi stories filter karein jinka time threshold se bada (nyaya) ho
+            queryset = queryset.filter(is_web_story=True, web_story_created_at__gte=time_threshold)
+            
+        return queryset
     
     def get_permissions(self):
         # Yahan 'increment_view' add kiya gaya hai taaki public access ho

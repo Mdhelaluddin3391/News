@@ -5,19 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NewsHub - Premium News</title>
-    
-    <meta name="description" content="Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on NewsHub.">
-    
+
+    <meta name="description"
+        content="Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on NewsHub.">
+
     <meta property="og:title" content="NewsHub - Premium News">
-    <meta property="og:description" content="Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on NewsHub.">
+    <meta property="og:description"
+        content="Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on NewsHub.">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80">
-    
+    <meta property="og:image"
+        content="https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80">
+
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="NewsHub - Premium News">
     <link rel="alternate" type="application/rss+xml" title="NewsHub RSS Feed" href="http://127.0.0.1:8000/rss/">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/search.css">
 </head>
@@ -40,14 +45,40 @@
                 <div id="featured-news-container" class="featured-news-item">
                 </div>
             </section>
+            <section class="web-stories-section" style="margin-bottom: 40px;">
+                <h3
+                    style="font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--dark); margin-bottom: 15px; border-left: 4px solid var(--secondary); padding-left: 10px;">
+                    Web Stories (Shorts) <i class="fas fa-bolt"
+                        style="color: #f59e0b; font-size: 1.1rem; margin-left: 5px;"></i>
+                </h3>
 
+                <div id="story-thumbnails-container" class="story-thumbnails-wrapper">
+                </div>
+            </section>
+
+            <div id="story-modal" class="story-modal">
+                <div class="story-modal-content">
+                    <div class="story-progress-container">
+                        <div id="story-progress-bar" class="story-progress-bar"></div>
+                    </div>
+                    <button id="close-story-btn" class="close-story-btn"><i class="fas fa-times"></i></button>
+
+                    <div id="story-display" class="story-display">
+                    </div>
+
+                    <div class="story-nav left-tap" onclick="prevStory()"></div>
+                    <div class="story-nav right-tap" onclick="nextStory()"></div>
+                </div>
+            </div>
 
             <section class="recent-news-section" id="recent-news-section" style="display: none; margin-bottom: 40px;">
-                <h3 style="font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--dark); margin-bottom: 15px; border-left: 4px solid var(--secondary); padding-left: 10px;">
+                <h3
+                    style="font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--dark); margin-bottom: 15px; border-left: 4px solid var(--secondary); padding-left: 10px;">
                     Latest News
                 </h3>
-                <div id="recent-news-container" style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: thin;">
-                    </div>
+                <div id="recent-news-container"
+                    style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: thin;">
+                </div>
             </section>
 
 

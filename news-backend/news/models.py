@@ -84,6 +84,8 @@ class Article(BaseModel):
     is_editors_pick = models.BooleanField(default=False, help_text="Show in Editor's Picks section")
     is_top_story = models.BooleanField(default=False, help_text="Show in Top Stories section")
     is_live = models.BooleanField(default=False, help_text="Tick if this is a Live Blog/Live Update article")
+    is_web_story = models.BooleanField(default=False, help_text="Tick karein agar is article ko Web Stories (Shorts) mein dikhana hai")
+    web_story_created_at = models.DateTimeField(blank=True, null=True, help_text="Story banne ka time (24h expiry ke liye)")
     post_to_facebook = models.BooleanField(default=False, help_text="Tick karein Facebook par post karne ke liye")
     post_to_twitter = models.BooleanField(default=False, help_text="Tick karein Twitter (X) par post karne ke liye")
     post_to_telegram = models.BooleanField(default=False, help_text="Tick karein Telegram channel par post karne ke liye")
@@ -94,6 +96,14 @@ class Article(BaseModel):
         # 1. Slug banayein
         if not self.slug:
             self.slug = slugify(self.title)
+
+        # 2. WEB STORY 24-HOUR EXPIRY LOGIC
+        if self.is_web_story and not self.web_story_created_at:
+            # Jaise hi admin tick karke save karega, current time record ho jayega
+            self.web_story_created_at = timezone.now()
+        elif not self.is_web_story:
+            # Agar admin ne tick hata diya, toh time clear kar do
+            self.web_story_created_at = None
 
         super().save(*args, **kwargs)
 

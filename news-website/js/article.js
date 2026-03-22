@@ -3,6 +3,7 @@
 // Real API Endpoint pointing to your Django backend
 const ARTICLE_DETAIL_API_URL = `${CONFIG.API_BASE_URL}/news/articles`;
 let liveRefreshInterval;
+let latestUpdateId = null; // NAYA: Track karne ke liye ki sabse latest update kaunsa hai
 
 // ==================== DOM Elements ====================
 const articleContainer = document.getElementById('article-detail');
@@ -188,13 +189,18 @@ function renderArticle(article) {
     
     let liveUpdatesHTML = '';
     if (article.is_live) {
+        // NAYA: Pehli baar load hone par latest ID set kar lein
+        if (article.live_updates && article.live_updates.length > 0) {
+            latestUpdateId = article.live_updates[0].id;
+        }
+
         liveUpdatesHTML = `
             <div class="live-updates-container" id="live-updates-section">
                 <div class="live-updates-title">
                     <i class="fas fa-broadcast-tower" style="color: #e11d48;"></i> Live Updates
                 </div>
                 <div class="auto-refresh-indicator">
-                    <i class="fas fa-sync-alt fa-spin"></i> Auto-refreshing every 30 seconds...
+                    <i class="fas fa-sync-alt fa-spin"></i> Auto-refreshing for new updates...
                 </div>
                 <div class="timeline" id="timeline-container">
                     ${generateTimelineHTML(article.live_updates)}
@@ -285,24 +291,44 @@ function generateTimelineHTML(updates) {
     return html;
 }
 
-// ==================== AUTO-REFRESH POLLING ====================
+// ==================== AUTO-REFRESH POLLING (SMART UPDATE) ====================
 function startLivePolling(articleId) {
     liveRefreshInterval = setInterval(async () => {
         try {
-            const response = await fetch(`${ARTICLE_DETAIL_API_URL}/${articleId}/`);
+            // NAYA: '?_t=' + timestamp lagane se backend ka cache bypass ho jayega aur fresh data aayega
+            const response = await fetch(`${ARTICLE_DETAIL_API_URL}/${articleId}/?_t=${new Date().getTime()}`);
             if (response.ok) {
                 const article = await response.json();
                 const timelineContainer = document.getElementById('timeline-container');
                 
-                // Agar timeline container exist karta hai aur naye updates aaye hain
-                if (timelineContainer && article.live_updates) {
-                    timelineContainer.innerHTML = generateTimelineHTML(article.live_updates);
+                if (timelineContainer && article.live_updates && article.live_updates.length > 0) {
+                    // Check karein ki latest update ki ID kya hai
+                    const currentLatestId = article.live_updates[0].id;
+                    
+                    // Agar naya update aaya hai, sirf tabhi HTML change karo
+                    if (currentLatestId !== latestUpdateId) {
+                        latestUpdateId = currentLatestId; // ID update kar lo
+                        
+                        // Pura HTML update karein
+                        timelineContainer.innerHTML = generateTimelineHTML(article.live_updates);
+                        
+                        // Naye update par ek chota sa smooth highlight effect daalein taaki user ko pata chale
+                        const firstItemContent = timelineContainer.querySelector('.timeline-content');
+                        if (firstItemContent) {
+                            firstItemContent.style.transition = 'background-color 1s ease';
+                            firstItemContent.style.backgroundColor = '#fecdd3'; // Soft red highlight
+                            
+                            setTimeout(() => {
+                                firstItemContent.style.backgroundColor = '#f8fafc'; // Wapas normal color
+                            }, 2000);
+                        }
+                    }
                 }
             }
         } catch (error) {
             console.error('Auto-refresh failed:', error);
         }
-    }, 30000); // 30,000 ms = Har 30 seconds mein API hit karke update check karega
+    }, 15000); // 30s se kam karke 15 seconds kar diya hai taaki live coverage tez ho
 }
 
 // Jab user kisi aur page par jaye, toh interval band kar dein

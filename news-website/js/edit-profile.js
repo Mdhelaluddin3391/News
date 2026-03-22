@@ -106,11 +106,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Header UI me naam update karne ke liye
                 if (typeof updateAuthUI === 'function') updateAuthUI();
 
-                successDiv.textContent = 'Profile updated successfully!';
-                successDiv.style.display = 'block';
+                // Purana success text hide kar diya, ab beautiful toast chalega
+                if (typeof showToast === 'function') {
+                    showToast('Profile updated successfully! Redirecting...', 'success');
+                } else {
+                    successDiv.textContent = 'Profile updated successfully!';
+                    successDiv.style.display = 'block';
+                }
                 
                 document.getElementById('new-password').value = '';
                 document.getElementById('confirm-new-password').value = '';
+
+                // NAYA: 2 second (2000 ms) ke baad profile.html par auto-redirect karein
+                setTimeout(() => {
+                    window.location.href = 'profile.html';
+                }, 2000);
+                
             } else {
                 const errorData = await response.json();
                 let errMsg = 'An error occurred while saving.';

@@ -3,6 +3,19 @@
 
 const RELATED_API_URL = `${CONFIG.API_BASE_URL}/news/articles/`;
 
+// Helper function to calculate time ago
+function getRelatedTimeAgo(isoString) {
+    if (!isoString) return 'Just now';
+    const now = new Date();
+    const past = new Date(isoString);
+    const diffMs = now - past;
+    const diffHrs = Math.floor(diffMs / 3600000);
+    if (diffHrs < 1) return 'Just now';
+    if (diffHrs < 24) return `${diffHrs} hour${diffHrs > 1 ? 's' : ''} ago`;
+    const diffDays = Math.floor(diffHrs / 24);
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+}
+
 // Fetch related articles based on current article's category
 async function fetchRelatedArticles(categorySlug, currentArticleId) {
     try {
@@ -47,13 +60,17 @@ async function renderRelated(containerId, categorySlug, currentArticleId) {
     related.forEach(a => {
         // NAYA CODE: Global helper function for image URL (Production ready)
         const imageUrl = window.getFullImageUrl(a.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');
+        const timeAgo = getRelatedTimeAgo(a.published_at);
+        const liveBadge = a.is_live ? `<div class="related-live-badge"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
         
         html += `
             <div class="related-card">
                 <a href="article.html?id=${a.id}">
+                    ${liveBadge}
                     <img src="${imageUrl}" alt="${a.title}" loading="lazy">
                     <div class="related-content">
                         <h4>${a.title}</h4>
+                        <div class="related-meta-time"><i class="far fa-clock"></i> ${timeAgo}</div>
                     </div>
                 </a>
             </div>

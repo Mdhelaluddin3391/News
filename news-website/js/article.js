@@ -60,13 +60,12 @@ function renderArticle(article) {
         return;
     }
 
-    // Puraana refresh interval clear karein agar koi ho (Memory leak se bachne ke liye)
+    // Puraana refresh interval clear karein
     if (liveRefreshInterval) clearInterval(liveRefreshInterval);
 
     const user = getCurrentUser(); 
     const isSaved = user ? isArticleSaved(article.id) : false;
     
-    // NAYA CODE: Global helper function for image URL (Production Ready)
     const imageUrl = window.getFullImageUrl(article.featured_image, 'https://picsum.photos/1200/600?random=1');
     
     const title = article.title || 'Untitled';
@@ -75,49 +74,90 @@ function renderArticle(article) {
     const description = article.description || '';
     const content = article.content || article.description || '';
     const categorySlug = article.category ? article.category.slug : 'general';
+    const categoryName = article.category ? article.category.name : 'News';
 
-    // --- SEO META TAGS ---
-    if (typeof updateSEOMetaTags === 'function') {
-        const seoDescription = description.length > 150 ? description.substring(0, 150) + '...' : description;
-        updateSEOMetaTags(title, seoDescription, imageUrl, window.location.href);
-    }
-
-    // --- ARTICLE SCHEMA MARKUP ---
-    if (typeof injectSchema === 'function') {
-        const authorName = article.author ? article.author.name : 'NewsHub Staff';
-        const articleSchema = {
-            "@context": "https://schema.org",
-            "@type": "NewsArticle",
-            "headline": title,
-            "image": [imageUrl],
-            "datePublished": article.published_at || new Date().toISOString(),
-            "dateModified": article.updated_at || article.published_at || new Date().toISOString(),
-            "author": [{
-                "@type": "Person",
-                "name": authorName,
-                "url": article.author ? `https://www.dharmanagarlive.com/author.html?id=${article.author.id}` : "https://www.dharmanagarlive.com/"
-            }],
-            "publisher": {
-                "@type": "Organization",
-                "name": "NewsHub",
-                "logo": {
-                    "@type": "ImageObject",
-                    "url": "https://www.dharmanagarlive.com/images/logo.png"
-                }
-            },
-            "description": description.substring(0, 150)
-        };
-        injectSchema(articleSchema);
-    }
-
-    // --- TAGS HTML BLOCK ---
+    // --- TAGS HTML BLOCK AUR SEO KEYWORDS ---
     let tagsHTML = '';
+    let seoKeywords = "news, daily news, breaking news"; // Default keywords
+    
     if (article.tags && article.tags.length > 0) {
         tagsHTML = '<div class="article-tags">';
+        // Tags array se comma-separated string banayein SEO ke liye
+        seoKeywords = article.tags.map(t => t.name).join(', ');
+        
         article.tags.forEach(tag => {
             tagsHTML += `<a href="tag.html?slug=${tag.slug}&name=${encodeURIComponent(tag.name)}" class="tag-pill">#${tag.name}</a>`;
         });
         tagsHTML += '</div>';
+    }
+
+    // Ek clean aur absolute canonical URL banayein
+    const cleanPageUrl = `${window.location.origin}${window.location.pathname}?id=${article.id}`;
+
+    // --- ADVANCED SEO META TAGS ---
+    if (typeof updateSEOMetaTags === 'function') {
+        const seoDescription = description.length > 150 ? description.substring(0, 150) + '...' : description;
+        updateSEOMetaTags(title, seoDescription, imageUrl, cleanPageUrl, seoKeywords);
+    }
+
+    // --- ADVANCED ARTICLE & BREADCRUMB SCHEMA MARKUP ---
+    if (typeof injectSchema === 'function') {
+        const authorName = article.author ? article.author.name : 'NewsHub Staff';
+        
+        // 1. News Article Schema
+        const articleSchema = {
+            "@type": "NewsArticle",
+            "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": cleanPageUrl
+            },
+            "headline": title,
+            "image": [imageUrl],
+            "datePublished": article.published_at || new Date().toISOString(),
+            "dateModified": article.updated_at || article.published_at || new Date().toISOString(),
+            "author": {
+                "@type": "Person",
+                "name": authorName,
+                "url": article.author ? `${window.location.origin}/author.html?id=${article.author.id}` : window.location.origin
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "NewsHub by Dharmanagar Live",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": `${window.location.origin}/images/logo.png`
+                }
+            },
+            "description": description.substring(0, 150)
+        };
+
+        // 2. Breadcrumb Schema (Google search results me nav structure dikhane ke liye)
+        const breadcrumbSchema = {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Home",
+                    "item": `${window.location.origin}/index.html`
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": categoryName,
+                    "item": `${window.location.origin}/index.html?category=${categorySlug}`
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": title,
+                    "item": cleanPageUrl
+                }
+            ]
+        };
+
+        // Dono schemas ko array format me pass karein
+        injectSchema([breadcrumbSchema, articleSchema]);
     }
 
     const saveButton = user ? 
@@ -161,10 +201,8 @@ function renderArticle(article) {
                 </div>
             </div>
         `;
-        // Polling start karo agar article live hai
         startLivePolling(article.id);
     }
-    // ============================================================
 
     // --- MAIN HTML INJECTION ---
     const html = `
@@ -187,11 +225,11 @@ function renderArticle(article) {
             </div>
             
             ${liveUpdatesHTML}
-            
             ${tagsHTML} 
             ${shareHTML}
             ${relatedHTML}
             ${commentsHTML}
+            
             <div class="detail-actions">
                 <a href="index.html" class="back-link">← Back to Home</a>
                 ${saveButton}
@@ -201,17 +239,10 @@ function renderArticle(article) {
 
     articleContainer.innerHTML = html;
 
-    // Load related articles
-    if (typeof renderRelated === 'function') {
-        renderRelated('related-container', categorySlug, article.id);
-    }
+    if (typeof renderRelated === 'function') renderRelated('related-container', categorySlug, article.id);
+    if (typeof renderComments === 'function') renderComments(article.id, 'comments-list');
 
-    // Load comments
-    if (typeof renderComments === 'function') {
-        renderComments(article.id, 'comments-list');
-    }
-
-    // Attach save button listener
+    // Save button event listener
     if (user) {
         const saveBtn = document.querySelector('.detail-save-btn');
         if (saveBtn) {

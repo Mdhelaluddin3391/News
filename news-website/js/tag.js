@@ -146,10 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
             `#${displayTagName} - Tagged Articles | NewsHub`, 
             `Explore the latest news, updates, and deep-dive articles tagged with #${displayTagName} on NewsHub.`, 
             'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80', 
-            window.location.href
+            window.location.href,
+            `${displayTagName} news, latest ${displayTagName} updates, #${displayTagName}` // <-- NAYA: Keywords
         );
     }
-    // ================================================================
 
     fetchTagResults(tagSlug, 1);
 });

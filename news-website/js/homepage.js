@@ -342,7 +342,8 @@ async function initHomepage() {
                     'NewsHub - Premium Global News', 
                     'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on NewsHub.', 
                     'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80', 
-                    window.location.href
+                    window.location.href,
+                    "global news, breaking news, latest updates, world news, NewsHub" // <-- NAYA: Keywords add kiye
                 );
             }
 

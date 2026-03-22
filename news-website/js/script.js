@@ -340,15 +340,14 @@ function showToast(message, type = 'success') {
 
 
 
-// ==================== SEO META TAGS UPDATER ====================
-// Yeh function dynamically page ka title, description aur social media tags update karta hai
-function updateSEOMetaTags(title, description, imageUrl, pageUrl) {
+/// ==================== SEO META TAGS & CANONICAL UPDATER ====================
+function updateSEOMetaTags(title, description, imageUrl, pageUrl, keywords = "") {
     // 1. Page ka Title update karein
     document.title = title ? `${title} - NewsHub` : 'NewsHub - Premium News';
 
     // Helper function: Agar tag pehle se hai toh update karein, nahi toh naya banayein
     function setMetaTag(attrName, attrValue, content) {
-        if (!content) return; // Agar content nahi hai toh skip karein
+        if (!content) return; 
         let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
         if (!element) {
             element = document.createElement('meta');
@@ -358,10 +357,13 @@ function updateSEOMetaTags(title, description, imageUrl, pageUrl) {
         element.setAttribute('content', content);
     }
 
-    // 2. Standard SEO Description
+    // 2. Standard SEO Description & Keywords
     setMetaTag('name', 'description', description);
+    if (keywords) {
+        setMetaTag('name', 'keywords', keywords);
+    }
 
-    // 3. Open Graph Tags (Facebook, LinkedIn, WhatsApp ke liye)
+    // 3. Open Graph Tags
     setMetaTag('property', 'og:title', title);
     setMetaTag('property', 'og:description', description);
     setMetaTag('property', 'og:image', imageUrl);
@@ -369,29 +371,46 @@ function updateSEOMetaTags(title, description, imageUrl, pageUrl) {
     setMetaTag('property', 'og:type', 'article');
     setMetaTag('property', 'og:site_name', 'NewsHub');
 
-    // 4. Twitter Card Tags (Twitter / X preview ke liye)
+    // 4. Twitter Card Tags
     setMetaTag('name', 'twitter:card', 'summary_large_image');
     setMetaTag('name', 'twitter:title', title);
     setMetaTag('name', 'twitter:description', description);
     setMetaTag('name', 'twitter:image', imageUrl);
-}
 
+    // 5. Canonical URL Handle (Taaki duplicate content ki penalty na lage)
+    let canonicalTag = document.querySelector('link[rel="canonical"]');
+    if (!canonicalTag) {
+        canonicalTag = document.createElement('link');
+        canonicalTag.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonicalTag);
+    }
+    // URL se extra parameters ya hash hata kar clean canonical link set karein
+    const cleanUrl = pageUrl.split('#')[0]; 
+    canonicalTag.setAttribute('href', cleanUrl);
+}
 
 
 // ==================== SCHEMA MARKUP (JSON-LD) INJECTOR ====================
 function injectSchema(schemaData) {
-    // Agar pehle se koi dynamically added schema hai, toh use remove karein
     const existingSchema = document.getElementById('dynamic-schema');
     if (existingSchema) {
         existingSchema.remove();
     }
 
-    // Naya script tag banayein
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.id = 'dynamic-schema';
-    script.text = JSON.stringify(schemaData);
     
-    // Head mein inject karein
+    // Agar array of schemas (jaise Article + Breadcrumb) pass kiya gaya hai, toh @graph banayenge
+    if (Array.isArray(schemaData)) {
+        const graphSchema = {
+            "@context": "https://schema.org",
+            "@graph": schemaData
+        };
+        script.text = JSON.stringify(graphSchema);
+    } else {
+        script.text = JSON.stringify(schemaData);
+    }
+    
     document.head.appendChild(script);
 }

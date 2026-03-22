@@ -179,7 +179,8 @@ async function fetchSearchResults(query, page = 1) {
                 `"${query}" - Search Results | NewsHub`, 
                 `Explore news articles and stories related to "${query}" on NewsHub. Find the most relevant updates.`, 
                 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80', 
-                window.location.href
+                window.location.href,
+                `${query} news, search ${query}, NewsHub results` // <-- NAYA: Keywords
             );
         }
 

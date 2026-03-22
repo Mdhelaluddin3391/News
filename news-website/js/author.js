@@ -61,7 +61,8 @@ async function fetchAuthorAndArticles() {
                 `${author.name} - NewsHub Author`, 
                 seoBio, 
                 avatar, 
-                window.location.href
+                window.location.href,
+                `${author.name}, journalist, author, NewsHub reporter` // <-- NAYA: Keywords
             );
         }
 

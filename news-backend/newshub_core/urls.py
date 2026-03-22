@@ -27,10 +27,16 @@ from news.feeds import LatestArticlesFeed
 from core.views import ContactMessageCreateView, SiteSettingAPIView
 from django.utils.decorators import method_decorator
 from rest_framework.throttling import ScopedRateThrottle
+from news.sitemaps import ArticleSitemap, CategorySitemap, AuthorSitemap, TagSitemap, StaticViewSitemap
+
+
 
 sitemaps = {
     'articles': ArticleSitemap,
     'categories': CategorySitemap,
+    'authors': AuthorSitemap,
+    'tags': TagSitemap,
+    'static': StaticViewSitemap,
 }
 
 class CustomTokenObtainPairView(TokenObtainPairView):

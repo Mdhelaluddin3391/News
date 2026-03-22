@@ -25,11 +25,17 @@ from django.contrib.sitemaps.views import sitemap
 from news.sitemaps import ArticleSitemap, CategorySitemap
 from news.feeds import LatestArticlesFeed
 from core.views import ContactMessageCreateView, SiteSettingAPIView
+from django.utils.decorators import method_decorator
+from rest_framework.throttling import ScopedRateThrottle
 
 sitemaps = {
     'articles': ArticleSitemap,
     'categories': CategorySitemap,
 }
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -51,6 +57,8 @@ urlpatterns = [
     path('api/newsletter/unsubscribe/', UnsubscribeNewsletterView.as_view(), name='newsletter_unsubscribe'),
     path('api/contact/', ContactMessageCreateView.as_view(), name='contact_api'),
     path('api/settings/', SiteSettingAPIView.as_view(), name='site_settings'),
+    path('api/auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     
 ]

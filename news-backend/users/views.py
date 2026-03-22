@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.throttling import ScopedRateThrottle
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.conf import settings
@@ -18,6 +19,9 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
+    # --- NAYA CODE ---
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth' # 5 requests per minute
 
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
@@ -29,6 +33,9 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
 class ForgotPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)
+    # --- NAYA CODE ---
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'email_alert' # 3 requests per hour taaki spam email na jaye
 
     def post(self, request):
         email = request.data.get('email')
@@ -105,6 +112,9 @@ class ForgotPasswordView(APIView):
 
 class ResetPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)
+    # --- NAYA CODE ---
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
 
     def post(self, request):
         token = request.data.get('token')
@@ -133,6 +143,9 @@ class ResetPasswordView(APIView):
 
 class GoogleLoginView(APIView):
     permission_classes = (permissions.AllowAny,)
+    # --- NAYA CODE ---
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
 
     def post(self, request):
         token = request.data.get('token')

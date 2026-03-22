@@ -1,5 +1,3 @@
-// js/edit-profile.js
-
 const PROFILE_API_URL = `${CONFIG.API_BASE_URL}/users/profile/`;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,11 +14,33 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('edit-name').value = user.name || '';
     document.getElementById('edit-email').value = user.email || '';
     
-    // Yaha Bio populate kiya jayega (Aapko HTML mein id="edit-bio" ka textarea add karna hoga)
     const bioElement = document.getElementById('edit-bio');
     if (bioElement) {
         bioElement.value = user.bio || '';
     }
+
+    // === NAYA CODE: Profile Picture Preview Set Karna ===
+    const previewImg = document.getElementById('profile-pic-preview');
+    if (previewImg) {
+        previewImg.src = window.getFullImageUrl(user.profile_picture, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80');
+    }
+
+    const profilePicInput = document.getElementById('edit-profile-pic');
+    
+    // Jab user naya image select kare toh turant usko preview mein dikhayein (bina save kiye)
+    if (profilePicInput && previewImg) {
+        profilePicInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    // ======================================================
 
     const form = document.getElementById('edit-profile-form');
     const successDiv = document.getElementById('edit-success');
@@ -34,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const newPassword = document.getElementById('new-password').value;
         const confirmNewPassword = document.getElementById('confirm-new-password').value;
         
-        // Fetch new bio value
         let newBio = '';
         if (bioElement) {
             newBio = bioElement.value.trim();
@@ -52,26 +71,30 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Saving...';
 
-        // Backend pe bhejne ke liye payload prepare karein, bio ke saath
-        const payload = { 
-            name: newName,
-            bio: newBio
-        };
+        // === NAYA CODE: FormData use karna (kyunki ab humein image file bhejni hai) ===
+        const formData = new FormData();
+        formData.append('name', newName);
+        formData.append('bio', newBio);
         
-        // Agar naya password dala hai toh payload me include karein
         if (newPassword) {
-            payload.password = newPassword; 
+            formData.append('password', newPassword); 
         }
 
+        // Agar user ne nayi file select ki hai, toh usko append karein
+        if (profilePicInput && profilePicInput.files.length > 0) {
+            formData.append('profile_picture', profilePicInput.files[0]);
+        }
+        // ===============================================================================
+
         try {
-            // Backend par PATCH request bhejna (sirf updated fields send karne ke liye)
             const response = await fetch(PROFILE_API_URL, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json',
+                    // DHYAN DEIN: Yahan 'Content-Type' nahi likhna hai. 
+                    // Browser khud 'multipart/form-data' set karega file upload ke liye.
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(payload)
+                body: formData // Payload ki jagah formData bhej rahe hain
             });
 
             if (response.ok) {
@@ -86,14 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 successDiv.textContent = 'Profile updated successfully!';
                 successDiv.style.display = 'block';
                 
-                // Optional: Clear password fields after save
                 document.getElementById('new-password').value = '';
                 document.getElementById('confirm-new-password').value = '';
             } else {
                 const errorData = await response.json();
                 let errMsg = 'An error occurred while saving.';
                 
-                // Error array/object me se pehla message nikalna
                 if (typeof errorData === 'object' && errorData !== null) {
                     const firstKey = Object.keys(errorData)[0];
                     if (firstKey) {

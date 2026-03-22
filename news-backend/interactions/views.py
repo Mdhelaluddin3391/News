@@ -9,7 +9,16 @@ from django.views.decorators.cache import cache_page
 from core.tasks import send_async_email
 from .models import Bookmark, Comment, NewsletterSubscriber, Poll, PollOption, PushSubscription
 from .serializers import BookmarkSerializer, CommentSerializer, PollSerializer, PushSubscriptionSerializer
+import jwt
+import datetime
+from django.conf import settings
+from rest_framework import permissions, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .models import NewsletterSubscriber
+from core.tasks import send_async_email
 
+# Baaki imports jo pehle se hain wo waise hi rahenge...
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
@@ -124,21 +133,80 @@ class SubscribeNewsletterView(APIView):
 
         return Response({"message": "Successfully subscribed to the newsletter!"}, status=status.HTTP_201_CREATED)
 
+
+
 class UnsubscribeNewsletterView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        token = request.data.get('token')
         email = request.data.get('email')
-        if not email:
-            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            subscriber = NewsletterSubscriber.objects.get(email=email)
-            subscriber.is_active = False # Email delete nahi karenge, bas inactive kar denge
-            subscriber.save()
-            return Response({"message": "Successfully unsubscribed."})
-        except NewsletterSubscriber.DoesNotExist:
-            return Response({"error": "This email is not registered in our subscriber list."}, status=status.HTTP_404_NOT_FOUND)
+
+        # === 1. CONFIRM UNSUBSCRIBE LOGIC (Agar request mein token aaya hai) ===
+        if token:
+            try:
+                # Token verify aur decode karein
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+                
+                if payload.get('type') != 'unsubscribe':
+                    raise jwt.InvalidTokenError
+                
+                sub_email = payload.get('email')
+                subscriber = NewsletterSubscriber.objects.get(email=sub_email)
+                
+                # User ko inactive mark karein
+                subscriber.is_active = False
+                subscriber.save()
+                
+                return Response({"message": "You have been successfully unsubscribed."})
+                
+            except jwt.ExpiredSignatureError:
+                return Response({"error": "The unsubscribe link has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+            except (jwt.InvalidTokenError, NewsletterSubscriber.DoesNotExist):
+                return Response({"error": "Invalid token or subscriber not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # === 2. REQUEST UNSUBSCRIBE LOGIC (Agar request mein email aaya hai) ===
+        if email:
+            try:
+                subscriber = NewsletterSubscriber.objects.get(email=email)
+                
+                if not subscriber.is_active:
+                    return Response({"message": "This email is already unsubscribed."})
+
+                # Ek secure JWT Token Generate karein (1 Hour expiry)
+                payload = {
+                    'email': email,
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+                    'type': 'unsubscribe'
+                }
+                unsub_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+                
+                # Unsubscribe Link banayein
+                unsub_link = f"{settings.FRONTEND_URL}/unsubscribe.html?token={unsub_token}"
+                
+                # Email Bhejein
+                subject = "Confirm Unsubscribe - NewsHub"
+                message = f"Please click the following link to confirm your unsubscription: {unsub_link}"
+                
+                html_content = f"""
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <h2 style="color: #d32f2f;">Confirm Unsubscribe</h2>
+                    <p>We received a request to unsubscribe this email from NewsHub alerts.</p>
+                    <p>If you wish to proceed, please click the button below. This link is valid for 1 hour.</p>
+                    <a href="{unsub_link}" style="display: inline-block; padding: 12px 25px; background-color: #d32f2f; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px;">Confirm Unsubscribe</a>
+                    <p style="margin-top: 20px; font-size: 12px; color: #64748b;">If you didn't request this, you can safely ignore this email.</p>
+                </div>
+                """
+                
+                # Background task call karke email bhejein
+                send_async_email.delay(subject, message, [email], html_content)
+                
+                return Response({"message": "A secure confirmation link has been sent to your email. Please check your inbox."})
+                
+            except NewsletterSubscriber.DoesNotExist:
+                return Response({"error": "This email is not registered in our subscriber list."}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"error": "Email or token is required."}, status=status.HTTP_400_BAD_REQUEST)
         
 class ActivePollView(APIView):
     permission_classes = [permissions.AllowAny]

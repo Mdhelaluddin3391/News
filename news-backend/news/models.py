@@ -1,9 +1,10 @@
-import os
-import sys
-from io import BytesIO
-from PIL import Image
 from django.db import models
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.utils.text import slugify
+from tinymce.models import HTMLField
+from core.models import BaseModel
+from users.models import User
+from django.utils import timezone
+from django.db import models
 from django.utils.text import slugify
 from tinymce.models import HTMLField
 from core.models import BaseModel
@@ -93,41 +94,11 @@ class Article(BaseModel):
         # 1. Slug banayein
         if not self.slug:
             self.slug = slugify(self.title)
-            
-        # 2. Image Compression & WebP Conversion
-        if self.featured_image:
-            # Check karein ki image pehle se webp toh nahi hai
-            if not self.featured_image.name.lower().endswith('.webp'):
-                # Image ko open karein
-                img = Image.open(self.featured_image)
-                
-                # Agar image PNG (RGBA) hai, toh usko RGB mein convert karein (WebP support ke liye)
-                if img.mode in ("RGBA", "P"):
-                    img = img.convert("RGB")
-                    
-                # Resize karein (Agar image bahut badi hai toh max width 1200px set karein)
-                img.thumbnail((1200, 800), Image.Resampling.LANCZOS)
-                
-                # Image ko memory mein save karein WebP format mein
-                output = BytesIO()
-                img.save(output, format='WEBP', quality=80) # Quality 80 means good quality, low size
-                output.seek(0)
-                
-                # Puraana extension hata kar .webp lagayein
-                file_name = os.path.splitext(self.featured_image.name)[0] + '.webp'
-                
-                # Nayi compressed file ko save karne ke liye ready karein
-                self.featured_image = InMemoryUploadedFile(
-                    output, 'ImageField', file_name, 'image/webp',
-                    sys.getsizeof(output), None
-                )
 
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
-
-
 
 class LiveUpdate(BaseModel):
     """

@@ -6,12 +6,14 @@ from django.core.cache import cache
 from django.conf import settings
 from .models import Article, Category, Author
 import json
+from django.db import transaction
 from pywebpush import webpush, WebPushException
 from interactions.models import PushSubscription
 import threading
 from django.core.mail import send_mail
 from interactions.models import NewsletterSubscriber
 from core.tasks import send_async_email
+from .tasks import process_article_image
 
 # 1. Article Save (Create/Update) hone par
 @receiver(post_save, sender=Article)
@@ -229,3 +231,13 @@ def handle_social_media_autopost(sender, instance, created, **kwargs):
                 print(f"❌ Telegram error: {e}")
             finally:
                 Article.objects.filter(pk=instance.pk).update(post_to_telegram=False)
+
+@receiver(post_save, sender=Article)
+def trigger_image_processing(sender, instance, created, **kwargs):
+    """
+    Article save hone ke baad check karta hai ki kya image compress karni hai.
+    Agar haan, toh background mein Celery task trigger karta hai.
+    """
+    if instance.featured_image and not instance.featured_image.name.lower().endswith('.webp'):
+        # transaction.on_commit ensure karega ki task tabhi chale jab article DB me fully save ho chuka ho
+        transaction.on_commit(lambda: process_article_image.delay(instance.id))

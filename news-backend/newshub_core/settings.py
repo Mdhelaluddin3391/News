@@ -85,6 +85,17 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 6,
+    
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle', # Bina login wale users ke liye
+        'rest_framework.throttling.UserRateThrottle'  # Logged in users ke liye
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '200/hour',      # Aam public 1 ghante mein max 200 requests kar sakti hai
+        'user': '1000/hour',     # Logged in user 1 ghante mein 1000 requests kar sakta hai
+        'auth': '5/minute',      # Sensitive APIs (Login/Register) ke liye 1 minute me max 5 try
+        'email_alert': '3/hour', # Forgot password jaise emails ke liye 1 ghante me max 3 try
+    },
 }
 
 AUTH_PASSWORD_VALIDATORS = [

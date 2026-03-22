@@ -12,7 +12,8 @@ from .models import ContactMessage, Advertisement
 from .serializers import ContactMessageSerializer, AdvertisementSerializer
 from .models import ContactMessage, Advertisement, SiteSetting
 from .serializers import ContactMessageSerializer, AdvertisementSerializer, SiteSettingSerializer
-
+from .models import ContactMessage, Advertisement, SiteSetting, JobPosting
+from .serializers import ContactMessageSerializer, AdvertisementSerializer, SiteSettingSerializer, JobPostingSerializer
 
 
 class ContactMessageCreateView(generics.CreateAPIView):
@@ -48,3 +49,9 @@ class SiteSettingAPIView(APIView):
         if setting and setting.ga4_tracking_id:
             return Response(SiteSettingSerializer(setting).data)
         return Response({"ga4_tracking_id": None})
+    
+class ActiveJobPostingsAPIView(generics.ListAPIView):
+    # Sirf unhi jobs ko fetch karega jinka is_active=True hai
+    queryset = JobPosting.objects.filter(is_active=True).order_by('-created_at')
+    serializer_class = JobPostingSerializer
+    permission_classes = [AllowAny]

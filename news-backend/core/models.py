@@ -70,3 +70,22 @@ class SiteSetting(models.Model):
 
     def __str__(self):
         return "Global Site Settings"
+    
+
+
+class JobPosting(BaseModel):
+    EMPLOYMENT_TYPES = (
+        ('full_time', 'Full-Time'),
+        ('part_time', 'Part-Time'),
+        ('contract', 'Contract'),
+        ('internship', 'Internship'),
+        ('freelance', 'Freelance'),
+    )
+    title = models.CharField(max_length=200, help_text="Job ka title (e.g., Senior Reporter)")
+    location = models.CharField(max_length=150, help_text="e.g., Remote, Tripura (Hybrid)")
+    employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPES)
+    description = models.TextField(help_text="Short description of the role")
+    is_active = models.BooleanField(default=True, help_text="Uncheck karein agar ye job ab available nahi hai")
+
+    def __str__(self):
+        return self.title

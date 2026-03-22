@@ -1,6 +1,68 @@
 // news-website/js/careers.js
+const JOBS_API_URL = `${CONFIG.API_BASE_URL}/jobs/active/`;
+
+async function loadDynamicJobs() {
+    const jobsContainer = document.getElementById('dynamic-jobs-container');
+    const roleSelect = document.getElementById('applied-role');
+    
+    if (!jobsContainer) return;
+
+    try {
+        const response = await fetch(JOBS_API_URL);
+        
+        // --- NAYA CODE ADD KIYA: 404 HTML Error ko gracefully handle karne ke liye ---
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        // -------------------------------------------------------------------------
+
+        const data = await response.json();
+        // DRF returns paginated data inside 'results'
+        const jobs = data.results || data;
+
+        if (jobs.length === 0) {
+            jobsContainer.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: var(--gray); font-size: 1.1rem;">Currently, there are no open positions. Check back later!</p>';
+            return;
+        }
+
+        let jobsHtml = '';
+        let optionsHtml = '<option value="">-- Select a role --</option>';
+
+        jobs.forEach(job => {
+            // 1. Job Card banana
+            jobsHtml += `
+                <div class="job-card">
+                    <div class="job-title">${job.title}</div>
+                    <div class="job-meta">
+                        <span><i class="fas fa-map-marker-alt"></i> ${job.location}</span>
+                        <span><i class="fas fa-briefcase"></i> ${job.employment_type_display}</span>
+                    </div>
+                    <div class="job-desc">${job.description}</div>
+                    <a href="#apply-section" class="read-more" style="font-weight: bold;" onclick="document.getElementById('applied-role').value='${job.title}'">Apply Now &rarr;</a>
+                </div>
+            `;
+            // 2. Dropdown Option banana
+            optionsHtml += `<option value="${job.title}">${job.title}</option>`;
+        });
+
+        // Niche ka "General" option wapas add karna
+        optionsHtml += '<option value="General / Other">General Application (Other)</option>';
+
+        jobsContainer.innerHTML = jobsHtml;
+        if (roleSelect) {
+            roleSelect.innerHTML = optionsHtml;
+        }
+
+    } catch (error) {
+        console.error("Error loading jobs:", error);
+        jobsContainer.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: red;">Failed to load job postings. Please try again later.</p>';
+    }
+}
+
+
 
 document.addEventListener('DOMContentLoaded', () => {
+    loadDynamicJobs();
     const form = document.getElementById('career-form');
     if (!form) return;
 

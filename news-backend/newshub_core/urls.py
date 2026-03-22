@@ -46,6 +46,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('tinymce/', include('tinymce.urls')),
+    path('api/', include('core.urls')),
 
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     path('rss/', LatestArticlesFeed(), name='rss_feed'),

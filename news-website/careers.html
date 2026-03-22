@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Careers - NewsHub</title>
-    <meta name="description" content="Join the NewsHub team. We are hiring passionate journalists, editors, and developers.">
-    
+    <meta name="description"
+        content="Join the NewsHub team. We are hiring passionate journalists, editors, and developers.">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/pages.css">
     <link rel="stylesheet" href="css/search.css">
-    
+
     <style>
         .careers-hero {
             text-align: center;
@@ -20,31 +22,35 @@
             border-radius: 12px;
             margin-bottom: 3rem;
         }
+
         .careers-hero h1 {
             font-size: 2.8rem;
             margin-bottom: 1rem;
             color: white;
         }
-        
+
         .jobs-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
             margin-bottom: 4rem;
         }
+
         .job-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 1.5rem;
             transition: var(--transition);
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
         }
+
         .job-card:hover {
             transform: translateY(-5px);
             border-color: var(--primary);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
+
         .job-title {
             font-size: 1.3rem;
             color: var(--primary);
@@ -52,6 +58,7 @@
             font-family: 'Roboto', sans-serif;
             font-weight: 700;
         }
+
         .job-meta {
             display: flex;
             gap: 15px;
@@ -60,14 +67,18 @@
             margin-bottom: 1rem;
             font-weight: 500;
         }
-        .job-meta i { color: var(--secondary); }
+
+        .job-meta i {
+            color: var(--secondary);
+        }
+
         .job-desc {
             font-size: 0.95rem;
             color: #475569;
             margin-bottom: 1rem;
             line-height: 1.5;
         }
-        
+
         .application-form-container {
             background: #f8fafc;
             padding: 3rem;
@@ -77,58 +88,36 @@
         }
     </style>
 </head>
+
 <body class="light-mode">
 
     <div id="header-placeholder"></div>
 
     <main class="container page-container" style="max-width: 1000px; padding: 1rem;">
-        
+
         <div class="careers-hero">
             <h1>Shape the Future of News</h1>
             <p style="font-size: 1.15rem; max-width: 700px; margin: 0 auto; opacity: 0.9;">
-                At NewsHub, we are always looking for passionate storytellers, sharp editors, and brilliant tech minds to join our mission of delivering the truth to the world.
+                At NewsHub, we are always looking for passionate storytellers, sharp editors, and brilliant tech minds
+                to join our mission of delivering the truth to the world.
             </p>
         </div>
 
-        <h2 style="margin-bottom: 1.5rem; color: var(--dark); border-left: 4px solid var(--primary); padding-left: 10px;">Open Positions</h2>
-        
-        <div class="jobs-grid">
-            <div class="job-card">
-                <div class="job-title">Senior Political Journalist</div>
-                <div class="job-meta">
-                    <span><i class="fas fa-map-marker-alt"></i> Tripura (Hybrid)</span>
-                    <span><i class="fas fa-briefcase"></i> Full-Time</span>
-                </div>
-                <div class="job-desc">We are looking for an experienced political journalist to cover state and national politics. Must have 5+ years of reporting experience.</div>
-                <a href="#apply-section" class="read-more" style="font-weight: bold;">Apply Now &rarr;</a>
-            </div>
+        <h2
+            style="margin-bottom: 1.5rem; color: var(--dark); border-left: 4px solid var(--primary); padding-left: 10px;">
+            Open Positions</h2>
 
-            <div class="job-card">
-                <div class="job-title">Content Editor (English)</div>
-                <div class="job-meta">
-                    <span><i class="fas fa-map-marker-alt"></i> Remote</span>
-                    <span><i class="fas fa-briefcase"></i> Full-Time</span>
-                </div>
-                <div class="job-desc">Seeking a sharp-eyed editor to review, fact-check, and format daily news articles. Excellent command over English grammar is required.</div>
-                <a href="#apply-section" class="read-more" style="font-weight: bold;">Apply Now &rarr;</a>
-            </div>
-
-            <div class="job-card">
-                <div class="job-title">Freelance Tech Writer</div>
-                <div class="job-meta">
-                    <span><i class="fas fa-map-marker-alt"></i> Remote</span>
-                    <span><i class="fas fa-briefcase"></i> Contract</span>
-                </div>
-                <div class="job-desc">Tech enthusiast? Write about the latest gadgets, AI trends, and software updates. Payment per published article.</div>
-                <a href="#apply-section" class="read-more" style="font-weight: bold;">Apply Now &rarr;</a>
-            </div>
+        <div class="jobs-grid" id="dynamic-jobs-container">
+            <p style="text-align: center; grid-column: 1/-1; color: var(--gray);">Loading open positions...</p>
         </div>
 
         <div id="apply-section" class="application-form-container">
             <h2 style="margin-bottom: 0.5rem; color: var(--primary);">Submit Your Application</h2>
-            <p style="color: var(--gray); margin-bottom: 2rem;">Don't see your role above? You can still drop your details. We are always hiring good talent.</p>
-            
-            <div id="career-status" style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;"></div>
+            <p style="color: var(--gray); margin-bottom: 2rem;">Don't see your role above? You can still drop your
+                details. We are always hiring good talent.</p>
+
+            <div id="career-status"
+                style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;"></div>
 
             <form class="contact-form" id="career-form">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
@@ -149,11 +138,10 @@
                     </div>
                     <div class="form-group">
                         <label for="applied-role">Applying For</label>
-                        <select id="applied-role" style="padding: 0.8rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: white;" required>
+                        <select id="applied-role"
+                            style="padding: 0.8rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: white;"
+                            required>
                             <option value="">-- Select a role --</option>
-                            <option value="Senior Political Journalist">Senior Political Journalist</option>
-                            <option value="Content Editor (English)">Content Editor (English)</option>
-                            <option value="Freelance Tech Writer">Freelance Tech Writer</option>
                             <option value="General / Other">General Application (Other)</option>
                         </select>
                     </div>
@@ -166,10 +154,13 @@
 
                 <div class="form-group" style="margin-top: 1.5rem;">
                     <label for="cover-letter">Cover Letter / Short Intro</label>
-                    <textarea id="cover-letter" rows="6" placeholder="Tell us why you'd be a great fit for NewsHub..." required></textarea>
+                    <textarea id="cover-letter" rows="6" placeholder="Tell us why you'd be a great fit for NewsHub..."
+                        required></textarea>
                 </div>
 
-                <button type="submit" class="submit-btn" style="margin-top: 1.5rem; width: 100%; text-align: center; display: block; background-color: var(--secondary);">Submit Application</button>
+                <button type="submit" class="submit-btn"
+                    style="margin-top: 1.5rem; width: 100%; text-align: center; display: block; background-color: var(--secondary);">Submit
+                    Application</button>
             </form>
         </div>
 
@@ -183,4 +174,5 @@
     <script src="js/search.js"></script>
     <script src="js/careers.js"></script>
 </body>
+
 </html>

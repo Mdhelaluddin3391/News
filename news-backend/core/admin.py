@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ContactMessage, Advertisement, SiteSetting
+from .models import ContactMessage, Advertisement, SiteSetting, JobPosting
 
 @admin.register(ContactMessage)
 class ContactMessageAdmin(admin.ModelAdmin):
@@ -46,3 +46,10 @@ class SiteSettingAdmin(admin.ModelAdmin):
         if self.model.objects.exists():
             return False
         return super().has_add_permission(request)
+    
+@admin.register(JobPosting)
+class JobPostingAdmin(admin.ModelAdmin):
+    list_display = ('title', 'location', 'employment_type', 'is_active', 'created_at')
+    list_filter = ('is_active', 'employment_type')
+    list_editable = ('is_active',) # Admin bahar se hi tick/untick kar payega
+    search_fields = ('title', 'location')

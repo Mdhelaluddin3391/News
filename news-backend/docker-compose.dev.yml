@@ -25,6 +25,8 @@ services:
       dockerfile: Dockerfile
     command: python manage.py runserver 0.0.0.0:8000  # <--- DEV SERVER (HOT RELOAD)
     restart: always
+    ports:                 # <--- YE NAYI LINE ADD KAREIN
+      - "8000:8000"
     env_file:
       - .env  # Updated path
     environment:

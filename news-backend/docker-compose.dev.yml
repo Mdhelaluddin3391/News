@@ -21,17 +21,17 @@ services:
 
   backend:
     build:
-      context: ./news-backend
+      context: .  # Updated path
       dockerfile: Dockerfile
     command: python manage.py runserver 0.0.0.0:8000  # <--- DEV SERVER (HOT RELOAD)
     restart: always
     env_file:
-      - ./news-backend/.env
+      - .env  # Updated path
     environment:
       POSTGRES_HOST: db
       REDIS_HOST: redis
     volumes:
-      - ./news-backend:/app  # <--- LIVE CODE SYNC
+      - .:/app  # Updated path for LIVE CODE SYNC
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     depends_on:
@@ -40,17 +40,17 @@ services:
 
   celery:
     build:
-      context: ./news-backend
+      context: .  # Updated path
       dockerfile: Dockerfile
     command: celery -A newshub_core worker --loglevel=info
     restart: always
     env_file:
-      - ./news-backend/.env
+      - .env  # Updated path
     environment:
       POSTGRES_HOST: db
       REDIS_HOST: redis
     volumes:
-      - ./news-backend:/app  # <--- LIVE CODE SYNC
+      - .:/app  # Updated path
       - media_volume:/app/media
     depends_on:
       - db
@@ -63,8 +63,8 @@ services:
     ports:
       - "80:80"  # <--- Direct port 80 pe chalega
     volumes:
-      - ./news-backend/nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - ./news-website:/usr/share/nginx/html  # <--- FRONTEND HTML FILES MOUNT
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf  # Updated path
+      - ../news-website:/usr/share/nginx/html  # Updated path (Points one folder back to reach frontend)
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     depends_on:

@@ -3,39 +3,38 @@ from .models import User
 
 @admin.register(User)
 class CustomUserAdmin(admin.ModelAdmin):
-    # 'role' ko list_display me add kiya gaya hai taaki bahar se hi sabka role dikh jaye
     list_display = ('email', 'name', 'role', 'is_staff', 'is_active', 'created_at')
-    
-    # Filter by role add kiya hai (Admin panel right side me filter aayega)
-    list_filter = ('role', 'is_staff', 'is_active', 'is_superuser')
-    
+    list_filter = ('role', 'is_staff', 'is_active', 'is_superuser', 'created_at')
     search_fields = ('email', 'name')
-    ordering = ('email',)
+    ordering = ('-created_at',)
+    date_hierarchy = 'created_at'
     
-    # Admin panel me jab kisi user ko edit/create karenge, tab 'role' select karne ka option aayega
+    actions = ['make_active', 'make_inactive']
+
     fieldsets = (
-        ('Login Info', {'fields': ('email', 'password')}),
+        ('Login Credentials', {'fields': ('email', 'password')}),
         ('Personal Info', {'fields': ('name', 'bio', 'profile_picture')}),
-        ('Role & Permissions', {'fields': (
-            'role', # Yahan role change karne ka dropdown aayega
-            'is_active', 
-            'is_staff', 
-            'is_superuser', 
-            'groups', 
-            'user_permissions'
-        )}),
+        ('Role & Permissions', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Important Dates', {'fields': ('last_login', 'date_joined'), 'classes': ('collapse',)})
     )
+    
+    @admin.action(description='✅ Activate selected users')
+    def make_active(self, request, queryset):
+        queryset.update(is_active=True)
+
+    @admin.action(description='🚫 Block/Deactivate selected users')
+    def make_inactive(self, request, queryset):
+        queryset.update(is_active=False)
     
     def save_model(self, request, obj, form, change):
         if obj.pk:
-            # Check if password was changed in admin panel
             orig_obj = User.objects.get(pk=obj.pk)
             if obj.password != orig_obj.password:
                 obj.set_password(obj.password)
         else:
             obj.set_password(obj.password)
         
-        # --- NAYA CODE: Authors aur Reporters ko bhi staff access dein ---
+        # Security: Automate is_staff based on role
         if obj.role in ['admin', 'editor', 'author', 'reporter']:
             obj.is_staff = True
         else:

@@ -1,5 +1,10 @@
 # news-backend/news/tasks.py
-
+import json
+from celery import shared_task
+from django.conf import settings
+from pywebpush import webpush, WebPushException
+from interactions.models import PushSubscription
+from .models import Article
 import os
 from io import BytesIO
 from PIL import Image
@@ -59,3 +64,38 @@ def process_article_image(article_id):
         return f"❌ Article {article_id} not found."
     except Exception as e:
         return f"❌ Image processing error for Article {article_id}: {str(e)}"
+    
+
+@shared_task
+def send_push_notifications_task(article_id):
+    try:
+        article = Article.objects.get(id=article_id)
+        
+        notif_title = f"🚨 Breaking: {article.title}" if article.is_breaking else f"📰 Naya Article: {article.title}"
+        short_desc = article.description[:120] + "..." if article.description else "Read now..."
+
+        payload = {
+            "title": notif_title,
+            "body": short_desc,
+            "url": f"{settings.FRONTEND_URL}/article.html?id={article.id}",
+            "icon": article.featured_image.url if article.featured_image else f"{settings.FRONTEND_URL}/images/logo.png"
+        }
+
+        subscriptions = PushSubscription.objects.all()
+        for sub in subscriptions:
+            try:
+                webpush(
+                    subscription_info={"endpoint": sub.endpoint, "keys": {"p256dh": sub.p256dh, "auth": sub.auth}},
+                    data=json.dumps(payload),
+                    vapid_private_key=settings.WEBPUSH_SETTINGS['VAPID_PRIVATE_KEY'],
+                    vapid_claims={"sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}"},
+                    ttl=86400, headers={"urgency": "high"}
+                )
+            except WebPushException as ex:
+                if ex.response and ex.response.status_code in [404, 410]:
+                    sub.delete()
+
+        # Update flag after sending
+        Article.objects.filter(pk=article.id).update(push_sent=True)
+    except Article.DoesNotExist:
+        pass

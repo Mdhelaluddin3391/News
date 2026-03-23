@@ -17,6 +17,8 @@ from .tasks import process_article_image
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from .models import LiveUpdate
+from .tasks import send_push_notifications_task
+
 
 # 1. Article Save (Create/Update) hone par
 @receiver(post_save, sender=Article)
@@ -50,52 +52,10 @@ def handle_article_publish(sender, instance, created, **kwargs):
     cache.clear()
     
     if instance.status == 'published' and not instance.push_sent:
-        
-        # 1. Notification ka Title
-        if instance.is_breaking:
-            notif_title = f"🚨 Breaking News: {instance.title}"
-        elif instance.is_featured:
-            notif_title = f"⭐ Featured: {instance.title}"
-        else:
-            notif_title = f"📰 Naya Article: {instance.title}"
-            
-        # 2. Notification ki Body (Short Description)
-        if instance.description:
-            short_desc = instance.description[:120] + "..." if len(instance.description) > 120 else instance.description
-        else:
-            short_desc = "Iss naye article ko padhne ke liye yahan click karein..."
-
-        # 3. Payload
-        payload = {
-            "title": notif_title,
-            "body": short_desc,
-            "url": f"{settings.FRONTEND_URL}/article.html?id={instance.id}",
-            "icon": instance.featured_image.url if instance.featured_image else f"{settings.FRONTEND_URL}/images/logo.png"
-        }
-
-        subscriptions = PushSubscription.objects.all()
-        for sub in subscriptions:
-            try:
-                webpush(
-                    subscription_info={
-                        "endpoint": sub.endpoint,
-                        "keys": {"p256dh": sub.p256dh, "auth": sub.auth}
-                    },
-                    data=json.dumps(payload),
-                    vapid_private_key=settings.WEBPUSH_SETTINGS['VAPID_PRIVATE_KEY'],
-                    vapid_claims={"sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}"},
-                    ttl=86400, # 24 hours
-                    headers={"urgency": "high"}
-                )
-            except WebPushException as ex:
-                if ex.response and ex.response.status_code in [404, 410]:
-                    sub.delete()
-            except Exception as e:
-                print(f"Push error for subscription {sub.id}: {e}")
-
-        Article.objects.filter(pk=instance.pk).update(push_sent=True)
-        print(f"✅ Push notifications sent successfully for article: {instance.title}")
-
+        # Pura lamba loop ab yahan nahi chalega!
+        # Humne transaction.on_commit isliye use kiya taaki pehle article DB me
+        # theek se save ho jaye, fir task chale.
+        transaction.on_commit(lambda: send_push_notifications_task.delay(instance.id))
 
 def send_bulk_emails_in_background(subject, message, recipient_list, html_message=None):
     """Ye function background mein chalega taaki website slow na ho"""

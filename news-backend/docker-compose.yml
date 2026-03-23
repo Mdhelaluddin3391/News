@@ -19,9 +19,8 @@ services:
     build:
       context: ./news-backend
       dockerfile: Dockerfile
-    command: >
-      sh -c "python manage.py migrate && 
-             gunicorn newshub_core.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2"
+    # NAYA: ab hume migrate yahan likhne ki zaroorat nahi hai
+    command: gunicorn newshub_core.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2
     restart: unless-stopped
     env_file:
       - ./news-backend/.env

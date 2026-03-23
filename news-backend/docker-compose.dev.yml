@@ -21,21 +21,20 @@ services:
 
   backend:
     build:
-      context: .  # Updated path
+      context: .
       dockerfile: Dockerfile
-    command: >
-      sh -c "python manage.py migrate && 
-             python manage.py runserver 0.0.0.0:8000" 
+    # NAYA: Sirf runserver chalayenge, migrate entrypoint kar dega
+    command: python manage.py runserver 0.0.0.0:8000
     restart: always
-    ports:                 # <--- YE NAYI LINE ADD KAREIN
+    ports:
       - "8000:8000"
     env_file:
-      - .env  # Updated path
+      - .env
     environment:
       POSTGRES_HOST: db
       REDIS_HOST: redis
     volumes:
-      - .:/app  # Updated path for LIVE CODE SYNC
+      - .:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     depends_on:

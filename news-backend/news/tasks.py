@@ -1,16 +1,14 @@
-# news-backend/news/tasks.py
 import json
-from celery import shared_task
-from django.conf import settings
-from pywebpush import webpush, WebPushException
-from interactions.models import PushSubscription
-from .models import Article
 import os
 from io import BytesIO
 from PIL import Image
+
 from celery import shared_task
-from django.core.files.base import ContentFile
 from django.conf import settings
+from django.core.files.base import ContentFile
+from pywebpush import webpush, WebPushException
+
+from interactions.models import PushSubscription
 from .models import Article
 
 @shared_task
@@ -68,17 +66,33 @@ def process_article_image(article_id):
 
 @shared_task
 def send_push_notifications_task(article_id):
+    """
+    Ye task naye articles par notification bhejega.
+    Absolute URL fix kar diya gaya hai taaki browsers image block na karein.
+    """
     try:
         article = Article.objects.get(id=article_id)
         
         notif_title = f"🚨 Breaking: {article.title}" if article.is_breaking else f"📰 Naya Article: {article.title}"
         short_desc = article.description[:120] + "..." if article.description else "Read now..."
 
+        # === NAYA UPDATE: Icon ka Absolute URL banana ===
+        base_url = settings.FRONTEND_URL.rstrip('/') # Extra slash hatane ke liye
+        icon_url = f"{base_url}/images/logo.png" # Default image
+        
+        if article.featured_image:
+            # Agar S3 bucket (https://) lagaya hai toh URL same rahega, nahi toh base_url append hoga
+            if article.featured_image.url.startswith('http'):
+                icon_url = article.featured_image.url
+            else:
+                icon_url = f"{base_url}{article.featured_image.url}"
+        # ================================================
+
         payload = {
             "title": notif_title,
             "body": short_desc,
-            "url": f"{settings.FRONTEND_URL}/article.html?id={article.id}",
-            "icon": article.featured_image.url if article.featured_image else f"{settings.FRONTEND_URL}/images/logo.png"
+            "url": f"{base_url}/article.html?id={article.id}",
+            "icon": icon_url
         }
 
         subscriptions = PushSubscription.objects.all()
@@ -89,13 +103,19 @@ def send_push_notifications_task(article_id):
                     data=json.dumps(payload),
                     vapid_private_key=settings.WEBPUSH_SETTINGS['VAPID_PRIVATE_KEY'],
                     vapid_claims={"sub": f"mailto:{settings.WEBPUSH_SETTINGS['VAPID_ADMIN_EMAIL']}"},
-                    ttl=86400, headers={"urgency": "high"}
+                    ttl=86400, 
+                    headers={"urgency": "high"}
                 )
             except WebPushException as ex:
+                # Agar user ne permission revoke kar di hai toh database se delete kar do
                 if ex.response and ex.response.status_code in [404, 410]:
                     sub.delete()
 
         # Update flag after sending
         Article.objects.filter(pk=article.id).update(push_sent=True)
+        return f"✅ Push notifications sent for Article {article_id}"
+        
     except Article.DoesNotExist:
-        pass
+        return f"❌ Article {article_id} not found."
+    except Exception as e:
+        return f"❌ Push notification error: {str(e)}"

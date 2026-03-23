@@ -11,6 +11,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security and Core Settings
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
+if not DEBUG:
+    # HTTP requests ne automatically HTTPS par redirect karse
+    SECURE_SSL_REDIRECT = True
+    
+    # Cookies ne sirf HTTPS par j send karva de
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+    # HSTS (HTTP Strict Transport Security) enable karva (optional but recommended)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',') # Production me yahan apna domain name add karein
 

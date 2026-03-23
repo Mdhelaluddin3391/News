@@ -14,6 +14,9 @@ from django.core.mail import send_mail
 from interactions.models import NewsletterSubscriber
 from core.tasks import send_async_email
 from .tasks import process_article_image
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from .models import LiveUpdate
 
 # 1. Article Save (Create/Update) hone par
 @receiver(post_save, sender=Article)
@@ -241,3 +244,27 @@ def trigger_image_processing(sender, instance, created, **kwargs):
     if instance.featured_image and not instance.featured_image.name.lower().endswith('.webp'):
         # transaction.on_commit ensure karega ki task tabhi chale jab article DB me fully save ho chuka ho
         transaction.on_commit(lambda: process_article_image.delay(instance.id))
+
+
+@receiver(post_save, sender=LiveUpdate)
+def broadcast_live_update(sender, instance, created, **kwargs):
+    if created:
+        channel_layer = get_channel_layer()
+        group_name = f'live_article_{instance.article.id}'
+        
+        # Data jo frontend ko jayega
+        update_data = {
+            'id': instance.id,
+            'title': instance.title,
+            'content': instance.content,
+            'timestamp': instance.timestamp.isoformat(),
+        }
+
+        # WebSocket group mein message push karein
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                'type': 'send_new_update',
+                'update_data': update_data
+            }
+        )

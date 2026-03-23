@@ -1,10 +1,10 @@
-// js/article.js
 // ==================== CONFIGURATION ====================
 // Real API Endpoint pointing to your Django backend
 const ARTICLE_DETAIL_API_URL = `${CONFIG.API_BASE_URL}/news/articles`;
 let liveRefreshInterval;
 let latestUpdateId = null; // NAYA: Track karne ke liye ki sabse latest update kaunsa hai
-
+let liveSocket = null; // NAYA: WebSocket connection track karne ke liye
+let useFallbackPolling = false; // NAYA: Fallback status track karne ke liye
 // ==================== DOM Elements ====================
 const articleContainer = document.getElementById('article-detail');
 // Variable names changed to avoid collision with script.js
@@ -63,6 +63,7 @@ function renderArticle(article) {
 
     // Puraana refresh interval clear karein
     if (liveRefreshInterval) clearInterval(liveRefreshInterval);
+    if (liveSocket) liveSocket.close(); // NAYA: Agar purana socket khula hai toh use band karein
 
     const user = getCurrentUser(); 
     const isSaved = user ? isArticleSaved(article.id) : false;
@@ -207,7 +208,11 @@ function renderArticle(article) {
                 </div>
             </div>
         `;
-        startLivePolling(article.id);
+        
+        // NAYA: Yahan hum startLivePolling() ki jagah naya WebSocket function call kar rahe hain
+        setTimeout(() => {
+            initLiveUpdates(article.id);
+        }, 100); 
     }
 
     // --- MAIN HTML INJECTION ---
@@ -291,6 +296,105 @@ function generateTimelineHTML(updates) {
     return html;
 }
 
+// ==================== WEBSOCKET LOGIC WITH FALLBACK ====================
+function initLiveUpdates(articleId) {
+    const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+    
+    // API_BASE_URL (http://127.0.0.1:8000/api) se WebSocket URL banayein
+    const backendBase = CONFIG.API_BASE_URL.replace('/api', '').replace('http', wsScheme);
+    const wsUrl = `${backendBase}/ws/live-updates/${articleId}/`;
+
+    try {
+        liveSocket = new WebSocket(wsUrl);
+
+        liveSocket.onopen = function(e) {
+            console.log("✅ WebSocket connected for real-time live updates");
+            const indicator = document.querySelector('.auto-refresh-indicator');
+            if (indicator) {
+                indicator.innerHTML = '<i class="fas fa-bolt" style="color: #f59e0b;"></i> Real-time updates active';
+            }
+        };
+
+        liveSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.update_data) {
+                appendNewUpdateToTimeline(data.update_data);
+            }
+        };
+
+        liveSocket.onclose = function(e) {
+            console.warn("⚠️ WebSocket closed. Falling back to polling...");
+            fallbackToPolling(articleId);
+        };
+
+        liveSocket.onerror = function(e) {
+            console.error("❌ WebSocket error. Falling back to polling...");
+            // WebSocket ko close karenge taaki onclose event chal jaye aur fallback start ho
+            if(liveSocket.readyState !== WebSocket.CLOSED) {
+                liveSocket.close(); 
+            }
+        };
+    } catch (err) {
+        console.error("WebSocket setup failed:", err);
+        fallbackToPolling(articleId);
+    }
+}
+
+function fallbackToPolling(articleId) {
+    if (useFallbackPolling) return; // Ek baar fallback shuru ho gaya toh dobara na karein
+    useFallbackPolling = true;
+    
+    const indicator = document.querySelector('.auto-refresh-indicator');
+    if (indicator) {
+        indicator.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Connection weak. Auto-refreshing...';
+    }
+    
+    // Aapka original polling function yahan call hoga
+    startLivePolling(articleId); 
+}
+
+function appendNewUpdateToTimeline(update) {
+    const timelineContainer = document.getElementById('timeline-container');
+    if (!timelineContainer) return;
+
+    // Remove empty message if exists
+    const emptyMsg = timelineContainer.querySelector('p');
+    if (emptyMsg && emptyMsg.textContent.includes('No live updates')) {
+        emptyMsg.remove();
+    }
+
+    const timeStr = formatLiveTime(update.timestamp);
+    const newHTML = `
+        <div class="timeline-item" style="opacity: 0; transform: translateY(-20px);">
+            <div class="timeline-dot"></div>
+            <div class="timeline-time"><i class="far fa-clock"></i> ${timeStr}</div>
+            <div class="timeline-content" style="background-color: #fecdd3; transition: background-color 2s ease;">
+                ${update.title ? `<h4 class="timeline-title">${update.title}</h4>` : ''}
+                <div class="timeline-body" style="line-height: 1.6; color: #334155;">${update.content}</div>
+            </div>
+        </div>
+    `;
+
+    // Sabse upar naya update daalein
+    timelineContainer.insertAdjacentHTML('afterbegin', newHTML);
+
+    // Smooth Animation
+    const newItem = timelineContainer.firstElementChild;
+    setTimeout(() => {
+        newItem.style.opacity = '1';
+        newItem.style.transform = 'translateY(0)';
+        newItem.style.transition = 'all 0.5s ease';
+        
+        // Highlight color dheere-dheere hatayein
+        setTimeout(() => {
+            const content = newItem.querySelector('.timeline-content');
+            if(content) content.style.backgroundColor = '#f8fafc';
+        }, 2000);
+    }, 50);
+
+    latestUpdateId = update.id;
+}
+
 // ==================== AUTO-REFRESH POLLING (SMART UPDATE) ====================
 function startLivePolling(articleId) {
     liveRefreshInterval = setInterval(async () => {
@@ -331,9 +435,16 @@ function startLivePolling(articleId) {
     }, 15000); // 30s se kam karke 15 seconds kar diya hai taaki live coverage tez ho
 }
 
-// Jab user kisi aur page par jaye, toh interval band kar dein
+// Jab user kisi aur page par jaye, toh interval aur socket dono band kar dein
 window.addEventListener('beforeunload', () => {
+    // 1. Polling interval clear karein
     if (liveRefreshInterval) clearInterval(liveRefreshInterval);
+    
+    // 2. WebSocket connection securely close karein
+    if (typeof liveSocket !== 'undefined' && liveSocket && liveSocket.readyState === WebSocket.OPEN) {
+        liveSocket.close();
+        console.log("WebSocket connection closed cleanly on page leave.");
+    }
 });
 
 

@@ -20,7 +20,7 @@ services:
       context: ./news-backend
       dockerfile: Dockerfile
     # NAYA: ab hume migrate yahan likhne ki zaroorat nahi hai
-    command: gunicorn newshub_core.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2
+    command: daphne -b 0.0.0.0 -p 8000 newshub_core.asgi:application
     restart: unless-stopped
     env_file:
       - ./news-backend/.env

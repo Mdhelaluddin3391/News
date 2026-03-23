@@ -26,4 +26,4 @@ RUN python manage.py collectstatic --noinput
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Gunicorn ke through server run karein (Default command)
-CMD ["gunicorn", "newshub_core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "newshub_core.asgi:application"]

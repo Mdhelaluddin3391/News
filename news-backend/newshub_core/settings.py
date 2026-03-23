@@ -11,7 +11,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security and Core Settings
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
-ALLOWED_HOSTS = ['*'] # Production me yahan apna domain name add karein
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',') # Production me yahan apna domain name add karein
 
 INSTALLED_APPS = [
     'daphne',
@@ -155,13 +156,18 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # CORS & Custom Auth
-CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = [
-    "http://127.0.0.1:5501/news-website",
-    "http://127.0.0.1:5501",  # Aapke frontend ka port
-    "http://127.0.0.1:8000",  # <--- YEH NAYA ADD KIYA HAI (Admin Login ke liye)
-    "http://localhost:8000",
-]
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'
+if not CORS_ALLOW_ALL_ORIGINS:
+    CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1:8000').split(',')
+
+# CSRF_TRUSTED_ORIGINS = [
+#     "http://127.0.0.1:5501/news-website",
+#     "http://127.0.0.1:5501",  # Aapke frontend ka port
+#     "http://127.0.0.1:8000",  # <--- YEH NAYA ADD KIYA HAI (Admin Login ke liye)
+#     "http://localhost:8000",
+# ]
 AUTH_USER_MODEL = 'users.User'
 
 # Email Settings

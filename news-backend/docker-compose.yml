@@ -19,7 +19,9 @@ services:
     build:
       context: ./news-backend
       dockerfile: Dockerfile
-    command: gunicorn newshub_core.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2  # <--- PRODUCTION SERVER
+    command: >
+      sh -c "python manage.py migrate && 
+             gunicorn newshub_core.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 2"
     restart: unless-stopped
     env_file:
       - ./news-backend/.env
@@ -37,7 +39,7 @@ services:
     build:
       context: ./news-backend
       dockerfile: Dockerfile
-    command: celery -A newshub_core worker --loglevel=warning # <--- WARNING LOGS ONLY
+    command: celery -A newshub_core worker --loglevel=warning
     restart: unless-stopped
     env_file:
       - ./news-backend/.env

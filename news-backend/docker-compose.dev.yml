@@ -23,7 +23,9 @@ services:
     build:
       context: .  # Updated path
       dockerfile: Dockerfile
-    command: python manage.py runserver 0.0.0.0:8000  # <--- DEV SERVER (HOT RELOAD)
+    command: >
+      sh -c "python manage.py migrate && 
+             python manage.py runserver 0.0.0.0:8000" 
     restart: always
     ports:                 # <--- YE NAYI LINE ADD KAREIN
       - "8000:8000"

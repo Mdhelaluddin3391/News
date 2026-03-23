@@ -1456,6 +1456,7 @@ nav {
     background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.6), transparent);
     padding: 40px 20px 20px;
     color: white;
+    z-index: 10; /* NAYA: Ye add karein taaki text aur button transparent nav se upar aa jaye */
 }
 
 .story-badge {

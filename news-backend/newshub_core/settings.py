@@ -14,6 +14,7 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = ['*'] # Production me yahan apna domain name add karein
 
 INSTALLED_APPS = [
+    'daphne',
     'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -31,7 +32,6 @@ INSTALLED_APPS = [
     'django.contrib.sites',   
     'django.contrib.sitemaps',
     'storages',
-    'daphne',
     
     # Custom apps
     'users',
@@ -69,6 +69,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'newshub_core.wsgi.application'
+ASGI_APPLICATION = 'newshub_core.asgi.application'
 
 CHANNEL_LAYERS = {
     "default": {

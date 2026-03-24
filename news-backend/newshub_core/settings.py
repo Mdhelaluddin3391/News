@@ -86,14 +86,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'newshub_core.wsgi.application'
 ASGI_APPLICATION = 'newshub_core.asgi.application'
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [(os.getenv('REDIS_HOST', '127.0.0.1'), 6379)],
-        },
-    },
-}
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [(os.getenv('REDIS_HOST', '127.0.0.1'), 6379)],
+#         },
+#     },
+# }
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -232,19 +232,37 @@ TINYMCE_DEFAULT_CONFIG = {
     'custom_undo_redo_levels': 10,
 }
 
-REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
 
 # Redis Caching Setup
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:6379/1",
+        "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "IGNORE_EXCEPTIONS": True,
         }
     }
 }
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [REDIS_URL], # Naya URL yahan pass kar diya
+        },
+    },
+}
+
+# Celery Setup
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
 
 # Web Push Settings
 WEBPUSH_SETTINGS = {
@@ -263,12 +281,7 @@ TWITTER_API_SECRET = os.getenv('TWITTER_API_SECRET')
 TWITTER_ACCESS_TOKEN = os.getenv('TWITTER_ACCESS_TOKEN')
 TWITTER_ACCESS_TOKEN_SECRET = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
 
-CELERY_BROKER_URL = f'redis://{REDIS_HOST}:6379/2'
-CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:6379/2'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
+
 
 # Jazzmin Admin Settings
 JAZZMIN_SETTINGS = {

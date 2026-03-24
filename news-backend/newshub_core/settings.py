@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 
 # Load environment variables from .env file
 load_dotenv()
@@ -93,16 +94,33 @@ CHANNEL_LAYERS = {
     },
 }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'newshub_db'),
-        'USER': os.getenv('POSTGRES_USER', 'newshub_user'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'newshub_password'),
-        'HOST': os.getenv('POSTGRES_HOST', 'db'), # Ye Docker compose service ka naam hoga
-        'PORT': os.getenv('POSTGRES_PORT', '5432'),
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    # Agar Render par DATABASE_URL diya gaya hai, toh ye automatically URL se username, password, host nikal lega
+    url = urlparse(DATABASE_URL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': url.path[1:],  # Shuru ka '/' hatane ke liye
+            'USER': url.username,
+            'PASSWORD': url.password,
+            'HOST': url.hostname,
+            'PORT': url.port or '5432',
+        }
     }
-}
+else:
+    # Local development ke liye aapka purana tareeqa
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'newshub_db'),
+            'USER': os.getenv('POSTGRES_USER', 'newshub_user'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'newshub_password'),
+            'HOST': os.getenv('POSTGRES_HOST', 'db'), 
+            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        }
+    }
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

@@ -300,8 +300,7 @@ function generateTimelineHTML(updates) {
 function initLiveUpdates(articleId) {
     const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
     
-    // API_BASE_URL (http://127.0.0.1:8000/api) se WebSocket URL banayein
-    const backendBase = CONFIG.API_BASE_URL.replace('/api', '').replace('http', wsScheme);
+    const backendBase = CONFIG.API_BASE_URL.replace('/api', '').replace(/^https?:\/\//, `${wsScheme}://`);
     const wsUrl = `${backendBase}/ws/live-updates/${articleId}/`;
 
     try {

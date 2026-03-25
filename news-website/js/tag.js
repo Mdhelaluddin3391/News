@@ -17,7 +17,7 @@ function renderTagArticles(articles) {
     const user = getCurrentUser(); 
     const html = articles.map(article => {
         // NAYA CODE: Global helper function for image URL (Production ready)
-        const imageUrl = window.getFullImageUrl(article.featured_image, '');
+        const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
         
         const isSaved = user ? isArticleSaved(article.id) : false;
         const saveBtn = user ? `<button class="save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save'}</button>` : '';
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSEOMetaTags(
                 `Tags - NewsHub`, 
                 `Browse our collection of news articles by topics and tags on NewsHub.`, 
-                '', 
+                'images/default-news.png', 
                 window.location.href
             );
         }

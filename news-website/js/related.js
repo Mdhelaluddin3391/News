@@ -59,7 +59,7 @@ async function renderRelated(containerId, categorySlug, currentArticleId) {
     let html = '';
     related.forEach(a => {
         // NAYA CODE: Global helper function for image URL (Production ready)
-        const imageUrl = window.getFullImageUrl(a.featured_image, '');
+        const imageUrl = window.getFullImageUrl(a.featured_image, 'images/default-news.png');
         const timeAgo = getRelatedTimeAgo(a.published_at);
         const liveBadge = a.is_live ? `<div class="related-live-badge"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
         

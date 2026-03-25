@@ -68,7 +68,7 @@ function renderArticle(article) {
     const user = getCurrentUser(); 
     const isSaved = user ? isArticleSaved(article.id) : false;
     
-    const imageUrl = window.getFullImageUrl(article.featured_image, '');
+    const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
     
     const title = article.title || 'Untitled';
     const source = article.source_name || 'NewsHub';

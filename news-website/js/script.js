@@ -70,7 +70,7 @@ function renderArticles(articles) {
     const user = getCurrentUser(); // from auth.js
     const html = articles.map(article => {
         // NAYA CODE: Yahan global helper use kiya gaya hai production-ready image URL ke liye
-        const imageUrl = window.getFullImageUrl(article.featured_image, '');
+        const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
         
         const title = article.title || 'Untitled';
         const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';
@@ -170,7 +170,7 @@ async function fetchNews(category = DEFAULT_CATEGORY, page = 1) {
                 updateSEOMetaTags(
                     `${formattedCategoryName} News`, 
                     `Read the latest breaking news, updates, and deep dives about ${formattedCategoryName} on NewsHub.`, 
-                    '', // Aap chahein toh category ke hisaab se dynamic image pass kar sakte hain
+                    'images/default-news.png', // Aap chahein toh category ke hisaab se dynamic image pass kar sakte hain
                     window.location.href
                 );
             }

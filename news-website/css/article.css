@@ -30,6 +30,7 @@
 
 .detail-meta {
     display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
     margin-bottom: 2rem;
     color: var(--gray);
@@ -93,6 +94,7 @@
 
 .share-buttons {
     display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
     margin-top: 0.5rem;
 }
@@ -529,4 +531,16 @@
     align-items: center;
     gap: 5px;
     margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+    .detail-content {
+        padding: 1.2rem; /* Mobile par padding kam ki hai taaki image aur text fit rahe */
+    }
+    .detail-title {
+        font-size: 1.6rem; /* Title thoda mobile-friendly banaya */
+    }
+    .detail-meta {
+        gap: 1rem; /* Spacing adjust ki */
+    }
 }

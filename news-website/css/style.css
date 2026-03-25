@@ -20,6 +20,10 @@
     box-sizing: border-box;
 }
 
+html, body {
+    overflow-x: hidden; /* Yeh screen ko left-right hilne se rokega */
+}
+
 body {
     font-family: 'Roboto', sans-serif;
     line-height: 1.6;

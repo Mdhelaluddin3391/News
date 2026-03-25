@@ -272,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- GLOBAL SIDEBAR DATA (Har page ke liye) ---
         // Yeh functions homepage.js mein hain, inhein yahan bahar call karein
+        if (typeof loadTopStories === 'function') loadTopStories();
         if (typeof loadEditorsPicks === 'function') loadEditorsPicks();
         if (typeof loadTrendingNews === 'function') loadTrendingNews();
         if (typeof loadCategoriesSidebar === 'function') loadCategoriesSidebar();
@@ -279,6 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const paginationContainer = document.getElementById('pagination');
         const featuredSection = document.querySelector('.featured-news'); 
+        const webStoriesSection = document.querySelector('.web-stories-section'); // <-- NAYA
+        const recentNewsSection = document.getElementById('recent-news-section'); // <-- NAYA
         
         if (category === 'general' && homeContainer) {
             // Homepage logic
@@ -287,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(categoryHeading) categoryHeading.style.display = 'none';
             if(homeContainer) homeContainer.style.display = 'block';
             if(featuredSection) featuredSection.style.display = 'block'; 
+            if(webStoriesSection) webStoriesSection.style.display = 'block'; // <-- NAYA
             
             if (typeof initHomepage === 'function') {
                 initHomepage();
@@ -298,6 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if(categoryHeading) categoryHeading.style.display = 'block';
             if(homeContainer) homeContainer.style.display = 'none';
             if(featuredSection) featuredSection.style.display = 'none'; 
+            if(webStoriesSection) webStoriesSection.style.display = 'none'; // <-- NAYA (Hide on category)
+            if(recentNewsSection) recentNewsSection.style.display = 'none'; // <-- NAYA (Hide on category)
             
             fetchNews(category, page);
         }

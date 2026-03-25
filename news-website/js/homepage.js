@@ -279,7 +279,7 @@ async function initHomepage() {
         const currentCategory = urlParams.get('category') || 'general';
 
         // Sidebar data ab hamare global functions se load hoga (Clean code)
-        window.loadTopStories()
+        // window.loadTopStories()
         window.loadEditorsPicks();
         window.loadTrendingNews();
         window.loadCategoriesSidebar();

@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import ssl
 from datetime import timedelta
 from dotenv import load_dotenv
 from urllib.parse import urlparse
@@ -242,9 +243,13 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "IGNORE_EXCEPTIONS": True,
+            "CONNECTION_POOL_KWARGS": {
+                "ssl_cert_reqs": None,  # <--- NAYA: SSL certificate verification bypass
+            }
         }
     }
 }
+
 
 CHANNEL_LAYERS = {
     "default": {
@@ -263,6 +268,9 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+if REDIS_URL.startswith('rediss://'):
+    CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+    CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
 
 # Web Push Settings
 WEBPUSH_SETTINGS = {

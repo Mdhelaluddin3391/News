@@ -243,9 +243,7 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "IGNORE_EXCEPTIONS": True,
-            "CONNECTION_POOL_KWARGS": {
-                "ssl_cert_reqs": None,  # <--- NAYA: SSL certificate verification bypass
-            }
+            # Removed the CONNECTION_POOL_KWARGS from here. We will add it conditionally.
         }
     }
 }
@@ -269,6 +267,11 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
 if REDIS_URL.startswith('rediss://'):
+    # redis-py library requires the string "none" instead of Python's None type
+    CACHES['default']['OPTIONS']['CONNECTION_POOL_KWARGS'] = {
+        "ssl_cert_reqs": "none" 
+    }
+    
     CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
     CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
 

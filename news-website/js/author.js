@@ -33,7 +33,7 @@ async function fetchAuthorAndArticles() {
 
         // Extract author details
         // NAYA CODE: Global helper function for profile picture
-        const avatar = window.getFullImageUrl(author.profile_picture, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80');
+        const avatar = window.getFullImageUrl(author.profile_picture, '');
         const role = author.role || 'Contributor';
         const bio = author.bio || 'This author has not added a bio yet.';
         
@@ -106,7 +106,7 @@ async function fetchAuthorAndArticles() {
         articles.forEach(article => {
             const date = article.published_at ? formatDate(article.published_at) : 'Unknown Date';
             // NAYA CODE: Global helper function for article image
-            const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=300&q=80');
+            const imageUrl = window.getFullImageUrl(article.featured_image, '');
             
             articlesHtml += `
                 <div class="article-card">

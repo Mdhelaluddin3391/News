@@ -73,7 +73,7 @@ function renderSearchArticles(articles, query) {
     const html = articles.map(article => {
         // Map backend fields
         // NAYA CODE: Global helper function use kiya gaya image URL ke liye
-        const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');
+        const imageUrl = window.getFullImageUrl(article.featured_image, '');
         
         // Fetch Title & Description and apply Truncation and Highlighting
         const rawTitle = article.title || 'Untitled';
@@ -178,7 +178,7 @@ async function fetchSearchResults(query, page = 1) {
             updateSEOMetaTags(
                 `"${query}" - Search Results | NewsHub`, 
                 `Explore news articles and stories related to "${query}" on NewsHub. Find the most relevant updates.`, 
-                'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80', 
+                '', 
                 window.location.href,
                 `${query} news, search ${query}, NewsHub results` // <-- NAYA: Keywords
             );
@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSEOMetaTags(
                 `Search News - NewsHub`, 
                 `Search our database for the latest news articles and stories on NewsHub.`, 
-                'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80', 
+                '', 
                 window.location.href
             );
         }

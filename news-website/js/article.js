@@ -68,7 +68,7 @@ function renderArticle(article) {
     const user = getCurrentUser(); 
     const isSaved = user ? isArticleSaved(article.id) : false;
     
-    const imageUrl = window.getFullImageUrl(article.featured_image, 'https://picsum.photos/1200/600?random=1');
+    const imageUrl = window.getFullImageUrl(article.featured_image, '');
     
     const title = article.title || 'Untitled';
     const source = article.source_name || 'NewsHub';

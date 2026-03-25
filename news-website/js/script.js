@@ -13,7 +13,7 @@ const errorMessageDiv = document.getElementById('error-message');
 const categoryButtons = document.querySelectorAll('.category-btn');
 
 // ==================== GLOBAL HELPER FUNCTION (For Images) ====================
-window.getFullImageUrl = function(imagePath, fallbackImage = 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80') {
+window.getFullImageUrl = function(imagePath, fallbackImage = '') {
     if (!imagePath) return fallbackImage;
     
     // NAYA CODE: Agar URL http:// se start ho raha hai, toh use automatically https:// kar do
@@ -70,7 +70,7 @@ function renderArticles(articles) {
     const user = getCurrentUser(); // from auth.js
     const html = articles.map(article => {
         // NAYA CODE: Yahan global helper use kiya gaya hai production-ready image URL ke liye
-        const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');
+        const imageUrl = window.getFullImageUrl(article.featured_image, '');
         
         const title = article.title || 'Untitled';
         const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';

@@ -31,7 +31,7 @@ async function fetchAndRenderAuthors() {
         let html = '';
         authors.forEach(author => {
             // Global helper function se profile picture URL nikalna
-            const avatarUrl = window.getFullImageUrl(author.profile_picture, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80');
+            const avatarUrl = window.getFullImageUrl(author.profile_picture, '');
             const role = author.role || 'Contributor';
             
             // Social Media Links

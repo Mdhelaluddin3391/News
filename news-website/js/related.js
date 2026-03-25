@@ -59,7 +59,7 @@ async function renderRelated(containerId, categorySlug, currentArticleId) {
     let html = '';
     related.forEach(a => {
         // NAYA CODE: Global helper function for image URL (Production ready)
-        const imageUrl = window.getFullImageUrl(a.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');
+        const imageUrl = window.getFullImageUrl(a.featured_image, '');
         const timeAgo = getRelatedTimeAgo(a.published_at);
         const liveBadge = a.is_live ? `<div class="related-live-badge"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
         

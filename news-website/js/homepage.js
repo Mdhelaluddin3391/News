@@ -15,7 +15,7 @@ function renderFeatured(article) {
     if (!container || !article) return;
     const timeAgo = formatTimeAgo(article.published_at);
     // NAYA CODE: Global helper function for image URL
-    const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80');
+    const imageUrl = window.getFullImageUrl(article.featured_image, '');
     const categoryName = article.category ? article.category.name : 'World';
     const authorName = article.author ? article.author.name : 'Staff';
     const liveBadgeHTML = article.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
@@ -115,7 +115,7 @@ function renderEditorsPicks(picks) {
     let html = '';
     picks.forEach(item => {
         // NAYA CODE: Global helper function for image URL
-        const imageUrl = window.getFullImageUrl(item.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80');
+        const imageUrl = window.getFullImageUrl(item.featured_image, '');
         
         html += `
             <div class="side-post" onclick="window.location.href='article.html?id=${item.id}'" style="margin-bottom: 15px; cursor: pointer;">
@@ -204,7 +204,7 @@ async function loadNextCategories(count = 1) {
             let sideHtml = sideArticles.map(a => {
                 const sideLiveBadge = a.is_live ? `<div class="live-badge-card" style="padding: 2px 5px; font-size: 0.6rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
                 // NAYA CODE: Global helper function for image URL
-                const sideImageUrl = window.getFullImageUrl(a.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80');
+                const sideImageUrl = window.getFullImageUrl(a.featured_image, '');
                 return `
                 <div class="side-post" onclick="window.location.href='article.html?id=${a.id}'" style="position: relative;">
                     ${sideLiveBadge}
@@ -220,7 +220,7 @@ async function loadNextCategories(count = 1) {
 
             const mainLiveBadge = mainArticle.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
             // NAYA CODE: Global helper function for image URL
-            const mainImageUrl = window.getFullImageUrl(mainArticle.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80');
+            const mainImageUrl = window.getFullImageUrl(mainArticle.featured_image, '');
 
             html += `
                 <div class="category-block">
@@ -342,7 +342,7 @@ async function initHomepage() {
                 updateSEOMetaTags(
                     'NewsHub - Premium Global News', 
                     'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on NewsHub.', 
-                    'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80', 
+                    '', 
                     window.location.href,
                     "global news, breaking news, latest updates, world news, NewsHub" // <-- NAYA: Keywords add kiye
                 );
@@ -512,7 +512,7 @@ function renderRecentNews(articles) {
     articles.forEach(article => {
         const timeAgo = formatTimeAgo(article.published_at);
         // NAYA CODE: Global helper function for image URL
-        const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=150&q=80');
+        const imageUrl = window.getFullImageUrl(article.featured_image, '');
         const liveBadge = article.is_live ? `<div class="live-badge-card" style="padding: 2px 4px; font-size: 0.65rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
 
         html += `
@@ -633,7 +633,7 @@ function renderStoryThumbnails() {
     let html = '';
     dynamicStories.forEach((story, index) => {
         // Production ready image URL
-        const imageUrl = window.getFullImageUrl(story.featured_image, 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?w=400&q=80');
+        const imageUrl = window.getFullImageUrl(story.featured_image, '');
         
         html += `
             <div class="story-thumb" onclick="openStoryModal(${index})">
@@ -674,7 +674,7 @@ function showStory() {
     const display = document.getElementById('story-display');
     const progressBar = document.getElementById('story-progress-bar');
     
-    const imageUrl = window.getFullImageUrl(story.featured_image, 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?w=800&q=80');
+    const imageUrl = window.getFullImageUrl(story.featured_image, '');
     const categoryName = story.category ? story.category.name : 'News';
     const shortDesc = story.description ? (story.description.length > 100 ? story.description.substring(0, 100) + '...' : story.description) : '';
     

@@ -5,8 +5,8 @@ self.addEventListener('push', function(event) {
         
         const options = {
             body: data.body,
-            icon: data.icon || 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?w=192&q=80',
-            badge: 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?w=96&q=80', // Android status bar icon
+            icon: data.icon || '',
+            badge: '', // Android status bar icon
             vibrate: [200, 100, 200, 100, 200, 100, 200], // Phone ko vibrate karne ke liye
             requireInteraction: true, // Notification tab tak screen par rahegi jab tak user click/dismiss na kare
             data: {

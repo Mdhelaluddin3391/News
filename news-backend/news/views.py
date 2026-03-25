@@ -94,7 +94,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
         if article.featured_image:
             image_url = request.build_absolute_uri(article.featured_image.url)
         else:
-            image_url = "https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80"
+            image_url = ""
         
         # Safe Text
         safe_title = escape(article.title)

@@ -22,7 +22,7 @@ function renderSavedArticles(articles) {
 
     const html = articles.map(article => {
         // NAYA CODE: Global helper function for image URL (Production ready)
-        const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80');
+        const imageUrl = window.getFullImageUrl(article.featured_image, '');
         
         const title = article.title || 'Untitled';
         const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';

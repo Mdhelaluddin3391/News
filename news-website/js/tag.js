@@ -17,7 +17,7 @@ function renderTagArticles(articles) {
     const user = getCurrentUser(); 
     const html = articles.map(article => {
         // NAYA CODE: Global helper function for image URL (Production ready)
-        const imageUrl = window.getFullImageUrl(article.featured_image, 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=300&q=80');
+        const imageUrl = window.getFullImageUrl(article.featured_image, '');
         
         const isSaved = user ? isArticleSaved(article.id) : false;
         const saveBtn = user ? `<button class="save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save'}</button>` : '';
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSEOMetaTags(
                 `Tags - NewsHub`, 
                 `Browse our collection of news articles by topics and tags on NewsHub.`, 
-                'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80', 
+                '', 
                 window.location.href
             );
         }
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSEOMetaTags(
             `#${displayTagName} - Tagged Articles | NewsHub`, 
             `Explore the latest news, updates, and deep-dive articles tagged with #${displayTagName} on NewsHub.`, 
-            'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80', 
+            '', 
             window.location.href,
             `${displayTagName} news, latest ${displayTagName} updates, #${displayTagName}` // <-- NAYA: Keywords
         );

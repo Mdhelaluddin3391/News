@@ -13,7 +13,7 @@ const errorMessageDiv = document.getElementById('error-message');
 const categoryButtons = document.querySelectorAll('.category-btn');
 
 // ==================== GLOBAL HELPER FUNCTION (For Images) ====================
-window.getFullImageUrl = function(imagePath, fallbackImage = '') {
+window.getFullImageUrl = function(imagePath, fallbackImage = 'images/default-news.png') {
     if (!imagePath) return fallbackImage;
     
     // NAYA CODE: Agar URL http:// se start ho raha hai, toh use automatically https:// kar do
@@ -170,7 +170,7 @@ async function fetchNews(category = DEFAULT_CATEGORY, page = 1) {
                 updateSEOMetaTags(
                     `${formattedCategoryName} News`, 
                     `Read the latest breaking news, updates, and deep dives about ${formattedCategoryName} on NewsHub.`, 
-                    'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80', // Aap chahein toh category ke hisaab se dynamic image pass kar sakte hain
+                    '', // Aap chahein toh category ke hisaab se dynamic image pass kar sakte hain
                     window.location.href
                 );
             }

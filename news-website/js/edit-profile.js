@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === NAYA CODE: Profile Picture Preview Set Karna ===
     const previewImg = document.getElementById('profile-pic-preview');
     if (previewImg) {
-        previewImg.src = window.getFullImageUrl(user.profile_picture, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80');
+        previewImg.src = window.getFullImageUrl(user.profile_picture, 'images/default-avatar.png');
     }
 
     const profilePicInput = document.getElementById('edit-profile-pic');

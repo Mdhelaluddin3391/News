@@ -33,7 +33,7 @@ async function fetchAuthorAndArticles() {
 
         // Extract author details
         // NAYA CODE: Global helper function for profile picture
-        const avatar = window.getFullImageUrl(author.profile_picture, '');
+        const avatar = window.getFullImageUrl(author.profile_picture, 'images/default-avatar.png');
         const role = author.role || 'Contributor';
         const bio = author.bio || 'This author has not added a bio yet.';
         

@@ -31,7 +31,7 @@ async function fetchAndRenderAuthors() {
         let html = '';
         authors.forEach(author => {
             // Global helper function se profile picture URL nikalna
-            const avatarUrl = window.getFullImageUrl(author.profile_picture, '');
+            const avatarUrl = window.getFullImageUrl(author.profile_picture, 'images/default-avatar.png');
             const role = author.role || 'Contributor';
             
             // Social Media Links

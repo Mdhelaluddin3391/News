@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Unknown Date';
     
     // NAYA CODE: Global helper function for profile picture URL
-    const profilePic = window.getFullImageUrl(user.profile_picture, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80');
+    const profilePic = window.getFullImageUrl(user.profile_picture, 'images/default-avatar.png');
 
     profileContent.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 30px;">

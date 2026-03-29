@@ -2,7 +2,7 @@ const APP_CONFIG = window.__APP_CONFIG__ || {};
 const isFileProtocol = window.location.protocol === 'file:';
 
 // Single source-of-truth: global API base URL
-const API_BASE_URL = (APP_CONFIG.API_BASE_URL || window.APP_CONFIG?.API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '');
+const API_BASE_URL = 'http://localhost:8000/api';
 
 const CONFIG = {
     API_BASE_URL,

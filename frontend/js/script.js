@@ -1,8 +1,7 @@
 // js/script.js
 // ==================== CONFIGURATION ====================
 // Real Django API Endpoint
-const API_BASE_URL = (window.APP_CONFIG?.API_BASE_URL || window.CONFIG?.API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '');
-const NEWS_API_URL = `${API_BASE_URL}/news`;
+const NEWS_API_URL = `${window.APP_CONFIG.API_BASE_URL}/news`;
 const DEFAULT_CATEGORY = 'general';
 const ARTICLES_PER_PAGE = 6;
 

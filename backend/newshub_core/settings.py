@@ -116,19 +116,32 @@ DATABASE_CONN_MAX_AGE = int(os.getenv('DATABASE_CONN_MAX_AGE', '60'))
 DATABASE_SSL_MODE = os.getenv('DATABASE_SSL_MODE', '')
 DATABASE_SSL_ROOT_CERT = os.getenv('DATABASE_SSL_ROOT_CERT', '')
 
-if DATABASE_URL:
+if DATABASE_URL or os.getenv('POSTGRES_HOST'):
     # Agar Render par DATABASE_URL diya gaya hai, toh ye automatically URL se username, password, host nikal lega
-    url = urlparse(DATABASE_URL)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': url.path[1:],  # Shuru ka '/' hatane ke liye
-            'USER': url.username,
-            'PASSWORD': url.password,
-            'HOST': url.hostname,
-            'PORT': url.port or '5432',
+    if DATABASE_URL:
+        url = urlparse(DATABASE_URL)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': url.path[1:],  # Shuru ka '/' hatane ke liye
+                'USER': url.username,
+                'PASSWORD': url.password,
+                'HOST': url.hostname,
+                'PORT': url.port or '5432',
+            }
         }
-    }
+    else:
+        # Docker ya local PostgreSQL
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.getenv('POSTGRES_DB', 'newshub_db'),
+                'USER': os.getenv('POSTGRES_USER', 'newshub_user'),
+                'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'newshub_password'),
+                'HOST': os.getenv('POSTGRES_HOST', 'db'), 
+                'PORT': os.getenv('POSTGRES_PORT', '5432'),
+            }
+        }
 elif DEBUG:
     # Local development ke liye SQLite use karo
     DATABASES = {

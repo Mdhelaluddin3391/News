@@ -125,8 +125,16 @@ if DATABASE_URL:
             'PORT': url.port or '5432',
         }
     }
+elif DEBUG:
+    # Local development ke liye SQLite use karo
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 else:
-    # Local development ke liye aapka purana tareeqa
+    # Production ke liye PostgreSQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',

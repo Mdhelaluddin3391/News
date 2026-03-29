@@ -1,7 +1,8 @@
 // js/script.js
 // ==================== CONFIGURATION ====================
 // Real Django API Endpoint
-const API_BASE_URL = `${CONFIG.API_BASE_URL}/news`;
+const API_BASE_URL = (window.APP_CONFIG?.API_BASE_URL || window.CONFIG?.API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '');
+const NEWS_API_URL = `${API_BASE_URL}/news`;
 const DEFAULT_CATEGORY = 'general';
 const ARTICLES_PER_PAGE = 6;
 
@@ -138,19 +139,9 @@ async function fetchNews(category = DEFAULT_CATEGORY, page = 1) {
     articlesContainer.innerHTML = '';
 
     try {
-        // Construct API URL with category filter and pagination
-        const url = new URL(`${API_BASE_URL}/articles/`);
-        // We use category__slug to filter via DRF
-        url.searchParams.append('category__slug', category); 
-        url.searchParams.append('page', page);
-
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}`);
-        }
-        
-        const data = await response.json();
+        // Construct API URL with category filter and pagination using centralized fetch helper
+        const endpoint = `/news/articles/?category__slug=${encodeURIComponent(category)}&page=${encodeURIComponent(page)}`;
+        const data = await window.apiFetch(endpoint);
         
         // DRF returns paginated data in 'results', total count in 'count'
         const articles = data.results || data;

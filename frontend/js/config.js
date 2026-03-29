@@ -1,12 +1,11 @@
 const APP_CONFIG = window.__APP_CONFIG__ || {};
 const isFileProtocol = window.location.protocol === 'file:';
 
-// For production with Nginx gateway, use relative paths
-// For development with separate servers, this will still work
-const API_BASE_URL = "http://localhost:8000/api";
+// Single source-of-truth: global API base URL
+const API_BASE_URL = (APP_CONFIG.API_BASE_URL || window.APP_CONFIG?.API_BASE_URL || 'http://localhost:8000/api').replace(/\/$/, '');
 
 const CONFIG = {
-    API_BASE_URL: apiBaseUrl,
+    API_BASE_URL,
     GOOGLE_CLIENT_ID: APP_CONFIG.GOOGLE_CLIENT_ID || '615098838513-hnphi7ekcv9nhjv94f0mfj0509nd63hu.apps.googleusercontent.com',
     VAPID_PUBLIC_KEY: APP_CONFIG.VAPID_PUBLIC_KEY || 'BL_wQ4AU0MABrcB7uQc5dX7d725RZmGktXdlp9YD6m1MWopxpFcFMLjiBdF8pMjuAKOJmwX4a596wC0mj4HlMQ8',
     SENTRY_DSN: APP_CONFIG.SENTRY_DSN || '',
@@ -14,6 +13,40 @@ const CONFIG = {
     SENTRY_RELEASE: APP_CONFIG.SENTRY_RELEASE || '',
     SENTRY_TRACES_SAMPLE_RATE: Number(APP_CONFIG.SENTRY_TRACES_SAMPLE_RATE || 0)
 };
+
+// Expose for maximum compatibility
+window.APP_CONFIG = Object.freeze({
+    ...CONFIG,
+    ...window.APP_CONFIG,
+});
+window.CONFIG = window.APP_CONFIG;
+
+function apiFetch(endpoint, options = {}) {
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${window.APP_CONFIG.API_BASE_URL}${normalizedEndpoint}`;
+
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers,
+        },
+        credentials: 'include',
+        ...options,
+    };
+
+    return fetch(url, defaultOptions).then(async (response) => {
+        if (!response.ok) {
+            const text = await response.text();
+            const message = `API error ${response.status}: ${text}`;
+            const err = new Error(message);
+            err.response = response;
+            throw err;
+        }
+        return response.json();
+    });
+}
+
+window.apiFetch = apiFetch;
 
 window.reportFrontendError = function reportFrontendError(error, context = {}) {
     if (!window.Sentry) {
@@ -43,17 +76,17 @@ function bootstrapFrontendSentry() {
     }
 
     window.Sentry.init({
-        dsn: CONFIG.SENTRY_DSN,
-        environment: CONFIG.SENTRY_ENVIRONMENT,
-        release: CONFIG.SENTRY_RELEASE || undefined,
+        dsn: window.APP_CONFIG.SENTRY_DSN,
+        environment: window.APP_CONFIG.SENTRY_ENVIRONMENT,
+        release: window.APP_CONFIG.SENTRY_RELEASE || undefined,
         integrations,
-        tracesSampleRate: CONFIG.SENTRY_TRACES_SAMPLE_RATE
+        tracesSampleRate: window.APP_CONFIG.SENTRY_TRACES_SAMPLE_RATE
     });
 
     window.__frontendSentryInitialized = true;
 }
 
-if (CONFIG.SENTRY_DSN && !isFileProtocol && !isLocalHost) {
+if (window.APP_CONFIG.SENTRY_DSN && !isFileProtocol && window.location.hostname !== 'localhost') {
     if (window.Sentry) {
         bootstrapFrontendSentry();
     } else {

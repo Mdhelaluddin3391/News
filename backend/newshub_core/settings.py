@@ -4,6 +4,7 @@ import ssl
 from datetime import timedelta
 from dotenv import load_dotenv
 from urllib.parse import urlparse
+from corsheaders.defaults import default_headers
 
 # Load environment variables from .env file
 load_dotenv()
@@ -239,17 +240,34 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Static & Media Files
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
-# CORS & Custom Auth
-CORS_ALLOW_ALL_ORIGINS = _get_bool_env('CORS_ALLOW_ALL_ORIGINS', DEBUG)
-if not CORS_ALLOW_ALL_ORIGINS:
-    domain_name = os.getenv('DOMAIN_NAME', 'localhost')
-    CORS_ALLOWED_ORIGINS = _get_list_env('CORS_ALLOWED_ORIGINS', f'http://{domain_name},https://{domain_name}')
-CORS_ALLOW_CREDENTIALS = _get_bool_env('CORS_ALLOW_CREDENTIALS', True)
+# Core CORS / redirect behavior control (fixes CORS + 301 for API clients)
+APPEND_SLASH = False
 
+# CORS config
+CORS_ALLOW_ALL_ORIGINS = _get_bool_env('CORS_ALLOW_ALL_ORIGINS', DEBUG)
+if CORS_ALLOW_ALL_ORIGINS:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOWED_ORIGINS = _get_list_env(
+        'CORS_ALLOWED_ORIGINS',
+        'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000'
+    )
+
+CORS_ALLOW_CREDENTIALS = _get_bool_env('CORS_ALLOW_CREDENTIALS', True)
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'content-type',
+    'authorization',
+]
+CORS_EXPOSE_HEADERS = [
+    'Content-Type',
+    'Authorization',
+]
+
+# Allow frontend dev host for CSRF
 domain_name = os.getenv('DOMAIN_NAME', 'localhost')
 CSRF_TRUSTED_ORIGINS = _get_list_env(
     'CSRF_TRUSTED_ORIGINS',
-    f'http://{domain_name},https://{domain_name}'
+    'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000'
 )
 
 # CSRF_TRUSTED_ORIGINS = [

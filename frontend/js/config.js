@@ -1,20 +1,16 @@
 const APP_CONFIG = window.__APP_CONFIG__ || {};
 const isFileProtocol = window.location.protocol === 'file:';
-const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-const backendUrl = APP_CONFIG.BACKEND_URL !== undefined
-    ? APP_CONFIG.BACKEND_URL
-    : (isFileProtocol || isLocalHost ? 'http://127.0.0.1:8000' : '');
-const normalizedBackendUrl = backendUrl.replace(/\/$/, '');
-const apiBaseUrl = APP_CONFIG.API_BASE_URL
-    || (normalizedBackendUrl ? `${normalizedBackendUrl}/api` : '/api');
+
+// For production with Nginx gateway, use relative paths
+// For development with separate servers, this will still work
+const apiBaseUrl = '/api';
 
 const CONFIG = {
-    BACKEND_URL: normalizedBackendUrl,
     API_BASE_URL: apiBaseUrl,
     GOOGLE_CLIENT_ID: APP_CONFIG.GOOGLE_CLIENT_ID || '615098838513-hnphi7ekcv9nhjv94f0mfj0509nd63hu.apps.googleusercontent.com',
     VAPID_PUBLIC_KEY: APP_CONFIG.VAPID_PUBLIC_KEY || 'BL_wQ4AU0MABrcB7uQc5dX7d725RZmGktXdlp9YD6m1MWopxpFcFMLjiBdF8pMjuAKOJmwX4a596wC0mj4HlMQ8',
     SENTRY_DSN: APP_CONFIG.SENTRY_DSN || '',
-    SENTRY_ENVIRONMENT: APP_CONFIG.SENTRY_ENVIRONMENT || (isLocalHost || isFileProtocol ? 'development' : 'production'),
+    SENTRY_ENVIRONMENT: APP_CONFIG.SENTRY_ENVIRONMENT || (window.location.hostname === 'localhost' || isFileProtocol ? 'development' : 'production'),
     SENTRY_RELEASE: APP_CONFIG.SENTRY_RELEASE || '',
     SENTRY_TRACES_SAMPLE_RATE: Number(APP_CONFIG.SENTRY_TRACES_SAMPLE_RATE || 0)
 };

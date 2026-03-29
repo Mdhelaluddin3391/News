@@ -242,12 +242,14 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # CORS & Custom Auth
 CORS_ALLOW_ALL_ORIGINS = _get_bool_env('CORS_ALLOW_ALL_ORIGINS', DEBUG)
 if not CORS_ALLOW_ALL_ORIGINS:
-    CORS_ALLOWED_ORIGINS = _get_list_env('CORS_ALLOWED_ORIGINS')
+    domain_name = os.getenv('DOMAIN_NAME', 'localhost')
+    CORS_ALLOWED_ORIGINS = _get_list_env('CORS_ALLOWED_ORIGINS', f'http://{domain_name},https://{domain_name}')
 CORS_ALLOW_CREDENTIALS = _get_bool_env('CORS_ALLOW_CREDENTIALS', True)
 
+domain_name = os.getenv('DOMAIN_NAME', 'localhost')
 CSRF_TRUSTED_ORIGINS = _get_list_env(
     'CSRF_TRUSTED_ORIGINS',
-    'http://127.0.0.1:5501,http://localhost:5501,http://127.0.0.1:8000,http://localhost:8000'
+    f'http://{domain_name},https://{domain_name}'
 )
 
 # CSRF_TRUSTED_ORIGINS = [
@@ -268,7 +270,7 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
 # URLs and IDs
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://127.0.0.1:5501/news-website')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 SITE_ID = 1
 
@@ -402,7 +404,7 @@ JAZZMIN_SETTINGS = {
     "custom_css": "css/admin_custom.css",
     "topmenu_links": [
         {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"name": "View Frontend Site", "url": os.getenv('FRONTEND_URL', 'http://127.0.0.1:5500') + "/index.html", "new_window": True},
+        {"name": "View Frontend Site", "url": FRONTEND_URL + "/index.html", "new_window": True},
     ],
     "icons": {
         "auth": "fas fa-users-cog",

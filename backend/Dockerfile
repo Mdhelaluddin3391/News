@@ -16,7 +16,7 @@ COPY . /app/
 RUN chmod +x /app/entrypoint.sh
 
 # Build argument to skip collectstatic during development
-ARG SKIP_COLLECTSTATIC=false
+ARG SKIP_COLLECTSTATIC=true
 ARG SECRET_KEY="dummy-key-for-build-only"
 ENV SECRET_KEY=${SECRET_KEY}
 ENV SKIP_COLLECTSTATIC=${SKIP_COLLECTSTATIC}

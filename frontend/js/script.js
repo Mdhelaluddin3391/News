@@ -15,27 +15,27 @@ const categoryButtons = document.querySelectorAll('.category-btn');
 // ==================== GLOBAL HELPER FUNCTION (For Images) ====================
 window.getFullImageUrl = function(imagePath, fallbackImage = 'images/default-news.png') {
     if (!imagePath) return fallbackImage;
-    
-    // NAYA CODE: Agar URL http:// se start ho raha hai, toh use automatically https:// kar do
-    if (imagePath.startsWith('http://')) {
-        imagePath = imagePath.replace('http://', 'https://');
-    }
 
-    const backendBase = CONFIG.BACKEND_URL || CONFIG.API_BASE_URL.replace('/api', '');
-
-    if (imagePath.startsWith('/')) {
-        return `${backendBase}${imagePath}`;
-    }
-    
-    if (imagePath.includes('backend:8000') || imagePath.includes('localhost:8000')) {
+    // Handle absolute URLs (from backend)
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+        // Since we're using Nginx gateway, convert backend URLs to relative paths
         try {
-            const pathOnly = new URL(imagePath).pathname;
-            return `${backendBase}${pathOnly}`;
+            const url = new URL(imagePath);
+            if (url.pathname.startsWith('/media/')) {
+                return url.pathname; // Use relative path for media files
+            }
         } catch (e) {
-            return imagePath; 
+            // Invalid URL, return as is
         }
+        return imagePath;
     }
-    
+
+    // Handle relative paths
+    if (imagePath.startsWith('/')) {
+        return imagePath;
+    }
+
+    // Return as is for other cases
     return imagePath;
 };
 

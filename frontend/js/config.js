@@ -3,7 +3,7 @@ const isFileProtocol = window.location.protocol === 'file:';
 
 // For production with Nginx gateway, use relative paths
 // For development with separate servers, this will still work
-const apiBaseUrl = '/api';
+const apiBaseUrl = 'http://0.0.0.0:8000/api';
 
 const CONFIG = {
     API_BASE_URL: apiBaseUrl,

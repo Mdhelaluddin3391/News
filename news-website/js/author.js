@@ -58,11 +58,11 @@ async function fetchAuthorAndArticles() {
         if (typeof updateSEOMetaTags === 'function') {
             const seoBio = bio.length > 150 ? bio.substring(0, 150) + '...' : bio;
             updateSEOMetaTags(
-                `${author.name} - NewsHub Author`, 
+                `${author.name} - Forex Times Author`, 
                 seoBio, 
                 avatar, 
                 window.location.href,
-                `${author.name}, journalist, author, NewsHub reporter` // <-- NAYA: Keywords
+                `${author.name}, journalist, author, Forex Times reporter` // <-- NAYA: Keywords
             );
         }
 
@@ -75,7 +75,7 @@ async function fetchAuthorAndArticles() {
                 "jobTitle": role,
                 "worksFor": {
                     "@type": "Organization",
-                    "name": "NewsHub"
+                    "name": "Forex Times"
                 },
                 "image": avatar,
                 "description": bio,

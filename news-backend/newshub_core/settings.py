@@ -298,11 +298,11 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Jazzmin Admin Settings
 JAZZMIN_SETTINGS = {
-    "site_title": "NewsHub Admin",
-    "site_header": "NewsHub",
-    "site_brand": "NewsHub Dashboard",
-    "welcome_sign": "Welcome to NewsHub Admin Panel",
-    "copyright": "NewsHub by Dharmanagar Live",
+    "site_title": "Forex Times Admin",
+    "site_header": "Forex Times",
+    "site_brand": "Forex Times Dashboard",
+    "welcome_sign": "Welcome to Forex Times Admin Panel",
+    "copyright": "Forex Times",
     "search_model": ["news.Article", "users.User"],
     "custom_css": "css/admin_custom.css",
     "topmenu_links": [

@@ -91,8 +91,8 @@ class SubscribeNewsletterView(APIView):
 
         # ================== NAYA CODE: WELCOME EMAIL ==================
         if created or subscriber.is_active:
-            subject = "🎉 Welcome to NewsHub - Stay Updated!"
-            message = "Thank you for subscribing to NewsHub! You will now receive our daily top stories and breaking news alerts."
+            subject = "🎉 Welcome to Forex Times - Stay Updated!"
+            message = "Thank you for subscribing to Forex Times! You will now receive our daily top stories and breaking news alerts."
             
             html_content = f"""
             <!DOCTYPE html>
@@ -109,7 +109,7 @@ class SubscribeNewsletterView(APIView):
             </head>
             <body>
                 <div class="container">
-                    <h2>Welcome to NewsHub! 📰</h2>
+                    <h2>Welcome to Forex Times! 📰</h2>
                     <p>Hi there,</p>
                     <p>Thank you for subscribing! You are now part of our community. We promise to bring you the most accurate, fast, and reliable news directly to your inbox.</p>
                     <p><strong>What to expect:</strong></p>
@@ -185,13 +185,13 @@ class UnsubscribeNewsletterView(APIView):
                 unsub_link = f"{settings.FRONTEND_URL}/unsubscribe.html?token={unsub_token}"
                 
                 # Email Bhejein
-                subject = "Confirm Unsubscribe - NewsHub"
+                subject = "Confirm Unsubscribe - Forex Times"
                 message = f"Please click the following link to confirm your unsubscription: {unsub_link}"
                 
                 html_content = f"""
                 <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
                     <h2 style="color: #d32f2f;">Confirm Unsubscribe</h2>
-                    <p>We received a request to unsubscribe this email from NewsHub alerts.</p>
+                    <p>We received a request to unsubscribe this email from Forex Times alerts.</p>
                     <p>If you wish to proceed, please click the button below. This link is valid for 1 hour.</p>
                     <a href="{unsub_link}" style="display: inline-block; padding: 12px 25px; background-color: #d32f2f; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px;">Confirm Unsubscribe</a>
                     <p style="margin-top: 20px; font-size: 12px; color: #64748b;">If you didn't request this, you can safely ignore this email.</p>

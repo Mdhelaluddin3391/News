@@ -22,7 +22,7 @@ async function fetchComments(articleId) {
 
 // Post a new comment
 async function postComment(articleId, text) {
-    const token = localStorage.getItem('newsHub_accessToken');
+    const token = localStorage.getItem('forexTimes_accessToken');
     if (!token) throw new Error('You must be logged in to comment.');
 
     const response = await fetch(COMMENTS_API_URL, {
@@ -46,7 +46,7 @@ async function postComment(articleId, text) {
 
 // Delete a comment
 async function deleteComment(commentId) {
-    const token = localStorage.getItem('newsHub_accessToken');
+    const token = localStorage.getItem('forexTimes_accessToken');
     if (!token) throw new Error('You must be logged in.');
 
     const response = await fetch(`${COMMENTS_API_URL}${commentId}/`, {

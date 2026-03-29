@@ -83,7 +83,7 @@ function renderSearchArticles(articles, query) {
         const title = highlightText(rawTitle, query);
         const description = highlightText(shortDesc, query);
         
-        const source = article.source_name || 'NewsHub';
+        const source = article.source_name || 'Forex Times';
         const date = article.published_at ? formatSearchDate(article.published_at) : 'Unknown date';
         const articleId = article.id || '';
         const isSaved = user && typeof isArticleSaved === 'function' ? isArticleSaved(articleId) : false;
@@ -176,11 +176,11 @@ async function fetchSearchResults(query, page = 1) {
         // Search Page SEO Update
         if (typeof updateSEOMetaTags === 'function') {
             updateSEOMetaTags(
-                `"${query}" - Search Results | NewsHub`, 
-                `Explore news articles and stories related to "${query}" on NewsHub. Find the most relevant updates.`, 
+                `"${query}" - Search Results | Forex Times`, 
+                `Explore news articles and stories related to "${query}" on Forex Times. Find the most relevant updates.`, 
                 'images/default-news.png', 
                 window.location.href,
-                `${query} news, search ${query}, NewsHub results` // <-- NAYA: Keywords
+                `${query} news, search ${query}, Forex Times results` // <-- NAYA: Keywords
             );
         }
 
@@ -271,8 +271,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (typeof updateSEOMetaTags === 'function') {
             updateSEOMetaTags(
-                `Search News - NewsHub`, 
-                `Search our database for the latest news articles and stories on NewsHub.`, 
+                `Search News - Forex Times`, 
+                `Search our database for the latest news articles and stories on Forex Times.`, 
                 'images/default-news.png', 
                 window.location.href
             );

@@ -98,7 +98,7 @@ function renderBreakingTicker(articles) {
         
         container.innerHTML = html;
     } else {
-        container.innerHTML = 'Welcome to NewsHub!';
+        container.innerHTML = 'Welcome to Forex Times!';
     }
 }
 
@@ -340,11 +340,11 @@ async function initHomepage() {
             // Homepage SEO Update
             if (typeof updateSEOMetaTags === 'function') {
                 updateSEOMetaTags(
-                    'NewsHub - Premium Global News', 
-                    'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on NewsHub.', 
+                    'Forex Times - Premium Global News', 
+                    'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on Forex Times.', 
                     'images/default-news.png', 
                     window.location.href,
-                    "global news, breaking news, latest updates, world news, NewsHub" // <-- NAYA: Keywords add kiye
+                    "global news, breaking news, latest updates, world news, Forex Times" // <-- NAYA: Keywords add kiye
                 );
             }
 
@@ -355,7 +355,7 @@ async function initHomepage() {
                     "@graph": [
                         {
                             "@type": "WebSite",
-                            "name": "NewsHub",
+                            "name": "Forex Times",
                             "url": "https://www.dharmanagarlive.com/", // Apna actual domain use karein
                             "potentialAction": {
                                 "@type": "SearchAction",
@@ -365,7 +365,7 @@ async function initHomepage() {
                         },
                         {
                             "@type": "Organization",
-                            "name": "NewsHub by Dharmanagar Live",
+                            "name": "Forex Times",
                             "url": "https://www.dharmanagarlive.com/",
                             "logo": "https://www.dharmanagarlive.com/images/logo.png", // Apne logo ka sahi URL daalein
                             "sameAs": [

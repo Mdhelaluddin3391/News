@@ -1,7 +1,7 @@
-const AUTH_STORAGE_KEY = 'newsHub_currentUser';
-const TOKEN_KEY = 'newsHub_accessToken';
-const REFRESH_KEY = 'newsHub_refreshToken';
-const BOOKMARKS_KEY = 'newsHub_bookmarks';
+const AUTH_STORAGE_KEY = 'forexTimes_currentUser';
+const TOKEN_KEY = 'forexTimes_accessToken';
+const REFRESH_KEY = 'forexTimes_refreshToken';
+const BOOKMARKS_KEY = 'forexTimes_bookmarks';
 const API_BASE_URL_AUTH = CONFIG.API_BASE_URL;
 
 async function registerUser(name, email, password) {

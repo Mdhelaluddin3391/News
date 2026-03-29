@@ -116,7 +116,7 @@ def auto_send_newsletter_on_publish(sender, instance, created, **kwargs):
                         <a href="{article_url}" class="btn" style="color: #ffffff;">Read Full Story</a>
                     </div>
                     <div class="footer">
-                        You received this because you are subscribed to NewsHub Breaking Alerts.<br>
+                        You received this because you are subscribed to Forex Times Breaking Alerts.<br>
                         <a href="{settings.FRONTEND_URL}/unsubscribe.html" style="color: #d32f2f;">Unsubscribe</a>
                     </div>
                 </div>
@@ -136,7 +136,7 @@ def handle_social_media_autopost(sender, instance, created, **kwargs):
     if instance.status == 'published':
         article_url = f"{settings.FRONTEND_URL}/article.html?id={instance.id}"
         short_desc = instance.description[:100] + "..." if instance.description else ""
-        message = f"🚨 {instance.title}\n\n📝 {short_desc}\n\n🔗 Pura padhne ke liye click karein:\n{article_url}\n\n#NewsHub #DharmanagarLive #LatestNews"
+        message = f"🚨 {instance.title}\n\n📝 {short_desc}\n\n🔗 Pura padhne ke liye click karein:\n{article_url}\n\n#ForexTimes #LatestNews"
 
         # 1. FACEBOOK AUTO POST
         if instance.post_to_facebook:

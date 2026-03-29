@@ -26,7 +26,7 @@ function renderSavedArticles(articles) {
         
         const title = article.title || 'Untitled';
         const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';
-        const source = article.source_name || 'NewsHub';
+        const source = article.source_name || 'Forex Times';
         const date = article.published_at ? formatSavedDate(article.published_at) : 'Unknown date';
         const articleId = article.id || '';
 
@@ -69,7 +69,7 @@ function renderSavedArticles(articles) {
 async function fetchSavedArticlesData() {
     showSavedLoader();
     // Bookmark IDs local cache se li jayengi jo auth.js fetch karta hai
-    const bookmarks = JSON.parse(localStorage.getItem('newsHub_bookmarks') || '[]');
+    const bookmarks = JSON.parse(localStorage.getItem('forexTimes_bookmarks') || '[]');
     
     if (bookmarks.length === 0) {
         renderSavedArticles([]);

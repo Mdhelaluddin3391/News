@@ -76,7 +76,7 @@ class ForgotPasswordView(APIView):
             <body>
                 <div class="email-container">
                     <div class="header">
-                        <h1>📰 NewsHub</h1>
+                        <h1>📰 Forex Times</h1>
                     </div>
                     <div class="content">
                         <h2 style="color: #1a365d;">Password Reset Request</h2>
@@ -88,7 +88,7 @@ class ForgotPasswordView(APIView):
                         <p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you did not request this, please ignore this email. Your account is safe.</p>
                     </div>
                     <div class="footer">
-                        &copy; 2026 NewsHub by Dharmanagar Live. All rights reserved.
+                        &copy; 2026 Forex Times. All rights reserved.
                     </div>
                 </div>
             </body>
@@ -98,7 +98,7 @@ class ForgotPasswordView(APIView):
 
 
             send_mail(
-                subject='Password Reset Request - NewsHub',
+                subject='Password Reset Request - Forex Times',
                 message=f'Hello {user.name},\n\nClick the link below to reset your password:\n{reset_link}', # Plain text as fallback
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],

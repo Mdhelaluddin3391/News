@@ -2,7 +2,7 @@ const PROFILE_API_URL = `${CONFIG.API_BASE_URL}/users/profile/`;
 
 document.addEventListener('DOMContentLoaded', () => {
     const user = getCurrentUser(); // Using function from auth.js
-    const token = localStorage.getItem('newsHub_accessToken');
+    const token = localStorage.getItem('forexTimes_accessToken');
     
     // Agar user logged in nahi hai ya token nahi hai
     if (!user || !token) {
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const updatedUser = await response.json();
                 
                 // Update current session data in localStorage
-                localStorage.setItem('newsHub_currentUser', JSON.stringify(updatedUser));
+                localStorage.setItem('forexTimes_currentUser', JSON.stringify(updatedUser));
                 
                 // Header UI me naam update karne ke liye
                 if (typeof updateAuthUI === 'function') updateAuthUI();

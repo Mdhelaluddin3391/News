@@ -71,7 +71,7 @@ function renderArticle(article) {
     const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
     
     const title = article.title || 'Untitled';
-    const source = article.source_name || 'NewsHub';
+    const source = article.source_name || 'Forex Times';
     const date = article.published_at ? formatArticleDate(article.published_at) : 'Unknown date';
     const description = article.description || '';
     const content = article.content || article.description || '';
@@ -104,7 +104,7 @@ function renderArticle(article) {
 
     // --- ADVANCED ARTICLE & BREADCRUMB SCHEMA MARKUP ---
     if (typeof injectSchema === 'function') {
-        const authorName = article.author ? article.author.name : 'NewsHub Staff';
+        const authorName = article.author ? article.author.name : 'Forex Times Staff';
         
         // 1. News Article Schema
         const articleSchema = {
@@ -124,7 +124,7 @@ function renderArticle(article) {
             },
             "publisher": {
                 "@type": "Organization",
-                "name": "NewsHub by Dharmanagar Live",
+                "name": "Forex Times",
                 "logo": {
                     "@type": "ImageObject",
                     "url": `${window.location.origin}/images/logo.png`

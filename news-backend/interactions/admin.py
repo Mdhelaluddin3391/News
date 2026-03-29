@@ -58,9 +58,9 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
             self.message_user(request, "Error: Bhejne ke liye koi published article nahi mila.", level='error')
             return
 
-        subject = "📰 Today's Top Stories from NewsHub"
+        subject = "📰 Today's Top Stories from Forex Times"
         message = "Hello!\n\nHere are the latest top stories for you:\n\n"
-        html_content = f"<html><body><h2>📰 NewsHub Top Stories</h2><p>Hello!</p>"
+        html_content = f"<html><body><h2>📰 Forex Times Top Stories</h2><p>Hello!</p>"
         
         for article in latest_articles:
             article_url = f"{settings.FRONTEND_URL}/article.html?id={article.id}"

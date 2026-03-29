@@ -45,7 +45,7 @@ async function subscribeToPush() {
         const subData = JSON.parse(JSON.stringify(subscription));
 
         // 5. Backend (Django) API par bhejein
-        const token = localStorage.getItem('newsHub_accessToken'); // Optional: Agar user logged in hai
+        const token = localStorage.getItem('forexTimes_accessToken'); // Optional: Agar user logged in hai
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 

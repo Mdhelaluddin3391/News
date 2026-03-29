@@ -36,7 +36,7 @@ function renderTagArticles(articles) {
                     <h3 class="article-title">${article.title}</h3>
                     <p class="article-description">${description}</p>
                     <div class="article-meta">
-                        <span class="article-source">${article.source_name || 'NewsHub'}</span>
+                        <span class="article-source">${article.source_name || 'Forex Times'}</span>
                         <span class="article-date">${formatTagDate(article.published_at)}</span>
                         <a href="article.html?id=${article.id}" class="read-more">Read more →</a>
                         ${saveBtn}
@@ -120,8 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // === NAYA CODE YAHAN ADD KAREIN (Fallback) ===
         if (typeof updateSEOMetaTags === 'function') {
             updateSEOMetaTags(
-                `Tags - NewsHub`, 
-                `Browse our collection of news articles by topics and tags on NewsHub.`, 
+                `Tags - Forex Times`, 
+                `Browse our collection of news articles by topics and tags on Forex Times.`, 
                 'images/default-news.png', 
                 window.location.href
             );
@@ -143,8 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // === NAYA CODE YAHAN ADD KAREIN (SEO Update for specific tag) ===
     if (typeof updateSEOMetaTags === 'function') {
         updateSEOMetaTags(
-            `#${displayTagName} - Tagged Articles | NewsHub`, 
-            `Explore the latest news, updates, and deep-dive articles tagged with #${displayTagName} on NewsHub.`, 
+            `#${displayTagName} - Tagged Articles | Forex Times`, 
+            `Explore the latest news, updates, and deep-dive articles tagged with #${displayTagName} on Forex Times.`, 
             '', 
             window.location.href,
             `${displayTagName} news, latest ${displayTagName} updates, #${displayTagName}` // <-- NAYA: Keywords

@@ -3,11 +3,14 @@
 # Agar koi command fail hoti hai toh script wahi ruk jayegi
 set -e
 
-echo "Applying database migrations..."
-python manage.py migrate --noinput
+# Sirf tabhi migrate karo jab RUN_MIGRATIONS true ho
+if [ "$RUN_MIGRATIONS" = "true" ]; then
+    echo "Applying database migrations..."
+    python manage.py migrate --noinput
 
-echo "Checking/Creating Superuser..."
-python create_superuser.py
+    echo "Checking/Creating Superuser..."
+    python create_superuser.py
+fi
 
 # Skip collectstatic during development
 if [ "$SKIP_COLLECTSTATIC" != "true" ]; then

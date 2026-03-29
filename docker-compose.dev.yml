@@ -37,6 +37,7 @@ services:
       REDIS_HOST: redis
       REDIS_URL: redis://redis:6379/0 
       SKIP_COLLECTSTATIC: "true"
+      RUN_MIGRATIONS: "true"
     volumes:
       - ./backend:/app
       - static_volume:/app/staticfiles

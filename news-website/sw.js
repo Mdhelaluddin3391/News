@@ -1,70 +1,148 @@
-const STATIC_CACHE = 'forex-times-static-v4';
-const API_CACHE = 'forex-times-api-v2';
-const CORE_ASSETS = [
-    './',
-    './index.html',
-    './article.html',
-    './search.html',
-    './login.html',
-    './register.html',
-    './profile.html',
-    './saved.html',
-    './components/header.html',
-    './components/footer.html',
-    './css/style.css',
-    './css/article.css',
-    './css/auth.css',
-    './css/search.css',
-    './css/comments.css',
-    './js/config.js',
-    './js/auth.js',
-    './js/script.js',
-    './js/homepage.js',
-    './js/index-ui.js',
-    './js/loadComponents.js',
-    './js/search.js',
-    './js/article.js',
-    './js/comments.js',
-    './js/push-notifications.js',
-    './images/default-news.png',
-    './images/default-avatar.png'
+const CACHE_VERSION = 'v5';
+const SHELL_CACHE = `forex-times-shell-${CACHE_VERSION}`;
+const PAGE_CACHE = `forex-times-pages-${CACHE_VERSION}`;
+const ASSET_CACHE = `forex-times-assets-${CACHE_VERSION}`;
+const API_CACHE = `forex-times-api-${CACHE_VERSION}`;
+const OFFLINE_FALLBACK_URL = '/index.html';
+const PRECACHE_URLS = [
+    '/',
+    '/index.html',
+    '/404.html',
+    '/about.html',
+    '/advertise.html',
+    '/article.html',
+    '/author.html',
+    '/authors.html',
+    '/careers.html',
+    '/contact.html',
+    '/edit-profile.html',
+    '/faq.html',
+    '/forgot-password.html',
+    '/login.html',
+    '/privacy.html',
+    '/profile.html',
+    '/register.html',
+    '/reset-password.html',
+    '/saved.html',
+    '/search.html',
+    '/tag.html',
+    '/terms.html',
+    '/unsubscribe.html',
+    '/verify-email.html',
+    '/manifest.json',
+    '/robots.txt',
+    '/components/header.html',
+    '/components/footer.html',
+    '/css/article.css',
+    '/css/auth.css',
+    '/css/author.css',
+    '/css/authors.css',
+    '/css/comments.css',
+    '/css/edit-profile.css',
+    '/css/extra-pages.css',
+    '/css/faq.css',
+    '/css/pages.css',
+    '/css/search.css',
+    '/css/style.css',
+    '/js/ad-manager.js',
+    '/js/advertise.js',
+    '/js/article.js',
+    '/js/auth.js',
+    '/js/author.js',
+    '/js/authors.js',
+    '/js/careers.js',
+    '/js/comments.js',
+    '/js/config.js',
+    '/js/contact.js',
+    '/js/edit-profile.js',
+    '/js/faq.js',
+    '/js/forgot-password.js',
+    '/js/homepage.js',
+    '/js/index-ui.js',
+    '/js/loadComponents.js',
+    '/js/login.js',
+    '/js/poll.js',
+    '/js/profile.js',
+    '/js/push-notifications.js',
+    '/js/register.js',
+    '/js/related.js',
+    '/js/reset-password.js',
+    '/js/saved.js',
+    '/js/script.js',
+    '/js/search.js',
+    '/js/tag.js',
+    '/js/unsubscribe.js',
+    '/js/verify-email.js',
+    '/images/default-avatar.png',
+    '/images/default-news.png'
 ];
+const MANAGED_CACHES = [SHELL_CACHE, PAGE_CACHE, ASSET_CACHE, API_CACHE];
 
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(STATIC_CACHE)
-            .then((cache) => cache.addAll(CORE_ASSETS))
-            .then(() => self.skipWaiting())
-    );
+    event.waitUntil((async () => {
+        const cache = await caches.open(SHELL_CACHE);
+        await cache.addAll(PRECACHE_URLS);
+        await self.skipWaiting();
+    })());
 });
 
 self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((keys) => Promise.all(
+    event.waitUntil((async () => {
+        const keys = await caches.keys();
+        await Promise.all(
             keys
-                .filter((key) => ![STATIC_CACHE, API_CACHE].includes(key))
+                .filter((key) => !MANAGED_CACHES.includes(key))
                 .map((key) => caches.delete(key))
-        )).then(() => self.clients.claim())
-    );
+        );
+
+        if ('navigationPreload' in self.registration) {
+            await self.registration.navigationPreload.enable();
+        }
+
+        await self.clients.claim();
+    })());
 });
 
 function isApiRequest(url) {
-    return url.pathname.includes('/api/');
+    return url.origin === self.location.origin && url.pathname.startsWith('/api/');
 }
 
-function isStaticAssetRequest(request) {
-    return ['style', 'script', 'image', 'font'].includes(request.destination);
+function isPageRequest(request) {
+    return request.mode === 'navigate' || request.destination === 'document';
 }
 
-async function networkFirst(request, cacheName, fallbackUrl) {
+function isStaticAssetRequest(request, url) {
+    return (
+        url.origin === self.location.origin &&
+        ['style', 'script', 'image', 'font'].includes(request.destination)
+    );
+}
+
+async function putInCache(cacheName, request, response) {
+    if (!response || !response.ok || response.type === 'error') {
+        return response;
+    }
+
+    const cache = await caches.open(cacheName);
+    await cache.put(request, response.clone());
+    return response;
+}
+
+async function networkFirst(request, cacheName, fallbackUrl, preloadResponsePromise) {
     const cache = await caches.open(cacheName);
 
     try {
-        const freshResponse = await fetch(request);
-        if (freshResponse && freshResponse.ok) {
-            cache.put(request, freshResponse.clone());
+        const preloadResponse = preloadResponsePromise ? await preloadResponsePromise : null;
+        if (preloadResponse) {
+            await cache.put(request, preloadResponse.clone());
+            return preloadResponse;
         }
-        return freshResponse;
+
+        const networkResponse = await fetch(request);
+        if (networkResponse.ok) {
+            await cache.put(request, networkResponse.clone());
+        }
+        return networkResponse;
     } catch (_error) {
         const cachedResponse = await cache.match(request);
         if (cachedResponse) {
@@ -78,7 +156,13 @@ async function networkFirst(request, cacheName, fallbackUrl) {
             }
         }
 
-        throw _error;
+        return new Response('Offline', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: {
+                'Content-Type': 'text/plain; charset=utf-8'
+            }
+        });
     }
 }
 
@@ -86,14 +170,11 @@ async function staleWhileRevalidate(request, cacheName) {
     const cache = await caches.open(cacheName);
     const cachedResponse = await cache.match(request);
 
-    const networkFetch = fetch(request).then((response) => {
-        if (response && response.ok) {
-            cache.put(request, response.clone());
-        }
-        return response;
-    }).catch(() => cachedResponse);
+    const networkPromise = fetch(request)
+        .then((response) => putInCache(cacheName, request, response))
+        .catch(() => cachedResponse);
 
-    return cachedResponse || networkFetch;
+    return cachedResponse || networkPromise;
 }
 
 self.addEventListener('fetch', (event) => {
@@ -104,9 +185,17 @@ self.addEventListener('fetch', (event) => {
     }
 
     const url = new URL(request.url);
+    if (!['http:', 'https:'].includes(url.protocol)) {
+        return;
+    }
 
-    if (request.mode === 'navigate') {
-        event.respondWith(networkFirst(request, STATIC_CACHE, './index.html'));
+    if (isPageRequest(request)) {
+        event.respondWith(networkFirst(
+            request,
+            PAGE_CACHE,
+            OFFLINE_FALLBACK_URL,
+            event.preloadResponse
+        ));
         return;
     }
 
@@ -115,51 +204,54 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    if (isStaticAssetRequest(request) || url.origin === self.location.origin) {
-        event.respondWith(staleWhileRevalidate(request, STATIC_CACHE));
+    if (isStaticAssetRequest(request, url) || url.origin === self.location.origin) {
+        event.respondWith(staleWhileRevalidate(request, ASSET_CACHE));
     }
 });
 
-self.addEventListener('push', function(event) {
-    if (event.data) {
-        const data = event.data.json();
-
-        const options = {
-            body: data.body,
-            icon: data.icon || '',
-            badge: '',
-            vibrate: [200, 100, 200, 100, 200, 100, 200],
-            requireInteraction: true,
-            data: {
-                url: data.url || '/'
-            },
-            actions: [
-                { action: 'open_url', title: 'Read Now' }
-            ]
-        };
-
-        event.waitUntil(
-            self.registration.showNotification(data.title, options)
-        );
+self.addEventListener('push', (event) => {
+    if (!event.data) {
+        return;
     }
+
+    let data = {};
+    try {
+        data = event.data.json();
+    } catch (_error) {
+        data = { title: 'Forex Times', body: event.data.text() };
+    }
+
+    const options = {
+        body: data.body || 'Breaking news is available.',
+        icon: data.icon || '/images/default-news.png',
+        badge: data.badge || '/images/default-avatar.png',
+        vibrate: [200, 100, 200, 100, 200, 100, 200],
+        requireInteraction: true,
+        data: {
+            url: data.url || '/'
+        },
+        actions: [
+            { action: 'open_url', title: 'Read Now' }
+        ]
+    };
+
+    event.waitUntil(self.registration.showNotification(data.title || 'Forex Times', options));
 });
 
-self.addEventListener('notificationclick', function(event) {
+self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const urlToOpen = event.notification.data.url;
+    const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
 
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(windowClients) {
-            for (let i = 0; i < windowClients.length; i++) {
-                const client = windowClients[i];
-                if (client.url === urlToOpen && 'focus' in client) {
-                    return client.focus();
-                }
+    event.waitUntil((async () => {
+        const windowClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+        for (const client of windowClients) {
+            if (client.url === urlToOpen && 'focus' in client) {
+                return client.focus();
             }
+        }
 
-            if (clients.openWindow) {
-                return clients.openWindow(urlToOpen);
-            }
-        })
-    );
+        if (clients.openWindow) {
+            return clients.openWindow(urlToOpen);
+        }
+    })());
 });

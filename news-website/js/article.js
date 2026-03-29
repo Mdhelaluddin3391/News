@@ -317,7 +317,6 @@ function initLiveUpdates(articleId) {
         liveSocket = new WebSocket(wsUrl);
 
         liveSocket.onopen = function(e) {
-            console.log("✅ WebSocket connected for real-time live updates");
             const indicator = document.querySelector('.auto-refresh-indicator');
             if (indicator) {
                 indicator.innerHTML = '<i class="fas fa-bolt" style="color: #f59e0b;"></i> Real-time updates active';
@@ -332,15 +331,12 @@ function initLiveUpdates(articleId) {
         };
 
         liveSocket.onclose = function(e) {
-            console.warn("⚠️ WebSocket closed. Falling back to polling...");
             fallbackToPolling(articleId);
         };
 
         liveSocket.onerror = function(e) {
-            console.error("❌ WebSocket error. Falling back to polling...");
-            // WebSocket ko close karenge taaki onclose event chal jaye aur fallback start ho
-            if(liveSocket.readyState !== WebSocket.CLOSED) {
-                liveSocket.close(); 
+            if (liveSocket.readyState !== WebSocket.CLOSED) {
+                liveSocket.close();
             }
         };
     } catch (err) {
@@ -452,7 +448,6 @@ window.addEventListener('beforeunload', () => {
     // 2. WebSocket connection securely close karein
     if (typeof liveSocket !== 'undefined' && liveSocket && liveSocket.readyState === WebSocket.OPEN) {
         liveSocket.close();
-        console.log("WebSocket connection closed cleanly on page leave.");
     }
 });
 

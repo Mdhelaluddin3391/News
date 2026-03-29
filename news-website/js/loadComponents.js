@@ -224,9 +224,6 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
     });
 }
 
-document.addEventListener('DOMContentLoaded', loadComponents);
-
-
 // ==================== GOOGLE ANALYTICS (GA4) INJECTOR ====================
 async function injectGoogleAnalytics() {
     try {
@@ -252,8 +249,6 @@ async function injectGoogleAnalytics() {
                 gtag('config', '${trackingId}');
             `;
             document.head.appendChild(script2);
-            
-            console.log(`✅ Google Analytics Initialized with ID: ${trackingId}`);
         }
     } catch (error) {
         if (typeof window.reportFrontendError === 'function') {

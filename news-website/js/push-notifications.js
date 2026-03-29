@@ -28,7 +28,7 @@ async function registerSiteServiceWorker() {
     }
 
     if (!siteServiceWorkerRegistration) {
-        siteServiceWorkerRegistration = await navigator.serviceWorker.register('sw.js');
+        siteServiceWorkerRegistration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     }
 
     return siteServiceWorkerRegistration;
@@ -43,7 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function subscribeToPush() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.log('Push notifications are not supported by this browser.');
+        if (typeof showToast === 'function') {
+            showToast('Push notifications are not supported on this device.', 'info');
+        }
         return;
     }
 
@@ -55,7 +57,9 @@ async function subscribeToPush() {
 
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
-            console.log('Notification permission denied.');
+            if (typeof showToast === 'function') {
+                showToast('Notification permission was not granted.', 'info');
+            }
             return;
         }
 
@@ -76,7 +80,6 @@ async function subscribeToPush() {
             })
         });
 
-        console.log("Successfully subscribed to push notifications!");
         if (typeof showToast === 'function') {
             showToast("Successfully subscribed to Breaking News alerts!", "success");
         }

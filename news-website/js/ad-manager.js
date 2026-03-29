@@ -15,7 +15,6 @@ async function loadAds() {
         const response = await fetch(ADS_API_URL);
         
         if (!response.ok) {
-            console.log("No active ads or API error");
             return;
         }
 

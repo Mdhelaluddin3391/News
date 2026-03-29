@@ -22,6 +22,8 @@ def _get_list_env(name, default=''):
 # Security and Core Settings
 SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = _get_bool_env('DEBUG', False)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = _get_bool_env('USE_X_FORWARDED_HOST', not DEBUG)
 if not DEBUG:
     # HTTP requests ne automatically HTTPS par redirect karse
     SECURE_SSL_REDIRECT = True
@@ -174,7 +176,14 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 USE_S3 = _get_bool_env('USE_S3', False)
 
@@ -188,17 +197,27 @@ if USE_S3:
         'AWS_S3_CUSTOM_DOMAIN',
         f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
     )
-    
-    # S3 Settings
+
+    AWS_S3_SIGNATURE_VERSION = 's3v4'
+    AWS_S3_ADDRESSING_STYLE = 'virtual'
     AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = 'public-read'
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = _get_bool_env('AWS_QUERYSTRING_AUTH', False)
+    AWS_LOCATION = os.getenv('AWS_LOCATION', 'media')
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',
     }
 
-    # Media Files ko S3 par point karein
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    STORAGES['default'] = {
+        'BACKEND': 'storages.backends.s3.S3Storage',
+        'OPTIONS': {
+            'location': AWS_LOCATION,
+            'default_acl': None,
+            'file_overwrite': AWS_S3_FILE_OVERWRITE,
+            'querystring_auth': AWS_QUERYSTRING_AUTH,
+        },
+    }
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
 else:
     # Local development ke liye
     MEDIA_URL = '/media/'

@@ -15,23 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.contrib.auth import get_user_model
+from django.contrib.sitemaps.views import sitemap
 from django.conf import settings
 from django.conf.urls.static import static
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.urls import include, path
 from rest_framework import status
 from rest_framework.response import Response
-from interactions.views import SubscribeNewsletterView, UnsubscribeNewsletterView
-from core.views import ContactMessageCreateView
-from django.contrib.sitemaps.views import sitemap
-from news.sitemaps import ArticleSitemap, CategorySitemap
-from news.feeds import LatestArticlesFeed
-from core.views import ContactMessageCreateView, SiteSettingAPIView
-from django.utils.decorators import method_decorator
 from rest_framework.throttling import ScopedRateThrottle
-from news.sitemaps import ArticleSitemap, CategorySitemap, AuthorSitemap, TagSitemap, StaticViewSitemap
-from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+
+from core.views import ContactMessageCreateView, SiteSettingAPIView
+from interactions.views import SubscribeNewsletterView, UnsubscribeNewsletterView
+from news.feeds import LatestArticlesFeed
+from news.sitemaps import ArticleSitemap, AuthorSitemap, CategorySitemap, StaticViewSitemap, TagSitemap
 
 User = get_user_model()
 
@@ -47,30 +44,27 @@ sitemaps = {
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'auth'
+    throttle_scope = "auth"
 
     def post(self, request, *args, **kwargs):
-        """Override to check if user has verified their email"""
         response = super().post(request, *args, **kwargs)
-        
-        # If login was successful, check if email is verified
-        if response.status_code == 200:
-            email = request.data.get('email')
-            if email:
-                try:
-                    user = User.objects.get(email=email)
-                    if not user.is_email_verified:
-                        return Response(
-                            {
-                                "detail": "Email not verified. Please check your email for the verification link.",
-                                "error_code": "email_not_verified",
-                                "email": email
-                            },
-                            status=status.HTTP_403_FORBIDDEN
-                        )
-                except User.DoesNotExist:
-                    pass
-        
+
+        email = (request.data.get("email") or "").strip()
+        password = request.data.get("password") or ""
+        if not email or not password:
+            return response
+
+        user = User.objects.filter(email__iexact=email).first()
+        if user and not user.is_email_verified and user.check_password(password):
+            return Response(
+                {
+                    "detail": "Email not verified. Please check your inbox for the verification link.",
+                    "error_code": "email_not_verified",
+                    "email": user.email,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         return response
 
 urlpatterns = [
@@ -81,15 +75,10 @@ urlpatterns = [
     path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
     path('rss/', LatestArticlesFeed(), name='rss_feed'),
     
-    # JWT Authentication Endpoints (Login)
-    path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    
     # App API Routes
     path('api/users/', include('users.urls')),
     path('api/news/', include('news.urls')),
     path('api/interactions/', include('interactions.urls')),
-    # path('api/interactions/', include('interactions.urls')), # Ise next step mein banayenge
     path('api/newsletter/subscribe/', SubscribeNewsletterView.as_view(), name='newsletter_subscribe'),
     path('api/newsletter/unsubscribe/', UnsubscribeNewsletterView.as_view(), name='newsletter_unsubscribe'),
     path('api/contact/', ContactMessageCreateView.as_view(), name='contact_api'),

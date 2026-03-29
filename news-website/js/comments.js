@@ -1,19 +1,14 @@
-// js/comments.js
-// ==================== COMMENTS MODULE ====================
-// Depends on auth.js (getCurrentUser)
-
-// Real Django backend endpoint for comments
 const COMMENTS_API_URL = `${CONFIG.API_BASE_URL}/interactions/comments/`;
 const COMMENT_REPORTS_API_URL = `${CONFIG.API_BASE_URL}/interactions/reports/comments/`;
 
-// Fetch comments for an article
 async function fetchComments(articleId) {
     try {
         const response = await fetch(`${COMMENTS_API_URL}?article_id=${articleId}`);
-        if (!response.ok) throw new Error('Failed to fetch comments');
-        
+        if (!response.ok) {
+            throw new Error('Failed to fetch comments.');
+        }
+
         const data = await response.json();
-        // Return results array if paginated, otherwise the whole data array
         return data.results || data;
     } catch (error) {
         console.error('Error fetching comments:', error);
@@ -21,10 +16,11 @@ async function fetchComments(articleId) {
     }
 }
 
-// Post a new comment
 async function postComment(articleId, text) {
     const token = localStorage.getItem('forexTimes_accessToken');
-    if (!token) throw new Error('You must be logged in to comment.');
+    if (!token) {
+        throw new Error('You must be logged in to comment.');
+    }
 
     const response = await fetch(COMMENTS_API_URL, {
         method: 'POST',
@@ -34,21 +30,23 @@ async function postComment(articleId, text) {
         },
         body: JSON.stringify({
             article: articleId,
-            text: text
+            text
         })
     });
 
+    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-        throw new Error('Failed to post comment. Please try again.');
+        throw new Error(data.detail || 'Failed to post comment. Please try again.');
     }
-    
-    return await response.json();
+
+    return data;
 }
 
-// Delete a comment
 async function deleteComment(commentId) {
     const token = localStorage.getItem('forexTimes_accessToken');
-    if (!token) throw new Error('You must be logged in.');
+    if (!token) {
+        throw new Error('You must be logged in.');
+    }
 
     const response = await fetch(`${COMMENTS_API_URL}${commentId}/`, {
         method: 'DELETE',
@@ -60,13 +58,15 @@ async function deleteComment(commentId) {
     if (!response.ok) {
         throw new Error('Failed to delete comment.');
     }
+
     return true;
 }
 
-// NEW: Report a comment
 async function reportComment(commentId, reason, description) {
     const token = localStorage.getItem('forexTimes_accessToken');
-    if (!token) throw new Error('You must be logged in to report.');
+    if (!token) {
+        throw new Error('You must be logged in to report comments.');
+    }
 
     const response = await fetch(COMMENT_REPORTS_API_URL, {
         method: 'POST',
@@ -76,254 +76,276 @@ async function reportComment(commentId, reason, description) {
         },
         body: JSON.stringify({
             comment: commentId,
-            reason: reason,
-            description: description
+            reason,
+            description
         })
     });
 
-    const data = await response.json();
-    
+    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-        if (data.detail) {
-            throw new Error(data.detail);
-        }
-        throw new Error('Failed to report comment.');
+        const errorMessage = data.detail || data.comment || data.non_field_errors || 'Failed to report comment.';
+        throw new Error(Array.isArray(errorMessage) ? errorMessage[0] : errorMessage);
     }
+
     return data;
 }
 
-// ==================== Custom Delete Confirmation Popup ====================
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function getCommentFeedbackElement() {
+    return document.getElementById('comment-feedback') || document.getElementById('comment-feedback-toast');
+}
+
+function showCommentFeedback(message, type = 'success') {
+    const feedback = getCommentFeedbackElement();
+    if (!feedback) {
+        return;
+    }
+
+    feedback.textContent = message;
+    const baseClass = feedback.id === 'comment-feedback-toast'
+        ? 'comment-feedback comment-feedback-toast'
+        : 'comment-feedback';
+    feedback.className = `${baseClass} comment-feedback-${type}`;
+    feedback.style.display = 'block';
+
+    window.clearTimeout(showCommentFeedback.timeoutId);
+    showCommentFeedback.timeoutId = window.setTimeout(() => {
+        feedback.style.display = 'none';
+    }, 4000);
+}
+
 function showCustomConfirm(message, onConfirmCallback) {
-    // Agar pehle se popup bana hua hai toh use nikal do
-    let existingOverlay = document.getElementById('custom-confirm-overlay');
+    const existingOverlay = document.getElementById('custom-confirm-overlay');
     if (existingOverlay) {
         existingOverlay.remove();
     }
 
-    // Naya popup HTML create karein
     const overlay = document.createElement('div');
     overlay.id = 'custom-confirm-overlay';
     overlay.className = 'custom-modal-overlay';
-    
     overlay.innerHTML = `
         <div class="custom-modal-box">
             <h3>Delete Comment</h3>
-            <p>${message}</p>
+            <p>${escapeHtml(message)}</p>
             <div class="custom-modal-actions">
                 <button class="custom-modal-btn custom-modal-cancel" id="custom-modal-cancel-btn">Cancel</button>
                 <button class="custom-modal-btn custom-modal-delete" id="custom-modal-delete-btn">Delete</button>
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(overlay);
 
-    // Cancel Button logic
     document.getElementById('custom-modal-cancel-btn').addEventListener('click', () => {
         overlay.classList.remove('active');
-        setTimeout(() => overlay.remove(), 300); // Animation ke baad remove
+        setTimeout(() => overlay.remove(), 250);
     });
 
-    // Delete Button logic
     document.getElementById('custom-modal-delete-btn').addEventListener('click', () => {
         overlay.classList.remove('active');
-        setTimeout(() => overlay.remove(), 300);
-        onConfirmCallback(); // Delete action perform karein
+        setTimeout(() => overlay.remove(), 250);
+        onConfirmCallback();
     });
 
-    // Thoda sa delay dekar animation trigger karein
-    setTimeout(() => {
-        overlay.classList.add('active');
-    }, 10);
+    setTimeout(() => overlay.classList.add('active'), 10);
 }
 
-// Render comments list and form
+function buildReportModal() {
+    const template = document.getElementById('report-comment-modal-template');
+    const overlay = document.createElement('div');
+    overlay.id = 'report-comment-overlay';
+    overlay.className = 'custom-modal-overlay';
+
+    if (template) {
+        overlay.appendChild(template.content.cloneNode(true));
+    } else {
+        overlay.innerHTML = `
+            <div class="custom-modal-box report-modal-box">
+                <h3>Report Flag</h3>
+                <p class="report-modal-copy">Flag comments that are spam, abusive, or misleading. Our moderation team will review them.</p>
+            </div>
+        `;
+    }
+
+    return overlay;
+}
+
 async function renderComments(articleId, containerId) {
     const container = document.getElementById(containerId);
-    if (!container) return;
+    if (!container) {
+        return;
+    }
 
     const user = getCurrentUser();
     const comments = await fetchComments(articleId);
 
-    if (comments.length === 0) {
-        container.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment!</p>';
+    if (!comments.length) {
+        container.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment.</p>';
     } else {
-        let html = '';
-        comments.forEach(c => {
-            const authorId = c.user_detail ? c.user_detail.id : null;
-            const authorName = c.user_detail ? c.user_detail.name : 'Unknown User';
+        container.innerHTML = comments.map((comment) => {
+            const authorId = comment.user_detail ? comment.user_detail.id : null;
+            const authorName = comment.user_detail ? comment.user_detail.name : 'Unknown User';
             const isAuthor = user && authorId === user.id;
-            
-            html += `
-                <div class="comment" data-comment-id="${c.id}">
+
+            return `
+                <article class="comment" data-comment-id="${comment.id}">
                     <div class="comment-header">
-                        <span class="comment-author">${authorName}</span>
-                        <span class="comment-date">${new Date(c.created_at).toLocaleString()}</span>
+                        <span class="comment-author">${escapeHtml(authorName)}</span>
+                        <span class="comment-date">${new Date(comment.created_at).toLocaleString()}</span>
                     </div>
-                    <div class="comment-text">${c.text}</div>
+                    <div class="comment-text">${escapeHtml(comment.text)}</div>
                     <div class="comment-actions">
                         ${isAuthor ? `
-                            <button class="delete-comment" data-comment-id="${c.id}">
+                            <button type="button" class="delete-comment" data-comment-id="${comment.id}">
                                 <i class="fas fa-trash-alt"></i> Delete
                             </button>
                         ` : ''}
-                        ${user ? `
-                            <button class="report-comment" data-comment-id="${c.id}">
-                                <i class="fas fa-flag"></i> Report
+                        ${user && !isAuthor ? `
+                            <button type="button" class="report-comment" data-comment-id="${comment.id}">
+                                <i class="fas fa-flag"></i> Report Flag
                             </button>
                         ` : ''}
                     </div>
-                </div>
+                </article>
             `;
-        });
-        container.innerHTML = html;
+        }).join('');
 
-        // Attach delete handlers with Custom Modal
-        container.querySelectorAll('.delete-comment').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const commentId = e.target.closest('.delete-comment').dataset.commentId;
-                
-                // Puraana confirm box hata kar naya wala use kiya
-                showCustomConfirm("Are you sure you want to delete this comment? This action cannot be undone.", async () => {
+        container.querySelectorAll('.delete-comment').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                const actionButton = event.currentTarget;
+                const commentId = actionButton.dataset.commentId;
+
+                showCustomConfirm('Are you sure you want to delete this comment? This action cannot be undone.', async () => {
                     try {
-                        // Jab tak delete ho raha hai button text change kar do
-                        e.target.closest('.delete-comment').textContent = 'Deleting...';
+                        actionButton.disabled = true;
+                        actionButton.textContent = 'Deleting...';
                         await deleteComment(commentId);
-                        await renderComments(articleId, containerId); // Refresh comments after deleting
-                    } catch (err) {
-                        alert(err.message);
+                        showCommentFeedback('Comment deleted successfully.');
+                        await renderComments(articleId, containerId);
+                    } catch (error) {
+                        actionButton.disabled = false;
+                        actionButton.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
+                        showCommentFeedback(error.message, 'error');
                     }
                 });
             });
         });
 
-        // NEW: Attach report handlers
-        container.querySelectorAll('.report-comment').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const commentId = e.target.closest('.report-comment').dataset.commentId;
-                showReportModal(commentId, articleId, containerId);
+        container.querySelectorAll('.report-comment').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                showReportModal(event.currentTarget.dataset.commentId);
             });
         });
     }
 
-    // Render comment form or login prompt
-    const formContainer = document.getElementById('comment-form-container');
-    if (user) {
-        formContainer.innerHTML = `
-            <div class="comment-form">
-                <h4>Add a Comment</h4>
-                <textarea id="new-comment-text" rows="3" placeholder="Write your comment..."></textarea>
-                <button id="submit-comment">Post Comment</button>
-            </div>
-        `;
-        document.getElementById('submit-comment').addEventListener('click', async () => {
-            const text = document.getElementById('new-comment-text').value.trim();
-            if (!text) return;
-            
-            const btn = document.getElementById('submit-comment');
-            btn.disabled = true;
-            btn.textContent = 'Posting...';
-            
-            try {
-                await postComment(articleId, text);
-                document.getElementById('new-comment-text').value = '';
-                await renderComments(articleId, containerId); // Refresh comments after posting
-            } catch (err) {
-                alert(err.message);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Post Comment';
-            }
-        });
-    } else {
-        formContainer.innerHTML = `
-            <p class="login-prompt">
-                <a href="login.html?redirect=article.html?id=${articleId}">Log in</a> to post a comment.
-            </p>
-        `;
-    }
+    renderCommentForm(articleId, containerId, user);
 }
 
-// NEW: Show report comment modal
-function showReportModal(commentId, articleId, containerId) {
-    // Remove existing modal if any
-    let existingOverlay = document.getElementById('report-comment-overlay');
+function renderCommentForm(articleId, containerId, user) {
+    const formContainer = document.getElementById('comment-form-container');
+    if (!formContainer) {
+        return;
+    }
+
+    if (!user) {
+        formContainer.innerHTML = `
+            <p class="login-prompt">
+                <a href="login.html?redirect=article.html?id=${articleId}">Log in</a> to post a comment or flag one for review.
+            </p>
+        `;
+        return;
+    }
+
+    formContainer.innerHTML = `
+        <div class="comment-form">
+            <h4>Add a Comment</h4>
+            <textarea id="new-comment-text" rows="3" placeholder="Write your comment..."></textarea>
+            <button id="submit-comment" type="button">Post Comment</button>
+        </div>
+    `;
+
+    document.getElementById('submit-comment').addEventListener('click', async () => {
+        const textarea = document.getElementById('new-comment-text');
+        const button = document.getElementById('submit-comment');
+        const text = textarea.value.trim();
+
+        if (!text) {
+            showCommentFeedback('Please write a comment before posting.', 'error');
+            return;
+        }
+
+        button.disabled = true;
+        button.textContent = 'Posting...';
+
+        try {
+            await postComment(articleId, text);
+            textarea.value = '';
+            showCommentFeedback('Comment posted successfully.');
+            await renderComments(articleId, containerId);
+        } catch (error) {
+            showCommentFeedback(error.message, 'error');
+            button.disabled = false;
+            button.textContent = 'Post Comment';
+        }
+    });
+}
+
+function showReportModal(commentId) {
+    const existingOverlay = document.getElementById('report-comment-overlay');
     if (existingOverlay) {
         existingOverlay.remove();
     }
 
-    const overlay = document.createElement('div');
-    overlay.id = 'report-comment-overlay';
-    overlay.className = 'custom-modal-overlay';
-    
-    overlay.innerHTML = `
-        <div class="custom-modal-box" style="max-width: 500px;">
-            <h3>Report Comment</h3>
-            <form id="report-form">
-                <div style="margin-bottom: 15px;">
-                    <label for="report-reason" style="display: block; margin-bottom: 5px; font-weight: bold;">Reason:</label>
-                    <select id="report-reason" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        <option value="">-- Select a reason --</option>
-                        <option value="spam">Spam</option>
-                        <option value="offensive">Offensive Language</option>
-                        <option value="inappropriate">Inappropriate Content</option>
-                        <option value="harassment">Harassment</option>
-                        <option value="false_info">False Information</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label for="report-description" style="display: block; margin-bottom: 5px; font-weight: bold;">Additional Details (Optional):</label>
-                    <textarea id="report-description" rows="3" placeholder="Explain why you're reporting this comment..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;"></textarea>
-                </div>
-                <div class="custom-modal-actions">
-                    <button type="button" class="custom-modal-btn custom-modal-cancel" id="report-cancel-btn">Cancel</button>
-                    <button type="submit" class="custom-modal-btn custom-modal-submit" id="report-submit-btn" style="background-color: #ff9800; color: white;">Report</button>
-                </div>
-            </form>
-        </div>
-    `;
-    
+    const overlay = buildReportModal();
     document.body.appendChild(overlay);
 
-    // Cancel button
-    document.getElementById('report-cancel-btn').addEventListener('click', () => {
+    const cancelButton = document.getElementById('report-cancel-btn');
+    const form = document.getElementById('report-form');
+    const reasonField = document.getElementById('report-reason');
+    const descriptionField = document.getElementById('report-description');
+    const submitButton = document.getElementById('report-submit-btn');
+
+    if (!cancelButton || !form || !reasonField || !descriptionField || !submitButton) {
+        overlay.remove();
+        showCommentFeedback('Could not open the report form.', 'error');
+        return;
+    }
+
+    cancelButton.addEventListener('click', () => {
         overlay.classList.remove('active');
-        setTimeout(() => overlay.remove(), 300);
+        setTimeout(() => overlay.remove(), 250);
     });
 
-    // Submit form
-    document.getElementById('report-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const reason = document.getElementById('report-reason').value;
-        const description = document.getElementById('report-description').value;
-        
-        if (!reason) {
-            alert('Please select a reason');
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        if (!reasonField.value) {
+            showCommentFeedback('Please select a reason before submitting.', 'error');
             return;
         }
 
-        const submitBtn = document.getElementById('report-submit-btn');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting...';
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
 
         try {
-            await reportComment(commentId, reason, description);
-            
+            await reportComment(commentId, reasonField.value, descriptionField.value.trim());
             overlay.classList.remove('active');
-            setTimeout(() => overlay.remove(), 300);
-            
-            alert('✅ Thank you! Your report has been submitted. Our moderation team will review it shortly.');
+            setTimeout(() => overlay.remove(), 250);
+            showCommentFeedback('Report submitted. Our moderation team will review it shortly.');
         } catch (error) {
-            alert('❌ Error: ' + error.message);
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Report';
+            showCommentFeedback(error.message, 'error');
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit Flag';
         }
     });
 
-    // Trigger animation
-    setTimeout(() => {
-        overlay.classList.add('active');
-    }, 10);
+    setTimeout(() => overlay.classList.add('active'), 10);
 }

@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from .models import Bookmark, Comment, CommentReport
+
 from users.serializers import UserSerializer
-from .models import Poll, PollOption
-from .models import PushSubscription
+
+from .models import Bookmark, Comment, CommentReport, Poll, PollOption, PushSubscription
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -23,6 +23,26 @@ class CommentReportSerializer(serializers.ModelSerializer):
         fields = ('id', 'comment', 'comment_detail', 'reported_by_detail', 'reason', 'description', 
                   'is_reviewed', 'admin_action', 'admin_notes', 'created_at')
         read_only_fields = ('id', 'reported_by_detail', 'comment_detail', 'is_reviewed', 'admin_action', 'admin_notes', 'created_at')
+
+    def validate_comment(self, value):
+        if not value.is_active:
+            raise serializers.ValidationError('This comment is no longer available to report.')
+        return value
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        comment = attrs.get('comment')
+
+        if request is None or not request.user.is_authenticated:
+            return attrs
+
+        if comment.user_id == request.user.id:
+            raise serializers.ValidationError({'comment': 'You cannot report your own comment.'})
+
+        if CommentReport.objects.filter(comment=comment, reported_by=request.user).exists():
+            raise serializers.ValidationError({'detail': 'You have already reported this comment.'})
+
+        return attrs
 
 class BookmarkSerializer(serializers.ModelSerializer):
     class Meta:

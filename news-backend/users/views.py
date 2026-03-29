@@ -1,245 +1,211 @@
+import datetime
+import logging
+
+import jwt
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.mail import EmailMultiAlternatives
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework.throttling import ScopedRateThrottle
-from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
-from django.conf import settings
-import jwt
-import datetime
-from .serializers import RegisterSerializer, UserSerializer
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .serializers import RegisterSerializer, UserSerializer
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+def build_verification_link(user):
+    return f"{settings.FRONTEND_URL}/verify-email.html?token={user.email_verification_token}"
+
+
+def send_verification_email(user, regenerate_token=False):
+    if regenerate_token or not user.has_valid_email_verification_token():
+        user.generate_email_verification_token()
+
+    verification_link = build_verification_link(user)
+    subject = "Verify Your Email - Forex Times"
+    text_content = (
+        f"Hello {user.name},\n\n"
+        "Welcome to Forex Times.\n"
+        "Please verify your email address to activate your account.\n\n"
+        f"Verification link: {verification_link}\n\n"
+        f"Verification token: {user.email_verification_token}\n\n"
+        "This link is valid for 24 hours."
+    )
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }}
+            .email-container {{ max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }}
+            .header {{ background-color: #1a365d; padding: 25px; text-align: center; }}
+            .header h1 {{ margin: 0; color: #ffffff; font-size: 24px; letter-spacing: 1px; }}
+            .content {{ padding: 35px; color: #334155; line-height: 1.6; font-size: 16px; text-align: center; }}
+            .content p {{ margin-bottom: 20px; }}
+            .btn {{ display: inline-block; background-color: #d32f2f; color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 50px; font-weight: bold; font-size: 16px; margin: 10px 0; }}
+            .footer {{ background-color: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; }}
+            .token-box {{ background-color: #f0f4f8; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: 'Courier New', monospace; word-break: break-all; }}
+        </style>
+    </head>
+    <body>
+        <div class="email-container">
+            <div class="header">
+                <h1>Forex Times</h1>
+            </div>
+            <div class="content">
+                <h2 style="color: #1a365d;">Verify your email</h2>
+                <p>Hello <strong>{user.name}</strong>,</p>
+                <p>Please verify your email address to activate your account. This link is valid for <strong>24 hours</strong>.</p>
+                <a href="{verification_link}" class="btn">Verify Email</a>
+                <p style="margin-top: 20px; font-size: 14px;">Or use this verification token:</p>
+                <div class="token-box">{user.email_verification_token}</div>
+                <p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you did not sign up for this account, you can ignore this email.</p>
+            </div>
+            <div class="footer">
+                &copy; 2026 Forex Times. All rights reserved.
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    email_message = EmailMultiAlternatives(
+        subject=subject,
+        body=text_content,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email],
+    )
+    email_message.attach_alternative(html_content, "text/html")
+    email_message.send(fail_silently=False)
+
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'auth'
+    throttle_scope = "auth"
 
-    def perform_create(self, serializer):
-        """Override to send verification email after user creation"""
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        
-        # Generate verification token
-        verification_token = user.generate_email_verification_token()
-        
-        # Create verification link
-        verification_link = f"{settings.FRONTEND_URL}/verify-email.html?token={verification_token}"
-        
-        # Email HTML template
-        html_content = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }}
-                .email-container {{ max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
-                .header {{ background-color: #1a365d; padding: 25px; text-align: center; }}
-                .header h1 {{ margin: 0; color: #ffffff; font-size: 24px; letter-spacing: 1px; }}
-                .content {{ padding: 35px; color: #334155; line-height: 1.6; font-size: 16px; text-align: center; }}
-                .content p {{ margin-bottom: 20px; }}
-                .btn {{ display: inline-block; background-color: #d32f2f; color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 50px; font-weight: bold; font-size: 16px; margin: 10px 0; }}
-                .footer {{ background-color: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; }}
-                .token-box {{ background-color: #f0f4f8; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: 'Courier New', monospace; word-break: break-all; }}
-            </style>
-        </head>
-        <body>
-            <div class="email-container">
-                <div class="header">
-                    <h1>📰 Forex Times</h1>
-                </div>
-                <div class="content">
-                    <h2 style="color: #1a365d;">Welcome to Forex Times!</h2>
-                    <p>Hello <strong>{user.name}</strong>,</p>
-                    <p>Thank you for registering! Please verify your email address to activate your account. This link is valid for <strong>24 hours</strong>.</p>
-                    
-                    <a href="{verification_link}" class="btn" style="color: #ffffff;">Verify Email</a>
-                    
-                    <p style="margin-top: 20px; font-size: 14px;">Or use this verification token:</p>
-                    <div class="token-box">{verification_token}</div>
-                    
-                    <p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you did not sign up for this account, please ignore this email.</p>
-                </div>
-                <div class="footer">
-                    &copy; 2026 Forex Times. All rights reserved.
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-        
-        # Send verification email
+
+        email_sent = True
         try:
-            send_mail(
-                subject='Verify Your Email - Forex Times',
-                message=f'Hello {user.name},\n\nVerify your email by clicking:\n{verification_link}',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
-                html_message=html_content
-            )
-        except Exception as e:
-            print(f"Failed to send verification email: {e}")
+            send_verification_email(user)
+        except Exception:
+            email_sent = False
+            logger.exception("Failed to send verification email for %s", user.email)
+
+        response_payload = {
+            "message": (
+                "Registration successful. Check your inbox to verify your email."
+                if email_sent
+                else "Registration successful, but we could not send the verification email. Please request a new one."
+            ),
+            "email": user.email,
+            "verification_required": True,
+            "email_sent": email_sent,
+        }
+        return Response(response_payload, status=status.HTTP_201_CREATED)
+
 
 class VerifyEmailView(APIView):
-    """Verify email with token and activate user"""
     permission_classes = (permissions.AllowAny,)
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'auth'
+    throttle_scope = "auth"
 
     def post(self, request):
-        token = request.data.get('token')
-        
+        token = (request.data.get("token") or "").strip()
         if not token:
+            return Response({"error": "Verification token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email_verification_token=token).first()
+        if not user:
             return Response(
-                {"error": "Verification token is required"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "Invalid or already used verification token."},
+                status=status.HTTP_404_NOT_FOUND,
             )
-        
-        try:
-            user = User.objects.get(email_verification_token=token)
-            
-            if user.verify_email(token):
-                return Response({
-                    "message": "Email verified successfully! Your account is now active.",
-                    "is_verified": True
-                }, status=status.HTTP_200_OK)
-            else:
-                return Response(
-                    {"error": "Verification token has expired. Request a new verification email."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        except User.DoesNotExist:
+
+        if not user.has_valid_email_verification_token():
             return Response(
-                {"error": "Invalid verification token."},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "Verification token has expired. Request a new verification email."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
+
+        user.mark_email_verified()
+        return Response(
+            {
+                "message": "Email verified successfully. Your account is now active.",
+                "is_verified": True,
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 class ResendVerificationEmailView(APIView):
-    """Resend verification email for unverified users"""
     permission_classes = (permissions.AllowAny,)
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'email_alert'
+    throttle_scope = "email_alert"
 
     def post(self, request):
-        email = request.data.get('email')
-        
-        if not email:
-            return Response(
-                {"error": "Email is required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        try:
-            user = User.objects.get(email=email)
-            
-            if user.is_email_verified:
+        raw_email = (request.data.get("email") or "").strip()
+        if not raw_email:
+            return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = User.objects.normalize_email(raw_email)
+        user = User.objects.filter(email__iexact=email).first()
+
+        if user and not user.is_email_verified:
+            try:
+                send_verification_email(user, regenerate_token=True)
+            except Exception:
+                logger.exception("Failed to resend verification email for %s", email)
                 return Response(
-                    {"message": "This email is already verified."},
-                    status=status.HTTP_200_OK
+                    {"error": "We could not send the verification email right now. Please try again later."},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
                 )
-            
-            # Generate new verification token
-            verification_token = user.generate_email_verification_token()
-            verification_link = f"{settings.FRONTEND_URL}/verify-email.html?token={verification_token}"
-            
-            # Send verification email
-            html_content = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }}
-                    .email-container {{ max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
-                    .header {{ background-color: #1a365d; padding: 25px; text-align: center; }}
-                    .header h1 {{ margin: 0; color: #ffffff; font-size: 24px; letter-spacing: 1px; }}
-                    .content {{ padding: 35px; color: #334155; line-height: 1.6; font-size: 16px; text-align: center; }}
-                    .content p {{ margin-bottom: 20px; }}
-                    .btn {{ display: inline-block; background-color: #d32f2f; color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 50px; font-weight: bold; font-size: 16px; margin: 10px 0; }}
-                    .footer {{ background-color: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; }}
-                </style>
-            </head>
-            <body>
-                <div class="email-container">
-                    <div class="header">
-                        <h1>📰 Forex Times</h1>
-                    </div>
-                    <div class="content">
-                        <h2 style="color: #1a365d;">Verify Your Email</h2>
-                        <p>Hello <strong>{user.name}</strong>,</p>
-                        <p>Here's your new verification link. This link is valid for <strong>24 hours</strong>.</p>
-                        
-                        <a href="{verification_link}" class="btn" style="color: #ffffff;">Verify Email</a>
-                        
-                        <p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you did not request this, please ignore this email.</p>
-                    </div>
-                    <div class="footer">
-                        &copy; 2026 Forex Times. All rights reserved.
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
-            
-            send_mail(
-                subject='Verify Your Email - Forex Times',
-                message=f'Hello {user.name},\n\nVerify your email:\n{verification_link}',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
-                html_message=html_content
-            )
-            
-            return Response({
-                "message": "Verification email sent successfully."
-            }, status=status.HTTP_200_OK)
-            
-        except User.DoesNotExist:
-            return Response(
-                {"error": "Email not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+
+        return Response(
+            {"message": "If this account is waiting for verification, a new email has been sent."},
+            status=status.HTTP_200_OK,
+        )
 
 
+class ProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_object(self):
-        # Current logged-in user ki profile return karega
         return self.request.user
+
 
 class ForgotPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)
-    # --- NAYA CODE ---
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'email_alert' # 3 requests per hour taaki spam email na jaye
+    throttle_scope = "email_alert"
 
     def post(self, request):
-        email = request.data.get('email')
+        email = request.data.get("email")
         if not email:
             return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = User.objects.get(email=email)
-            
-            # Generate a secure JWT token valid for 15 minutes
             payload = {
-                'user_id': user.id,
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
-                'type': 'reset_password'
+                "user_id": user.id,
+                "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
+                "type": "reset_password",
             }
-            token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
-
-            # Create the reset link
+            token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
             reset_link = f"{settings.FRONTEND_URL}/reset-password.html?token={token}"
-
-            # Send Email
 
             html_content = f"""
             <!DOCTYPE html>
@@ -247,7 +213,7 @@ class ForgotPasswordView(APIView):
             <head>
                 <style>
                     body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }}
-                    .email-container {{ max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+                    .email-container {{ max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }}
                     .header {{ background-color: #1a365d; padding: 25px; text-align: center; }}
                     .header h1 {{ margin: 0; color: #ffffff; font-size: 24px; letter-spacing: 1px; }}
                     .content {{ padding: 35px; color: #334155; line-height: 1.6; font-size: 16px; text-align: center; }}
@@ -259,15 +225,13 @@ class ForgotPasswordView(APIView):
             <body>
                 <div class="email-container">
                     <div class="header">
-                        <h1>📰 Forex Times</h1>
+                        <h1>Forex Times</h1>
                     </div>
                     <div class="content">
                         <h2 style="color: #1a365d;">Password Reset Request</h2>
                         <p>Hello <strong>{user.name}</strong>,</p>
                         <p>We received a request to reset your password. Click the button below to set a new password. This link is valid for <strong>15 minutes</strong>.</p>
-                        
-                        <a href="{reset_link}" class="btn" style="color: #ffffff;">Reset Password</a>
-                        
+                        <a href="{reset_link}" class="btn">Reset Password</a>
                         <p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you did not request this, please ignore this email. Your account is safe.</p>
                     </div>
                     <div class="footer">
@@ -278,94 +242,106 @@ class ForgotPasswordView(APIView):
             </html>
             """
 
-
-
-            send_mail(
-                subject='Password Reset Request - Forex Times',
-                message=f'Hello {user.name},\n\nClick the link below to reset your password:\n{reset_link}', # Plain text as fallback
+            email_message = EmailMultiAlternatives(
+                subject="Password Reset Request - Forex Times",
+                body=f"Hello {user.name},\n\nClick the link below to reset your password:\n{reset_link}",
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=False,
-                html_message=html_content  # <--- NAYA PARAMETER
+                to=[user.email],
             )
+            email_message.attach_alternative(html_content, "text/html")
+            email_message.send(fail_silently=False)
         except User.DoesNotExist:
             pass
 
         return Response({"message": "If that email is registered, we have sent a reset link."})
 
+
 class ResetPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)
-    # --- NAYA CODE ---
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'auth'
+    throttle_scope = "auth"
 
     def post(self, request):
-        token = request.data.get('token')
-        password = request.data.get('password')
+        token = request.data.get("token")
+        password = request.data.get("password")
 
         if not token or not password:
             return Response({"error": "Token and password are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            
-            if payload.get('type') != 'reset_password':
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            if payload.get("type") != "reset_password":
                 raise jwt.InvalidTokenError
 
-            user = User.objects.get(id=payload['user_id'])
+            user = User.objects.get(id=payload["user_id"])
             user.set_password(password)
-            user.save()
-
+            user.save(update_fields=["password"])
             return Response({"message": "Password reset successful."})
-
         except jwt.ExpiredSignatureError:
-            return Response({"error": "The reset link has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "The reset link has expired. Please request a new one."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         except (jwt.InvalidTokenError, User.DoesNotExist):
             return Response({"error": "Invalid reset link."}, status=status.HTTP_400_BAD_REQUEST)
-        
+
 
 class GoogleLoginView(APIView):
     permission_classes = (permissions.AllowAny,)
-    # --- NAYA CODE ---
     throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'auth'
+    throttle_scope = "auth"
 
     def post(self, request):
-        token = request.data.get('token')
+        token = request.data.get("token")
         if not token:
             return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Google token verify karein
             idinfo = id_token.verify_oauth2_token(
-                token, 
-                google_requests.Request(), 
-                settings.GOOGLE_CLIENT_ID
+                token,
+                google_requests.Request(),
+                settings.GOOGLE_CLIENT_ID,
             )
 
-            email = idinfo['email']
-            name = idinfo.get('name', 'Google User')
-            picture = idinfo.get('picture', '')
+            email = User.objects.normalize_email(idinfo["email"])
+            name = idinfo.get("name", "Google User")
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    "name": name,
+                    "role": "subscriber",
+                    "is_active": True,
+                    "is_email_verified": True,
+                },
+            )
 
-            # Check karein ki user pehle se hai ya nahi
-            user, created = User.objects.get_or_create(email=email)
-            
+            fields_to_update = []
             if created:
-                # Naya user hai toh details save karein
+                user.set_unusable_password()
+                fields_to_update.append("password")
+
+            if not user.name:
                 user.name = name
-                user.role = 'subscriber'
-                user.set_unusable_password() # Kyunki password Google handle kar raha hai
-                user.save()
+                fields_to_update.append("name")
 
-            # Generate JWT tokens for our app
+            if not user.is_email_verified:
+                user.is_email_verified = True
+                fields_to_update.append("is_email_verified")
+
+            if not user.is_active:
+                user.is_active = True
+                fields_to_update.append("is_active")
+
+            if fields_to_update:
+                user.save(update_fields=fields_to_update)
+
             refresh = RefreshToken.for_user(user)
-
-            return Response({
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-                'user': UserSerializer(user).data
-            })
-
+            return Response(
+                {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                    "user": UserSerializer(user).data,
+                }
+            )
         except ValueError:
-            # Invalid token
             return Response({"error": "Invalid Google Token"}, status=status.HTTP_400_BAD_REQUEST)

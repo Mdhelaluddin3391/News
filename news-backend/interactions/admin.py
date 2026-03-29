@@ -1,6 +1,7 @@
 from django.contrib import admin
-from django.core.mail import EmailMultiAlternatives # NAYA: Secure email ke liye
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+
 from news.models import Article
 from .models import Bookmark, Comment, CommentReport, NewsletterSubscriber, Poll, PollOption, PushSubscription
 
@@ -33,63 +34,74 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(CommentReport)
 class CommentReportAdmin(admin.ModelAdmin):
-    list_display = ('id', 'reported_by', 'reason', 'comment_preview', 'is_reviewed', 'admin_action', 'created_at')
+    list_display = ('id', 'comment_author', 'reported_by', 'reason', 'comment_preview', 'is_reviewed', 'admin_action', 'created_at')
     list_filter = ('reason', 'is_reviewed', 'admin_action', 'created_at')
-    search_fields = ('comment__text', 'reported_by__email', 'description')
-    readonly_fields = ('comment', 'reported_by', 'created_at')
+    search_fields = ('comment__text', 'comment__user__email', 'reported_by__email', 'description')
+    readonly_fields = ('comment', 'reported_by', 'comment_preview', 'comment_author', 'created_at')
     
     fieldsets = (
         ('Report Details', {
-            'fields': ('comment', 'reported_by', 'reason', 'description', 'created_at')
+            'fields': ('comment', 'comment_author', 'comment_preview', 'reported_by', 'reason', 'description', 'created_at')
         }),
         ('Admin Review', {
             'fields': ('is_reviewed', 'admin_action', 'admin_notes')
         }),
     )
     
-    actions = ['mark_reviewed', 'hide_comment_action', 'delete_comment_action', 'warn_user_action']
+    actions = ['mark_reviewed', 'dismiss_reports_action', 'hide_comment_action', 'remove_comment_action', 'warn_user_action']
 
     def comment_preview(self, obj):
-        text = obj.comment.text[:50] + "..." if len(obj.comment.text) > 50 else obj.comment.text
-        return text
+        return obj.comment.text[:80] + "..." if len(obj.comment.text) > 80 else obj.comment.text
     comment_preview.short_description = "Comment"
+
+    def comment_author(self, obj):
+        return obj.comment.user.email
+    comment_author.short_description = "Comment author"
+
+    def _mark_related_reports(self, report, action, notes):
+        CommentReport.objects.filter(comment=report.comment).update(
+            is_reviewed=True,
+            admin_action=action,
+            admin_notes=notes,
+        )
 
     @admin.action(description='✅ Mark as Reviewed')
     def mark_reviewed(self, request, queryset):
         queryset.update(is_reviewed=True)
 
-    @admin.action(description='🚫 Hide Comment & Mark No Action')
+    @admin.action(description='🟢 Dismiss selected reports')
+    def dismiss_reports_action(self, request, queryset):
+        queryset.update(is_reviewed=True, admin_action='none')
+        self.message_user(request, f"{queryset.count()} reports have been dismissed.")
+
+    @admin.action(description='🚫 Hide comment from the site')
     def hide_comment_action(self, request, queryset):
         for report in queryset:
             report.comment.is_active = False
-            report.comment.save()
-            report.is_reviewed = True
-            report.admin_action = 'hidden'
-            report.admin_notes = 'Comment hidden by admin via report interface'
-            report.save()
+            report.comment.save(update_fields=['is_active'])
+            self._mark_related_reports(report, 'hidden', 'Comment hidden by admin via report interface.')
         self.message_user(request, f"{queryset.count()} comments have been hidden.")
 
-    @admin.action(description='🗑️ Delete Comment & Mark Deleted')
-    def delete_comment_action(self, request, queryset):
+    @admin.action(description='🗑️ Remove comment from public view')
+    def remove_comment_action(self, request, queryset):
         for report in queryset:
-            comment_id = report.comment.id
-            report.comment.delete()
-            report.is_reviewed = True
-            report.admin_action = 'deleted'
-            report.admin_notes = 'Comment deleted by admin via report interface'
-            report.save()
-        self.message_user(request, f"{queryset.count()} comments have been deleted.")
+            report.comment.is_active = False
+            report.comment.save(update_fields=['is_active'])
+            self._mark_related_reports(report, 'deleted', 'Comment removed from public view by admin.')
+        self.message_user(request, f"{queryset.count()} comments have been removed from public view.")
 
     @admin.action(description='⚠️ Warn User & Mark Actioned')
     def warn_user_action(self, request, queryset):
         for report in queryset:
-            user_email = report.reported_by.email
-            # Future: Send warning email to user
-            report.is_reviewed = True
-            report.admin_action = 'warn_user'
-            report.admin_notes = 'User warned about report'
-            report.save()
-        self.message_user(request, f"{queryset.count()} users have been warned.")
+            self._mark_related_reports(report, 'warn_user', 'Comment author flagged for moderator warning.')
+        self.message_user(request, f"{queryset.count()} comment authors have been flagged for warning.")
+
+    def save_model(self, request, obj, form, change):
+        if obj.admin_action in ['hidden', 'deleted']:
+            obj.comment.is_active = False
+            obj.comment.save(update_fields=['is_active'])
+        obj.is_reviewed = True if obj.admin_action != 'none' else obj.is_reviewed
+        super().save_model(request, obj, form, change)
 
 @admin.register(NewsletterSubscriber)
 class NewsletterSubscriberAdmin(admin.ModelAdmin):

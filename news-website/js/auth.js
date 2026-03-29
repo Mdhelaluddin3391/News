@@ -15,11 +15,20 @@ async function registerUser(name, email, password) {
         
         if (!response.ok) {
             let errMsg = 'Registration failed.';
-            if (data.email) errMsg = data.email[0];
-            else if (data.password) errMsg = data.password[0];
+            if (data.email) errMsg = Array.isArray(data.email) ? data.email[0] : data.email;
+            else if (data.password) errMsg = Array.isArray(data.password) ? data.password[0] : data.password;
+            else if (data.name) errMsg = Array.isArray(data.name) ? data.name[0] : data.name;
+            else if (data.error) errMsg = data.error;
+            else if (data.detail) errMsg = data.detail;
             return { success: false, message: errMsg };
         }
-        return { success: true };
+        return {
+            success: true,
+            message: data.message || 'Registration successful. Please verify your email.',
+            email: data.email || email,
+            verificationRequired: data.verification_required !== false,
+            emailSent: data.email_sent !== false
+        };
     } catch (error) {
         return { success: false, message: 'Network error. Please try again.' };
     }

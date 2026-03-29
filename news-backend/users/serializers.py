@@ -15,15 +15,21 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('name', 'email', 'password')
+        fields = ("name", "email", "password")
+
+    def validate_email(self, value):
+        email = User.objects.normalize_email(value.strip())
+        if User.objects.filter(email__iexact=email).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return email
 
     def create(self, validated_data):
-        # Create user with is_active=False (inactive until email is verified)
         user = User.objects.create_user(
-            email=validated_data['email'],
-            name=validated_data['name'],
-            password=validated_data['password'],
-            role='subscriber',
-            is_active=False  # Keep user inactive until email verification
+            email=validated_data["email"],
+            name=validated_data["name"],
+            password=validated_data["password"],
+            role="subscriber",
+            is_active=False,
+            is_email_verified=False,
         )
         return user

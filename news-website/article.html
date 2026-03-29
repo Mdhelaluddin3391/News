@@ -23,6 +23,7 @@
 
 <body>
     <div id="header-placeholder"></div>
+    <div id="comment-feedback-toast" class="comment-feedback-toast" aria-live="polite"></div>
 
     <main class="container main-content">
         <div class="left-column">
@@ -47,6 +48,35 @@
     </main>
 
     <div id="footer-placeholder"></div>
+
+    <template id="report-comment-modal-template">
+        <div class="custom-modal-box report-modal-box">
+            <h3>Report Flag</h3>
+            <p class="report-modal-copy">Flag comments that are spam, abusive, or misleading. Our moderation team will review them.</p>
+            <form id="report-form" class="report-form">
+                <div class="report-form-group">
+                    <label for="report-reason">Reason</label>
+                    <select id="report-reason" required>
+                        <option value="">Select a reason</option>
+                        <option value="spam">Spam</option>
+                        <option value="offensive">Offensive Language</option>
+                        <option value="inappropriate">Inappropriate Content</option>
+                        <option value="harassment">Harassment</option>
+                        <option value="false_info">False Information</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="report-form-group">
+                    <label for="report-description">Additional Details</label>
+                    <textarea id="report-description" rows="4" placeholder="Explain why you are flagging this comment."></textarea>
+                </div>
+                <div class="custom-modal-actions">
+                    <button type="button" class="custom-modal-btn custom-modal-cancel" id="report-cancel-btn">Cancel</button>
+                    <button type="submit" class="custom-modal-btn custom-modal-submit" id="report-submit-btn">Submit Flag</button>
+                </div>
+            </form>
+        </div>
+    </template>
 
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>

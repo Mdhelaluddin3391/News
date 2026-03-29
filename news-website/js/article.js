@@ -183,7 +183,17 @@ function renderArticle(article) {
     `;
 
     const relatedHTML = `<section class="related-articles"><h3>Related Articles</h3><div id="related-container"></div></section>`;
-    const commentsHTML = `<section class="comments-section"><h3>Comments</h3><div id="comments-list"></div><div id="comment-form-container"></div></section>`;
+    const commentsHTML = `
+        <section class="comments-section">
+            <div class="comments-heading">
+                <h3>Comments</h3>
+                <p class="comments-policy">Use Report Flag to alert our moderators about spam, abuse, or misleading comments.</p>
+            </div>
+            <div id="comment-feedback" class="comment-feedback" aria-live="polite"></div>
+            <div id="comments-list"></div>
+            <div id="comment-form-container"></div>
+        </section>
+    `;
 
     // ==================== LIVE UPDATES LOGIC ====================
     const liveBadgeHTML = article.is_live ? `<div class="live-badge"><i class="fas fa-circle"></i> LIVE UPDATE</div>` : '';

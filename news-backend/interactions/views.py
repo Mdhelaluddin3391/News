@@ -1,49 +1,59 @@
-import threading
-from django.core.mail import send_mail
+from django.utils.decorators import method_decorator
 from django.conf import settings
 from django.utils import timezone
-from rest_framework import permissions, status, viewsets
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+import datetime
+import jwt
+
+from rest_framework import permissions, status, viewsets
+from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.views import APIView
+
 from core.tasks import send_async_email
 from .models import Bookmark, Comment, CommentReport, NewsletterSubscriber, Poll, PollOption, PushSubscription
 from .serializers import BookmarkSerializer, CommentSerializer, CommentReportSerializer, PollSerializer, PushSubscriptionSerializer
-from rest_framework.throttling import ScopedRateThrottle
-import jwt
-import datetime
+
+
+class IsCommentOwnerOrAdmin(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return request.user.is_staff or obj.user_id == request.user.id
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    
-    # --- NAYA CODE YAHAN SE START HAI ---
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+
     def get_permissions(self):
-        # 'list' aur 'retrieve' (comments dekhna) sabke liye allow hai
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
-        # Comment create, update ya delete karne ke liye login (IsAuthenticated) hona zaroori hai
+        if self.action == 'destroy':
+            return [permissions.IsAuthenticated(), IsCommentOwnerOrAdmin()]
         return [permissions.IsAuthenticated()]
-    # --- NAYA CODE YAHAN END HAI ---
-    
+
     def get_queryset(self):
-        # Agar URL mein article_id pass kiya hai, toh sirf uske comments laaye
         article_id = self.request.query_params.get('article_id')
-        queryset = Comment.objects.filter(is_active=True).order_by('-created_at')
-        if article_id:
+        queryset = Comment.objects.select_related('user', 'article').order_by('-created_at')
+
+        if self.action in ['list', 'retrieve']:
+            queryset = queryset.filter(is_active=True)
+        elif self.request.user.is_staff:
+            queryset = queryset.all()
+        else:
+            queryset = queryset.filter(user=self.request.user)
+
+        if article_id and self.action == 'list':
             queryset = queryset.filter(article_id=article_id)
         return queryset
 
     def perform_create(self, serializer):
-        # Comment banane wale user ko automatically set karein
         serializer.save(user=self.request.user)
+
 
 class BookmarkViewSet(viewsets.ModelViewSet):
     serializer_class = BookmarkSerializer
-    permission_classes = [permissions.IsAuthenticated] # Sirf logged in users
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Sirf current logged-in user ke saved articles return karein
         return Bookmark.objects.filter(user=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
@@ -51,54 +61,20 @@ class BookmarkViewSet(viewsets.ModelViewSet):
 
 
 class CommentReportViewSet(viewsets.ModelViewSet):
-    """Report offensive comments"""
     serializer_class = CommentReportSerializer
     permission_classes = [permissions.IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'comment_report'
+    http_method_names = ['get', 'post', 'head', 'options']
 
     def get_queryset(self):
-        # Users sirf unhe reports dekh sakte hain jo unhone khud kiye hain (unless admin)
+        queryset = CommentReport.objects.select_related('reported_by', 'comment', 'comment__user', 'comment__article')
         if self.request.user.is_staff:
-            return CommentReport.objects.all().order_by('-created_at')
-        return CommentReport.objects.filter(reported_by=self.request.user).order_by('-created_at')
+            return queryset.order_by('-created_at')
+        return queryset.filter(reported_by=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
-        # Automatically set reported_by to current user
         serializer.save(reported_by=self.request.user)
-
-    def create(self, request, *args, **kwargs):
-        """Override create to check for duplicate reports"""
-        comment_id = request.data.get('comment')
-        
-        # Check if user already reported this comment
-        existing_report = CommentReport.objects.filter(
-            comment_id=comment_id,
-            reported_by=request.user
-        ).exists()
-        
-        if existing_report:
-            return Response(
-                {"detail": "You have already reported this comment."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        return super().create(request, *args, **kwargs)
-
-
-def send_email_in_background(subject, message, recipient_list, html_message=None):
-    """Background mein email bhejne ka helper function"""
-    try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=recipient_list,
-            fail_silently=False,
-            html_message=html_message
-        )
-    except Exception as e:
-        print(f"Email sending error: {e}")
 
 
 

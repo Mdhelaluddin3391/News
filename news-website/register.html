@@ -20,6 +20,7 @@
         <div class="auth-container">
             <h1 class="auth-title">Create an Account</h1>
             <div class="auth-error" id="register-error"></div>
+            <div class="auth-success" id="register-success"></div>
             <form class="auth-form" id="register-form">
                 <div class="form-group">
                     <label for="name">Full Name</label>
@@ -40,12 +41,26 @@
                 <button type="submit" class="auth-btn">Register</button>
             </form>
 
-            <div style="text-align: center; margin: 1.5rem 0;">
+            <div id="verification-next-steps" style="display: none; text-align: center; margin-top: 1.5rem;">
+                <p style="color: var(--gray); margin-bottom: 0.75rem;">
+                    We created your account for <strong id="verification-email"></strong>.
+                </p>
+                <p style="color: var(--gray); margin-bottom: 1rem;">
+                    Check your inbox and spam folder, then open the verification page to activate your account.
+                </p>
+                <button type="button" class="auth-btn" id="open-verification-page">Open Verification Page</button>
+                <p style="color: var(--gray); margin-top: 1rem; font-size: 0.95rem;">
+                    Didn't get the email?
+                    <a href="#" id="register-resend-link">Resend verification email</a>
+                </p>
+            </div>
+
+            <div id="register-alt-auth" style="text-align: center; margin: 1.5rem 0;">
                 <p style="color: var(--gray); margin-bottom: 10px; font-size: 0.9rem;">OR</p>
 
                 <div id="google-button-container" style="display: flex; justify-content: center;"></div>
             </div>
-            <p class="auth-link">Already have an account? <a href="login.html">Login here</a></p>
+            <p class="auth-link" id="register-login-link">Already have an account? <a href="login.html">Login here</a></p>
         </div>
     </main>
 

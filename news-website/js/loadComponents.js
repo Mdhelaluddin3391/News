@@ -17,6 +17,9 @@ async function loadComponents() {
             updateAuthUI();
         }
     } catch (error) {
+        if (typeof window.reportFrontendError === 'function') {
+            window.reportFrontendError(error, { scope: 'layout', action: 'loadComponents' });
+        }
         console.error(error);
     }
 }
@@ -127,9 +130,11 @@ document.addEventListener('click', (e) => {
     if (logoutBtn) {
         e.preventDefault();
         if (typeof logoutUser === 'function') {
-            logoutUser();
-            if (typeof updateAuthUI === 'function') updateAuthUI();
-            window.location.href = 'index.html';
+            (async () => {
+                await logoutUser();
+                if (typeof updateAuthUI === 'function') updateAuthUI();
+                window.location.href = 'index.html';
+            })();
         }
     }
 });
@@ -196,6 +201,9 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
                 suggestionsBox.innerHTML = html;
                 suggestionsBox.style.display = 'block';
             } catch (e) {
+                if (typeof window.reportFrontendError === 'function') {
+                    window.reportFrontendError(e, { scope: 'layout', action: 'searchAutocomplete', query });
+                }
                 console.error('Autocomplete error:', e);
             }
         }, 300); 
@@ -248,6 +256,9 @@ async function injectGoogleAnalytics() {
             console.log(`✅ Google Analytics Initialized with ID: ${trackingId}`);
         }
     } catch (error) {
+        if (typeof window.reportFrontendError === 'function') {
+            window.reportFrontendError(error, { scope: 'analytics', action: 'injectGoogleAnalytics' });
+        }
         console.error('Failed to load Google Analytics:', error);
     }
 }

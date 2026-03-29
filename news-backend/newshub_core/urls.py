@@ -19,19 +19,24 @@ from django.contrib.auth import get_user_model
 from django.contrib.sitemaps.views import sitemap
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
 from django.urls import include, path
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core.views import ContactMessageCreateView, SiteSettingAPIView
 from interactions.views import SubscribeNewsletterView, UnsubscribeNewsletterView
 from news.feeds import LatestArticlesFeed
 from news.sitemaps import ArticleSitemap, AuthorSitemap, CategorySitemap, StaticViewSitemap, TagSitemap
+from users.views import CookieTokenRefreshView, CsrfCookieView, LogoutView, set_auth_cookies
 
 User = get_user_model()
 
+def health_check(_request):
+    return JsonResponse({"status": "ok"})
 
 
 sitemaps = {
@@ -65,9 +70,15 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        if response.status_code == status.HTTP_200_OK and "refresh" in response.data:
+            refresh = response.data["refresh"]
+            response.data = {"message": "Login successful."}
+            set_auth_cookies(response, refresh=RefreshToken(refresh))
+
         return response
 
 urlpatterns = [
+    path('health/', health_check, name='health_check'),
     path('admin/', admin.site.urls),
     path('tinymce/', include('tinymce.urls')),
     path('api/', include('core.urls')),
@@ -83,8 +94,10 @@ urlpatterns = [
     path('api/newsletter/unsubscribe/', UnsubscribeNewsletterView.as_view(), name='newsletter_unsubscribe'),
     path('api/contact/', ContactMessageCreateView.as_view(), name='contact_api'),
     path('api/settings/', SiteSettingAPIView.as_view(), name='site_settings'),
+    path('api/auth/csrf/', CsrfCookieView.as_view(), name='auth_csrf'),
     path('api/auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/logout/', LogoutView.as_view(), name='auth_logout'),
 
     
 ]

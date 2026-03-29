@@ -1,0 +1,16 @@
+[Unit]
+Description=Newshub Celery Worker
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/Myproject/news-backend
+EnvironmentFile=/home/ubuntu/Myproject/news-backend/.env
+ExecStart=/home/ubuntu/venvs/newshub/bin/celery -A newshub_core worker --loglevel=info
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

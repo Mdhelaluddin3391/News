@@ -10,9 +10,18 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+def _get_bool_env(name, default=False):
+    return os.getenv(name, str(default)).strip().lower() == 'true'
+
+
+def _get_list_env(name, default=''):
+    value = os.getenv(name, default)
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+
 # Security and Core Settings
 SECRET_KEY = os.getenv('SECRET_KEY')
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = _get_bool_env('DEBUG', False)
 if not DEBUG:
     # HTTP requests ne automatically HTTPS par redirect karse
     SECURE_SSL_REDIRECT = True
@@ -25,8 +34,7 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',') # Production me yahan apna domain name add karein
+ALLOWED_HOSTS = _get_list_env('ALLOWED_HOSTS', '127.0.0.1,localhost')
 
 INSTALLED_APPS = [
     'daphne',
@@ -36,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.postgres',
     'django.contrib.staticfiles',
     
     # Third-party apps
@@ -97,6 +106,9 @@ ASGI_APPLICATION = 'newshub_core.asgi.application'
 # }
 
 DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_CONN_MAX_AGE = int(os.getenv('DATABASE_CONN_MAX_AGE', '60'))
+DATABASE_SSL_MODE = os.getenv('DATABASE_SSL_MODE', '')
+DATABASE_SSL_ROOT_CERT = os.getenv('DATABASE_SSL_ROOT_CERT', '')
 
 if DATABASE_URL:
     # Agar Render par DATABASE_URL diya gaya hai, toh ye automatically URL se username, password, host nikal lega
@@ -124,9 +136,15 @@ else:
         }
     }
 
+DATABASES['default']['CONN_MAX_AGE'] = DATABASE_CONN_MAX_AGE
+if DATABASE_SSL_MODE:
+    DATABASES['default'].setdefault('OPTIONS', {})['sslmode'] = DATABASE_SSL_MODE
+if DATABASE_SSL_ROOT_CERT:
+    DATABASES['default'].setdefault('OPTIONS', {})['sslrootcert'] = DATABASE_SSL_ROOT_CERT
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'users.authentication.CookieJWTAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 6,
@@ -158,7 +176,7 @@ USE_TZ = True
 
 
 
-USE_S3 = os.getenv('USE_S3', 'False') == 'True'
+USE_S3 = _get_bool_env('USE_S3', False)
 
 if USE_S3:
     # AWS Credentials
@@ -166,7 +184,10 @@ if USE_S3:
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
     AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-south-1') # e.g., Mumbai region
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_S3_CUSTOM_DOMAIN = os.getenv(
+        'AWS_S3_CUSTOM_DOMAIN',
+        f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+    )
     
     # S3 Settings
     AWS_S3_FILE_OVERWRITE = False
@@ -189,11 +210,15 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # CORS & Custom Auth
-CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'True') == 'True'
+CORS_ALLOW_ALL_ORIGINS = _get_bool_env('CORS_ALLOW_ALL_ORIGINS', DEBUG)
 if not CORS_ALLOW_ALL_ORIGINS:
-    CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    CORS_ALLOWED_ORIGINS = _get_list_env('CORS_ALLOWED_ORIGINS')
+CORS_ALLOW_CREDENTIALS = _get_bool_env('CORS_ALLOW_CREDENTIALS', True)
 
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1:8000').split(',')
+CSRF_TRUSTED_ORIGINS = _get_list_env(
+    'CSRF_TRUSTED_ORIGINS',
+    'http://127.0.0.1:5501,http://localhost:5501,http://127.0.0.1:8000,http://localhost:8000'
+)
 
 # CSRF_TRUSTED_ORIGINS = [
 #     "http://127.0.0.1:5501/news-website",
@@ -222,7 +247,21 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
     'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_COOKIE_ACCESS': os.getenv('AUTH_COOKIE_ACCESS', 'ft_access_token'),
+    'AUTH_COOKIE_REFRESH': os.getenv('AUTH_COOKIE_REFRESH', 'ft_refresh_token'),
+    'AUTH_COOKIE_SECURE': _get_bool_env('AUTH_COOKIE_SECURE', not DEBUG),
+    'AUTH_COOKIE_HTTP_ONLY': True,
+    'AUTH_COOKIE_SAMESITE': os.getenv('AUTH_COOKIE_SAMESITE', 'Lax'),
+    'AUTH_COOKIE_PATH': os.getenv('AUTH_COOKIE_PATH', '/'),
+    'AUTH_COOKIE_REFRESH_PATH': os.getenv('AUTH_COOKIE_REFRESH_PATH', '/api/auth/refresh/'),
 }
+
+SENTRY_DSN = os.getenv('SENTRY_DSN', '')
+SENTRY_ENVIRONMENT = os.getenv('SENTRY_ENVIRONMENT', 'development' if DEBUG else 'production')
+SENTRY_RELEASE = os.getenv('SENTRY_RELEASE', '')
+SENTRY_TRACES_SAMPLE_RATE = float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0'))
+SENTRY_PROFILES_SAMPLE_RATE = float(os.getenv('SENTRY_PROFILES_SAMPLE_RATE', '0'))
+SENTRY_SEND_DEFAULT_PII = _get_bool_env('SENTRY_SEND_DEFAULT_PII', False)
 
 # TinyMCE Setup
 TINYMCE_DEFAULT_CONFIG = {
@@ -235,6 +274,26 @@ TINYMCE_DEFAULT_CONFIG = {
 }
 
 REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
+
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=SENTRY_ENVIRONMENT,
+        release=SENTRY_RELEASE or None,
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+        ],
+        traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+        profiles_sample_rate=SENTRY_PROFILES_SAMPLE_RATE,
+        send_default_pii=SENTRY_SEND_DEFAULT_PII,
+    )
+REDIS_SSL_NO_VERIFY = _get_bool_env('REDIS_SSL_NO_VERIFY', True)
+REDIS_CHANNEL_HOSTS = [REDIS_URL]
 
 # Redis Caching Setup
 CACHES = {
@@ -254,7 +313,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [REDIS_URL], # Naya URL yahan pass kar diya
+            "hosts": REDIS_CHANNEL_HOSTS,
         },
     },
 }
@@ -268,13 +327,17 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
 if REDIS_URL.startswith('rediss://'):
-    # redis-py library requires the string "none" instead of Python's None type
-    CACHES['default']['OPTIONS']['CONNECTION_POOL_KWARGS'] = {
-        "ssl_cert_reqs": "none" 
-    }
-    
-    CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
-    CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+    if REDIS_SSL_NO_VERIFY:
+        # redis-py library requires the string "none" instead of Python's None type
+        CACHES['default']['OPTIONS']['CONNECTION_POOL_KWARGS'] = {
+            "ssl_cert_reqs": "none"
+        }
+        REDIS_CHANNEL_HOSTS[:] = [{
+            "address": REDIS_URL,
+            "ssl_cert_reqs": None,
+        }]
+        CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+        CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
 
 # Web Push Settings
 WEBPUSH_SETTINGS = {
@@ -295,6 +358,7 @@ TWITTER_ACCESS_TOKEN_SECRET = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
 
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 
 # Jazzmin Admin Settings

@@ -1,4 +1,5 @@
-from rest_framework import viewsets, permissions, filters
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -28,14 +29,13 @@ class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Article.objects.all().order_by('-published_at')
     serializer_class = ArticleSerializer
     
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend]
     
     # 'is_editors_pick' aur 'tags__slug' yahan filter mein hain
     filterset_fields = ['category__slug', 'author', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'tags__slug', 'is_top_story', 'is_web_story']
-    search_fields = ['title', 'content', 'description', 'author__user__name', 'category__name', 'tags__name']
 
     def get_queryset(self):
-        queryset = Article.objects.all().order_by('-published_at')
+        queryset = Article.objects.select_related('category', 'author__user').prefetch_related('tags').order_by('-published_at')
         
         # --- 24 HOURS STORY EXPIRY LOGIC ---
         is_web_story = self.request.query_params.get('is_web_story')
@@ -44,6 +44,24 @@ class ArticleViewSet(viewsets.ModelViewSet):
             time_threshold = timezone.now() - timedelta(hours=24)
             # Sirf wahi stories filter karein jinka time threshold se bada (nyaya) ho
             queryset = queryset.filter(is_web_story=True, web_story_created_at__gte=time_threshold)
+
+        search_term = (self.request.query_params.get('search') or '').strip()
+        if search_term:
+            search_vector = (
+                SearchVector('title', weight='A', config='english')
+                + SearchVector('description', weight='B', config='english')
+                + SearchVector('content', weight='C', config='english')
+                + SearchVector('category__name', weight='B', config='english')
+                + SearchVector('author__user__name', weight='B', config='english')
+            )
+            search_query = SearchQuery(search_term, search_type='websearch', config='english')
+            queryset = (
+                queryset
+                .annotate(search=search_vector, rank=SearchRank(search_vector, search_query))
+                .filter(search=search_query)
+                .order_by('-rank', '-published_at')
+                .distinct()
+            )
             
         return queryset
     

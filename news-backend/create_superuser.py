@@ -10,10 +10,14 @@ from django.contrib.auth import get_user_model
 def create_auto_superuser():
     User = get_user_model()
     
-    # Environment variables se credentials lenge, taaki code me password expose na ho
-    email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'muhammadhelal228@gmail.com')
-    password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', 'helal@123')
+    # Production mein insecure fallback credentials kabhi use na hon.
+    email = os.environ.get('DJANGO_SUPERUSER_EMAIL')
+    password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
     name = os.environ.get('DJANGO_SUPERUSER_NAME', 'Super Admin')
+
+    if not email or not password:
+        print("⚠️  Skipping superuser creation. Set DJANGO_SUPERUSER_EMAIL and DJANGO_SUPERUSER_PASSWORD to enable it.")
+        return
 
     # Check karte hain ki is email se user pehle se hai ya nahi
     if not User.objects.filter(email=email).exists():

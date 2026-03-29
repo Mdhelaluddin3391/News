@@ -1,3 +1,5 @@
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector
 from django.db import models
 from django.utils.text import slugify
 from tinymce.models import HTMLField
@@ -109,6 +111,16 @@ class Article(BaseModel):
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        indexes = [
+            GinIndex(
+                SearchVector('title', weight='A', config='english')
+                + SearchVector('description', weight='B', config='english')
+                + SearchVector('content', weight='C', config='english'),
+                name='article_fts_gin_idx',
+            ),
+        ]
 
 class LiveUpdate(BaseModel):
     """

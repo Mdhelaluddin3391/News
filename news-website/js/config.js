@@ -1,21 +1,70 @@
-// const CONFIG = {
-//     // Production & Nginx reverse proxy ke liye empty aur relative path
-//     BACKEND_URL: '', 
-//     API_BASE_URL: '/api', 
-    
-//     // Aapki existing keys (Agar aapne live server ke liye nayi generate ki hain toh yahan replace kar lein)
-//     GOOGLE_CLIENT_ID: '615098838513-hnphi7ekcv9nhjv94f0mfj0509nd63hu.apps.googleusercontent.com',
-//     VAPID_PUBLIC_KEY: 'BL_wQ4AU0MABrcB7uQc5dX7d725RZmGktXdlp9YD6m1MWopxpFcFMLjiBdF8pMjuAKOJmwX4a596wC0mj4HlMQ8'
-// };
-
-
+const APP_CONFIG = window.__APP_CONFIG__ || {};
+const isFileProtocol = window.location.protocol === 'file:';
+const isLocalHost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const backendUrl = APP_CONFIG.BACKEND_URL !== undefined
+    ? APP_CONFIG.BACKEND_URL
+    : (isFileProtocol || isLocalHost ? 'http://127.0.0.1:8000' : '');
+const normalizedBackendUrl = backendUrl.replace(/\/$/, '');
+const apiBaseUrl = APP_CONFIG.API_BASE_URL
+    || (normalizedBackendUrl ? `${normalizedBackendUrl}/api` : '/api');
 
 const CONFIG = {
-    // Backend ka naya live URL yahan set karein
-    BACKEND_URL: 'https://news-5p7p.onrender.com', 
-    API_BASE_URL: 'https://news-5p7p.onrender.com/api', 
-    
-    // Aapki existing keys
-    GOOGLE_CLIENT_ID: '615098838513-hnphi7ekcv9nhjv94f0mfj0509nd63hu.apps.googleusercontent.com',
-    VAPID_PUBLIC_KEY: 'BL_wQ4AU0MABrcB7uQc5dX7d725RZmGktXdlp9YD6m1MWopxpFcFMLjiBdF8pMjuAKOJmwX4a596wC0mj4HlMQ8'
+    BACKEND_URL: normalizedBackendUrl,
+    API_BASE_URL: apiBaseUrl,
+    GOOGLE_CLIENT_ID: APP_CONFIG.GOOGLE_CLIENT_ID || '615098838513-hnphi7ekcv9nhjv94f0mfj0509nd63hu.apps.googleusercontent.com',
+    VAPID_PUBLIC_KEY: APP_CONFIG.VAPID_PUBLIC_KEY || 'BL_wQ4AU0MABrcB7uQc5dX7d725RZmGktXdlp9YD6m1MWopxpFcFMLjiBdF8pMjuAKOJmwX4a596wC0mj4HlMQ8',
+    SENTRY_DSN: APP_CONFIG.SENTRY_DSN || '',
+    SENTRY_ENVIRONMENT: APP_CONFIG.SENTRY_ENVIRONMENT || (isLocalHost || isFileProtocol ? 'development' : 'production'),
+    SENTRY_RELEASE: APP_CONFIG.SENTRY_RELEASE || '',
+    SENTRY_TRACES_SAMPLE_RATE: Number(APP_CONFIG.SENTRY_TRACES_SAMPLE_RATE || 0)
 };
+
+window.reportFrontendError = function reportFrontendError(error, context = {}) {
+    if (!window.Sentry) {
+        return;
+    }
+
+    if (error instanceof Error) {
+        const tags = context.scope ? { scope: context.scope } : undefined;
+        window.Sentry.captureException(error, { tags, extra: context });
+        return;
+    }
+
+    window.Sentry.captureMessage(String(error), {
+        level: 'error',
+        extra: context
+    });
+};
+
+function bootstrapFrontendSentry() {
+    if (!window.Sentry || window.__frontendSentryInitialized) {
+        return;
+    }
+
+    const integrations = [];
+    if (typeof window.Sentry.browserTracingIntegration === 'function') {
+        integrations.push(window.Sentry.browserTracingIntegration());
+    }
+
+    window.Sentry.init({
+        dsn: CONFIG.SENTRY_DSN,
+        environment: CONFIG.SENTRY_ENVIRONMENT,
+        release: CONFIG.SENTRY_RELEASE || undefined,
+        integrations,
+        tracesSampleRate: CONFIG.SENTRY_TRACES_SAMPLE_RATE
+    });
+
+    window.__frontendSentryInitialized = true;
+}
+
+if (CONFIG.SENTRY_DSN && !isFileProtocol && !isLocalHost) {
+    if (window.Sentry) {
+        bootstrapFrontendSentry();
+    } else {
+        const sentryScript = document.createElement('script');
+        sentryScript.src = 'https://browser.sentry-cdn.com/8.28.0/bundle.tracing.min.js';
+        sentryScript.crossOrigin = 'anonymous';
+        sentryScript.onload = bootstrapFrontendSentry;
+        document.head.appendChild(sentryScript);
+    }
+}

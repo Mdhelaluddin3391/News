@@ -11,28 +11,29 @@ async function fetchComments(articleId) {
         const data = await response.json();
         return data.results || data;
     } catch (error) {
+        if (typeof window.reportFrontendError === 'function') {
+            window.reportFrontendError(error, { scope: 'comments', action: 'fetchComments', articleId });
+        }
         console.error('Error fetching comments:', error);
         return [];
     }
 }
 
 async function postComment(articleId, text) {
-    const token = localStorage.getItem('forexTimes_accessToken');
-    if (!token) {
+    if (!getCurrentUser()) {
         throw new Error('You must be logged in to comment.');
     }
 
-    const response = await fetch(COMMENTS_API_URL, {
+    const response = await apiFetch(COMMENTS_API_URL, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             article: articleId,
             text
         })
-    });
+    }, { authRequired: true });
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -43,17 +44,13 @@ async function postComment(articleId, text) {
 }
 
 async function deleteComment(commentId) {
-    const token = localStorage.getItem('forexTimes_accessToken');
-    if (!token) {
+    if (!getCurrentUser()) {
         throw new Error('You must be logged in.');
     }
 
-    const response = await fetch(`${COMMENTS_API_URL}${commentId}/`, {
-        method: 'DELETE',
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    });
+    const response = await apiFetch(`${COMMENTS_API_URL}${commentId}/`, {
+        method: 'DELETE'
+    }, { authRequired: true });
 
     if (!response.ok) {
         throw new Error('Failed to delete comment.');
@@ -63,23 +60,21 @@ async function deleteComment(commentId) {
 }
 
 async function reportComment(commentId, reason, description) {
-    const token = localStorage.getItem('forexTimes_accessToken');
-    if (!token) {
+    if (!getCurrentUser()) {
         throw new Error('You must be logged in to report comments.');
     }
 
-    const response = await fetch(COMMENT_REPORTS_API_URL, {
+    const response = await apiFetch(COMMENT_REPORTS_API_URL, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({
             comment: commentId,
             reason,
             description
         })
-    });
+    }, { authRequired: true });
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {

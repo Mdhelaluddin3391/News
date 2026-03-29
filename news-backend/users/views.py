@@ -5,18 +5,64 @@ import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import EmailMultiAlternatives
+from django.middleware.csrf import get_token
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import ProfileSerializer, RegisterSerializer, UserSerializer
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+def set_auth_cookies(response, refresh):
+    access_cookie = settings.SIMPLE_JWT["AUTH_COOKIE_ACCESS"]
+    refresh_cookie = settings.SIMPLE_JWT["AUTH_COOKIE_REFRESH"]
+    secure = settings.SIMPLE_JWT["AUTH_COOKIE_SECURE"]
+    httponly = settings.SIMPLE_JWT["AUTH_COOKIE_HTTP_ONLY"]
+    same_site = settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"]
+    cookie_path = settings.SIMPLE_JWT["AUTH_COOKIE_PATH"]
+    refresh_path = settings.SIMPLE_JWT["AUTH_COOKIE_REFRESH_PATH"]
+
+    response.set_cookie(
+        access_cookie,
+        str(refresh.access_token),
+        max_age=int(settings.SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"].total_seconds()),
+        secure=secure,
+        httponly=httponly,
+        samesite=same_site,
+        path=cookie_path,
+    )
+    response.set_cookie(
+        refresh_cookie,
+        str(refresh),
+        max_age=int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds()),
+        secure=secure,
+        httponly=httponly,
+        samesite=same_site,
+        path=refresh_path,
+    )
+
+
+def clear_auth_cookies(response):
+    response.delete_cookie(
+        settings.SIMPLE_JWT["AUTH_COOKIE_ACCESS"],
+        path=settings.SIMPLE_JWT["AUTH_COOKIE_PATH"],
+        samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
+    )
+    response.delete_cookie(
+        settings.SIMPLE_JWT["AUTH_COOKIE_REFRESH"],
+        path=settings.SIMPLE_JWT["AUTH_COOKIE_REFRESH_PATH"],
+        samesite=settings.SIMPLE_JWT["AUTH_COOKIE_SAMESITE"],
+    )
 
 
 def build_verification_link(user):
@@ -179,12 +225,45 @@ class ResendVerificationEmailView(APIView):
         )
 
 
-class ProfileView(generics.RetrieveAPIView):
-    serializer_class = UserSerializer
+class ProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_object(self):
         return self.request.user
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class CsrfCookieView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request):
+        return Response({"detail": "CSRF cookie set.", "csrfToken": get_token(request)})
+
+
+class CookieTokenRefreshView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        refresh_token = request.COOKIES.get(settings.SIMPLE_JWT["AUTH_COOKIE_REFRESH"]) or request.data.get("refresh")
+        if not refresh_token:
+            return Response({"detail": "Refresh token not found."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = TokenRefreshSerializer(data={"refresh": refresh_token})
+        serializer.is_valid(raise_exception=True)
+
+        response = Response({"message": "Session refreshed."}, status=status.HTTP_200_OK)
+        set_auth_cookies(response, RefreshToken(refresh_token))
+        return response
+
+
+class LogoutView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        response = Response({"message": "Logged out successfully."}, status=status.HTTP_200_OK)
+        clear_auth_cookies(response)
+        return response
 
 
 class ForgotPasswordView(APIView):
@@ -336,12 +415,13 @@ class GoogleLoginView(APIView):
                 user.save(update_fields=fields_to_update)
 
             refresh = RefreshToken.for_user(user)
-            return Response(
+            response = Response(
                 {
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
+                    "message": "Login successful.",
                     "user": UserSerializer(user).data,
                 }
             )
+            set_auth_cookies(response, refresh)
+            return response
         except ValueError:
             return Response({"error": "Invalid Google Token"}, status=status.HTTP_400_BAD_REQUEST)

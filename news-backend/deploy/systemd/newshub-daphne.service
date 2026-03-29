@@ -1,0 +1,16 @@
+[Unit]
+Description=Newshub Daphne ASGI Server
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/Myproject/news-backend
+EnvironmentFile=/home/ubuntu/Myproject/news-backend/.env
+ExecStart=/home/ubuntu/venvs/newshub/bin/daphne -b 0.0.0.0 -p 8000 newshub_core.asgi:application
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

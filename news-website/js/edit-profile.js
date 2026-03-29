@@ -2,10 +2,9 @@ const PROFILE_API_URL = `${CONFIG.API_BASE_URL}/users/profile/`;
 
 document.addEventListener('DOMContentLoaded', () => {
     const user = getCurrentUser(); // Using function from auth.js
-    const token = localStorage.getItem('forexTimes_accessToken');
     
-    // Agar user logged in nahi hai ya token nahi hai
-    if (!user || !token) {
+    // Agar user logged in nahi hai
+    if (!user) {
         window.location.href = 'login.html?redirect=edit-profile.html';
         return;
     }
@@ -87,15 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // ===============================================================================
 
         try {
-            const response = await fetch(PROFILE_API_URL, {
+            const response = await apiFetch(PROFILE_API_URL, {
                 method: 'PATCH',
-                headers: {
-                    // DHYAN DEIN: Yahan 'Content-Type' nahi likhna hai. 
-                    // Browser khud 'multipart/form-data' set karega file upload ke liye.
-                    'Authorization': `Bearer ${token}`
-                },
+                // DHYAN DEIN: Yahan 'Content-Type' nahi likhna hai. 
+                // Browser khud 'multipart/form-data' set karega file upload ke liye.
                 body: formData // Payload ki jagah formData bhej rahe hain
-            });
+            }, { authRequired: true });
 
             if (response.ok) {
                 const updatedUser = await response.json();
@@ -137,6 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 errorDiv.style.display = 'block';
             }
         } catch (error) {
+            if (typeof window.reportFrontendError === 'function') {
+                window.reportFrontendError(error, { scope: 'profile', action: 'updateProfile' });
+            }
             console.error("Profile update error:", error);
             errorDiv.textContent = 'Network error. Please try again.';
             errorDiv.style.display = 'block';

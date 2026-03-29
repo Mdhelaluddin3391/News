@@ -23,6 +23,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        SKIP_COLLECTSTATIC: "true"
     # NAYA: Sirf runserver chalayenge, migrate entrypoint kar dega
     command: python manage.py runserver 0.0.0.0:8000
     restart: always
@@ -33,6 +35,7 @@ services:
     environment:
       POSTGRES_HOST: db
       REDIS_HOST: redis
+      SKIP_COLLECTSTATIC: "true"
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
@@ -45,6 +48,8 @@ services:
     build:
       context: .  # Updated path
       dockerfile: Dockerfile
+      args:
+        SKIP_COLLECTSTATIC: "true"
     command: celery -A newshub_core worker --loglevel=info
     restart: always
     env_file:
@@ -52,6 +57,7 @@ services:
     environment:
       POSTGRES_HOST: db
       REDIS_HOST: redis
+      SKIP_COLLECTSTATIC: "true"
     volumes:
       - .:/app  # Updated path
       - media_volume:/app/media

@@ -38,6 +38,9 @@ if not DEBUG:
     SECURE_HSTS_PRELOAD = True
 ALLOWED_HOSTS = _get_list_env('ALLOWED_HOSTS', '127.0.0.1,localhost')
 
+WHITENOISE_MANIFEST_STRICT = False
+
+
 INSTALLED_APPS = [
     'daphne',
     'jazzmin',
@@ -189,7 +192,7 @@ STORAGES = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage' if not DEBUG else 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage',
     },
 }
 

@@ -15,12 +15,14 @@ COPY . /app/
 # NAYA: Entrypoint script ko executable banayein
 RUN chmod +x /app/entrypoint.sh
 
-# Build time error se bachne ke liye dummy SECRET_KEY set karein
+# Build argument to skip collectstatic during development
+ARG SKIP_COLLECTSTATIC=false
 ARG SECRET_KEY="dummy-key-for-build-only"
 ENV SECRET_KEY=${SECRET_KEY}
+ENV SKIP_COLLECTSTATIC=${SKIP_COLLECTSTATIC}
 
-# Static files collect karein
-RUN python manage.py collectstatic --noinput
+# Static files collect karein (skip during development)
+RUN if [ "$SKIP_COLLECTSTATIC" = "false" ]; then python manage.py collectstatic --noinput; fi
 
 # NAYA: Entrypoint set karein
 ENTRYPOINT ["/app/entrypoint.sh"]

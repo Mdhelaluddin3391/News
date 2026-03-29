@@ -9,9 +9,11 @@ python manage.py migrate --noinput
 echo "Checking/Creating Superuser..."
 python create_superuser.py
 
-# (Optional) Agar aap chahte hain ki static files bhi har baar collect hon
-echo "Collecting static files..."
-python manage.py collectstatic --noinput
+# Skip collectstatic during development
+if [ "$SKIP_COLLECTSTATIC" != "true" ]; then
+    echo "Collecting static files..."
+    python manage.py collectstatic --noinput
+fi
 
 echo "Starting server..."
 # "$@" ka matlab hai ki jo command Dockerfile ya docker-compose mein di gayi hai, wo execute hogi

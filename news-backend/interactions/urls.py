@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CommentViewSet, BookmarkViewSet
+from .views import CommentViewSet, BookmarkViewSet, CommentReportViewSet
 from .views import SubscribeNewsletterView, UnsubscribeNewsletterView, ActivePollView, VotePollView
 from .views import SavePushSubscriptionView
 
@@ -8,6 +8,7 @@ from .views import SavePushSubscriptionView
 router = DefaultRouter()
 router.register(r'comments', CommentViewSet, basename='comment')
 router.register(r'bookmarks', BookmarkViewSet, basename='bookmark')
+router.register(r'reports/comments', CommentReportViewSet, basename='comment-report')
 
 urlpatterns = [
     path('', include(router.urls)),

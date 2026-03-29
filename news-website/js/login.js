@@ -19,8 +19,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const redirect = urlParams.get('redirect') || 'index.html';
             window.location.href = redirect;
         } else {
-            errorDiv.textContent = result.message;
-            errorDiv.style.display = 'block';
+            // Handle email verification requirement
+            if (result.needsVerification) {
+                errorDiv.textContent = result.message;
+                errorDiv.style.display = 'block';
+                setTimeout(() => {
+                    window.location.href = 'verify-email.html';
+                }, 2000);
+            } else {
+                errorDiv.textContent = result.message;
+                errorDiv.style.display = 'block';
+            }
             submitBtn.disabled = false;
             submitBtn.textContent = 'Login';
         }

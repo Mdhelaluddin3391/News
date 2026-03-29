@@ -7,10 +7,8 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        # 'role' ko add kiya gaya hai taaki frontend me dikh sake
-        fields = ('id', 'name', 'email', 'profile_picture', 'bio', 'role', 'created_at')
-        # 'role' read-only hai taaki user edit profile se apna role change na kar sake
-        read_only_fields = ('id', 'email', 'role', 'created_at')
+        fields = ('id', 'name', 'email', 'profile_picture', 'bio', 'role', 'is_email_verified', 'created_at')
+        read_only_fields = ('id', 'email', 'role', 'is_email_verified', 'created_at')
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -20,11 +18,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('name', 'email', 'password')
 
     def create(self, validated_data):
-        # Industry Standard Security: Yahan explicitly role='subscriber' set kiya hai
+        # Create user with is_active=False (inactive until email is verified)
         user = User.objects.create_user(
             email=validated_data['email'],
             name=validated_data['name'],
             password=validated_data['password'],
-            role='subscriber' 
+            role='subscriber',
+            is_active=False  # Keep user inactive until email verification
         )
         return user

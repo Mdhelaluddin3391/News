@@ -1,24 +1,18 @@
 import threading
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils import timezone
 from rest_framework import permissions, status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from core.tasks import send_async_email
-from .models import Bookmark, Comment, NewsletterSubscriber, Poll, PollOption, PushSubscription
-from .serializers import BookmarkSerializer, CommentSerializer, PollSerializer, PushSubscriptionSerializer
+from .models import Bookmark, Comment, CommentReport, NewsletterSubscriber, Poll, PollOption, PushSubscription
+from .serializers import BookmarkSerializer, CommentSerializer, CommentReportSerializer, PollSerializer, PushSubscriptionSerializer
+from rest_framework.throttling import ScopedRateThrottle
 import jwt
 import datetime
-from django.conf import settings
-from rest_framework import permissions, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .models import NewsletterSubscriber
-from core.tasks import send_async_email
-
-# Baaki imports jo pehle se hain wo waise hi rahenge...
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
@@ -55,6 +49,41 @@ class BookmarkViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+
+class CommentReportViewSet(viewsets.ModelViewSet):
+    """Report offensive comments"""
+    serializer_class = CommentReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'comment_report'
+
+    def get_queryset(self):
+        # Users sirf unhe reports dekh sakte hain jo unhone khud kiye hain (unless admin)
+        if self.request.user.is_staff:
+            return CommentReport.objects.all().order_by('-created_at')
+        return CommentReport.objects.filter(reported_by=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        # Automatically set reported_by to current user
+        serializer.save(reported_by=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        """Override create to check for duplicate reports"""
+        comment_id = request.data.get('comment')
+        
+        # Check if user already reported this comment
+        existing_report = CommentReport.objects.filter(
+            comment_id=comment_id,
+            reported_by=request.user
+        ).exists()
+        
+        if existing_report:
+            return Response(
+                {"detail": "You have already reported this comment."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return super().create(request, *args, **kwargs)
 
 
 def send_email_in_background(subject, message, recipient_list, html_message=None):
@@ -154,8 +183,23 @@ class UnsubscribeNewsletterView(APIView):
                 sub_email = payload.get('email')
                 subscriber = NewsletterSubscriber.objects.get(email=sub_email)
                 
-                # User ko inactive mark karein
+                # === NAYA: Check if token has already been used ===
+                if subscriber.unsubscribe_token_used_at is not None:
+                    return Response(
+                        {"error": "This unsubscribe link has already been used. You are already unsubscribed."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Verify that the token matches what we have stored
+                if subscriber.unsubscribe_token != token:
+                    return Response(
+                        {"error": "Invalid or expired unsubscribe token."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # User ko inactive mark karein AND mark token as used
                 subscriber.is_active = False
+                subscriber.unsubscribe_token_used_at = timezone.now()
                 subscriber.save()
                 
                 return Response({"message": "You have been successfully unsubscribed."})
@@ -180,6 +224,11 @@ class UnsubscribeNewsletterView(APIView):
                     'type': 'unsubscribe'
                 }
                 unsub_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+                
+                # === NAYA: Store token in database ===
+                subscriber.unsubscribe_token = unsub_token
+                subscriber.unsubscribe_token_used_at = None  # Token is newly issued, not yet used
+                subscriber.save()
                 
                 # Unsubscribe Link banayein
                 unsub_link = f"{settings.FRONTEND_URL}/unsubscribe.html?token={unsub_token}"

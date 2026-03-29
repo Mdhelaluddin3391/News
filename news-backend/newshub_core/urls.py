@@ -19,6 +19,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework import status
+from rest_framework.response import Response
 from interactions.views import SubscribeNewsletterView, UnsubscribeNewsletterView
 from core.views import ContactMessageCreateView
 from django.contrib.sitemaps.views import sitemap
@@ -28,6 +31,9 @@ from core.views import ContactMessageCreateView, SiteSettingAPIView
 from django.utils.decorators import method_decorator
 from rest_framework.throttling import ScopedRateThrottle
 from news.sitemaps import ArticleSitemap, CategorySitemap, AuthorSitemap, TagSitemap, StaticViewSitemap
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
 
@@ -42,6 +48,30 @@ sitemaps = {
 class CustomTokenObtainPairView(TokenObtainPairView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'auth'
+
+    def post(self, request, *args, **kwargs):
+        """Override to check if user has verified their email"""
+        response = super().post(request, *args, **kwargs)
+        
+        # If login was successful, check if email is verified
+        if response.status_code == 200:
+            email = request.data.get('email')
+            if email:
+                try:
+                    user = User.objects.get(email=email)
+                    if not user.is_email_verified:
+                        return Response(
+                            {
+                                "detail": "Email not verified. Please check your email for the verification link.",
+                                "error_code": "email_not_verified",
+                                "email": email
+                            },
+                            status=status.HTTP_403_FORBIDDEN
+                        )
+                except User.DoesNotExist:
+                    pass
+        
+        return response
 
 urlpatterns = [
     path('admin/', admin.site.urls),

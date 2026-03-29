@@ -35,6 +35,16 @@ async function loginUser(email, password) {
         const data = await response.json();
 
         if (!response.ok) {
+            // Check if error is due to unverified email
+            if (data.error_code === 'email_not_verified') {
+                localStorage.setItem('waitingForEmailVerification', email);
+                return { 
+                    success: false, 
+                    message: 'Please verify your email first. Redirecting to verification page...',
+                    needsVerification: true,
+                    email: email
+                };
+            }
             return { success: false, message: data.detail || 'Invalid email or password.' };
         }
 

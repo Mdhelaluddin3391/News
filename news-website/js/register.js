@@ -26,11 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Registering...';
 
-        const result = await registerUser(name, email, password); // Async call from auth.js
+        const result = await registerUser(name, email, password);
         if (result.success) {
-            // Auto-login after registration
-            await loginUser(email, password);
-            window.location.href = 'index.html';
+            // Store email for verification page
+            localStorage.setItem('waitingForEmailVerification', email);
+            // Redirect to email verification page
+            window.location.href = 'verify-email.html';
         } else {
             errorDiv.textContent = result.message;
             errorDiv.style.display = 'block';

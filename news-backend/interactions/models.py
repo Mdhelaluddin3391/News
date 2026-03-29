@@ -26,12 +26,64 @@ class Comment(BaseModel):
 
     def __str__(self):
         return f"Comment by {self.user.name} on {self.article.title}"
+
+class CommentReport(BaseModel):
+    """Comments jo offensive hain unhe report karne ke liye"""
+    REASON_CHOICES = (
+        ('spam', 'Spam'),
+        ('offensive', 'Offensive Language'),
+        ('inappropriate', 'Inappropriate Content'),
+        ('harassment', 'Harassment'),
+        ('false_info', 'False Information'),
+        ('other', 'Other'),
+    )
     
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='reports')
+    reported_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reported_comments')
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES)
+    description = models.TextField(blank=True, null=True, help_text="Additional details about the report")
+    
+    # Status tracking
+    is_reviewed = models.BooleanField(default=False, help_text="Admin review ho gaya ya nahi")
+    admin_action = models.CharField(
+        max_length=20,
+        choices=[
+            ('none', 'No Action'),
+            ('hidden', 'Comment Hidden'),
+            ('deleted', 'Comment Deleted'),
+            ('warn_user', 'User Warned'),
+        ],
+        default='none',
+        help_text="Admin ka action"
+    )
+    admin_notes = models.TextField(blank=True, null=True, help_text="Admin ke notes")
+    
+    class Meta:
+        # Ek user ek comment ko sirf ek baar report kar sake
+        unique_together = ('comment', 'reported_by')
+
+    def __str__(self):
+        return f"Report: {self.get_reason_display()} - {self.comment.id}"
+    
+
 
 class NewsletterSubscriber(BaseModel):
     """Newsletter subscribe karne wale users ke emails"""
     email = models.EmailField(unique=True)
     is_active = models.BooleanField(default=True, help_text="False means user ne unsubscribe kar diya hai")
+    
+    # Token tracking fields for unsubscribe security
+    unsubscribe_token = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="Current unsubscribe token issued to user"
+    )
+    unsubscribe_token_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the unsubscribe token was used (one-time use)"
+    )
 
     def __str__(self):
         return self.email

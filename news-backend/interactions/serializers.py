@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Bookmark, Comment
+from .models import Bookmark, Comment, CommentReport
 from users.serializers import UserSerializer
 from .models import Poll, PollOption
 from .models import PushSubscription
@@ -13,6 +13,16 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'article', 'user_detail', 'text', 'is_active', 'created_at')
         read_only_fields = ('id', 'is_active', 'created_at')
+
+class CommentReportSerializer(serializers.ModelSerializer):
+    reported_by_detail = UserSerializer(source='reported_by', read_only=True)
+    comment_detail = CommentSerializer(source='comment', read_only=True)
+
+    class Meta:
+        model = CommentReport
+        fields = ('id', 'comment', 'comment_detail', 'reported_by_detail', 'reason', 'description', 
+                  'is_reviewed', 'admin_action', 'admin_notes', 'created_at')
+        read_only_fields = ('id', 'reported_by_detail', 'comment_detail', 'is_reviewed', 'admin_action', 'admin_notes', 'created_at')
 
 class BookmarkSerializer(serializers.ModelSerializer):
     class Meta:

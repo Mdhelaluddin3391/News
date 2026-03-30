@@ -729,3 +729,17 @@ document.addEventListener('DOMContentLoaded', () => {
         closeBtn.addEventListener('click', closeStoryModal);
     }
 });
+
+
+
+// ==================== GLOBAL BREAKING NEWS FUNCTION ====================
+window.loadBreakingNews = async function() {
+    try {
+        const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_breaking=true`);
+        const data = await res.json();
+        const breakingArticles = data.results || data;
+        renderBreakingTicker(breakingArticles);
+    } catch (err) {
+        console.error("Error loading Breaking News:", err);
+    }
+};

@@ -155,13 +155,16 @@ async function fetchNews(category = DEFAULT_CATEGORY, page = 1) {
     if (articlesContainer) articlesContainer.innerHTML = '';
 
     try {
-        // FIX 1: Category ko hamesha lowercase mein convert karein taaki exact match ho
         const cleanCategory = category.toLowerCase();
         
-        // Yahan cleanCategory use karein
-        const endpoint = `/news/articles/?category__slug=${encodeURIComponent(cleanCategory)}&page=${encodeURIComponent(page)}`;
+        // NAYA CODE: Use standard fetch with NEWS_API_URL to match homepage.js exactly
+        const response = await fetch(`${NEWS_API_URL}/articles/?category__slug=${encodeURIComponent(cleanCategory)}&page=${encodeURIComponent(page)}`);
         
-        const data = await window.apiFetch(endpoint);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
         
         let articles = [];
         let totalResults = 0;
@@ -291,6 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof loadEditorsPicks === 'function') loadEditorsPicks();
         if (typeof loadTrendingNews === 'function') loadTrendingNews();
         if (typeof loadCategoriesSidebar === 'function') loadCategoriesSidebar();
+        if (typeof loadBreakingNews === 'function') loadBreakingNews();
         // ----------------------------------------------
 
         const paginationContainer = document.getElementById('pagination');

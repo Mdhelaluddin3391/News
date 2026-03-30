@@ -5,50 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page Not Found - Forex Times</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/pages.css">
     <link rel="stylesheet" href="css/search.css">
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <a href="index.html" style="text-decoration: none; color: inherit;">📰 Forex Times</a>
-        </div>
-        <div class="search-container">
-            <form id="search-form" action="search.html" method="get">
-                <input type="text" name="q" placeholder="Search news..." required>
-                <button type="submit">🔍</button>
-            </form>
-        </div>
-        <nav>
-            <ul class="categories">
-                <li><a href="index.html?category=general" class="category-link">Home</a></li>
-                <li><a href="index.html?category=technology" class="category-link">Technology</a></li>
-                <li><a href="index.html?category=sports" class="category-link">Sports</a></li>
-                <li><a href="index.html?category=business" class="category-link">Business</a></li>
-                <li><a href="index.html?category=entertainment" class="category-link">Entertainment</a></li>
-                <li><a href="index.html?category=health" class="category-link">Health</a></li>
-                <li><a href="index.html?category=science" class="category-link">Science</a></li>
-            </ul>
-        </nav>
-    </header>
+    <div id="header-placeholder"></div>
 
-    <main>
-        <div class="page-container" style="text-align: center;">
-            <div class="error-code">404</div>
-            <h1 class="error-message-static">Oops! Page Not Found</h1>
-            <p class="page-content" style="margin-bottom: 2rem;">The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
-            <a href="index.html" class="back-home">Return to Homepage</a>
-        </div>
+    <main class="page-main">
+        <section class="page-shell error-shell">
+            <div class="page-card">
+                <div class="error-code">404</div>
+                <h1 class="error-message-static">Page Not Found</h1>
+                <p class="page-lead">The page you are looking for might have been removed, renamed, or is temporarily unavailable.</p>
+                <a href="index.html" class="back-home">Return to Homepage</a>
+            </div>
+        </section>
     </main>
 
     <div id="footer-placeholder"></div>
+    <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/script.js"></script>
-    <script src="js/homepage.js"></script> 
-    <script src="js/index-ui.js"></script>
-    <script src="js/search.js"></script>
-    
     <script src="js/loadComponents.js"></script>
 </body>
 </html>

@@ -1,4 +1,47 @@
 /* Shared styles for static pages (About, Contact, 404) */
+.page-main {
+    padding: 2.5rem 0 4rem;
+}
+
+.page-shell {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.page-shell--wide {
+    max-width: 1080px;
+}
+
+.page-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: clamp(1.5rem, 3vw, 3rem);
+}
+
+.page-hero {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.page-eyebrow {
+    display: inline-block;
+    margin-bottom: 0.9rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: var(--primary);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
 .page-container {
     max-width: 800px;
     margin: 2rem auto;
@@ -16,6 +59,26 @@
     padding-left: 1rem;
 }
 
+.page-title--center {
+    border-left: none;
+    padding-left: 0;
+    margin-bottom: 0.75rem;
+}
+
+.page-lead {
+    max-width: 720px;
+    margin: 0 auto;
+    color: var(--gray);
+    font-size: 1.08rem;
+    line-height: 1.8;
+}
+
+.page-meta {
+    margin-top: 0.85rem;
+    color: var(--gray);
+    font-style: italic;
+}
+
 .page-content {
     font-size: 1.1rem;
     line-height: 1.8;
@@ -24,6 +87,32 @@
 
 .page-content p {
     margin-bottom: 1.5rem;
+}
+
+.page-list {
+    margin: 1rem 0 0;
+    padding-left: 1.25rem;
+    color: #334155;
+    font-size: 1.05rem;
+    line-height: 1.85;
+}
+
+.page-list li + li {
+    margin-top: 0.65rem;
+}
+
+.page-cta-box {
+    background: #f8fafc;
+    padding: 1.8rem;
+    border-radius: 14px;
+    border-left: 4px solid var(--primary);
+    margin-top: 3rem;
+}
+
+.page-cta-box h2 {
+    border-left: none;
+    padding-left: 0;
+    margin-bottom: 0.75rem;
 }
 
 /* Contact form */
@@ -106,6 +195,15 @@
 
 .back-home:hover {
     background-color: var(--primary-dark);
+}
+
+.error-shell {
+    text-align: center;
+}
+
+.error-shell .page-card {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
 }
 
 
@@ -234,6 +332,28 @@
 
 /* Responsive adjustment */
 @media (max-width: 768px) {
+    .page-main {
+        padding: 2rem 0 3rem;
+    }
+
+    .page-card {
+        border-radius: 16px;
+    }
+
+    .page-hero {
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+    }
+
+    .page-title {
+        font-size: 1.9rem;
+    }
+
+    .page-lead,
+    .page-list {
+        font-size: 1rem;
+    }
+
     .about-grid-2 {
         grid-template-columns: 1fr;
     }

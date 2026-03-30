@@ -11,9 +11,9 @@ def create_auto_superuser():
     User = get_user_model()
     
     # Production mein insecure fallback credentials kabhi use na hon.
-    email = os.environ.get('DJANGO_SUPERUSER_EMAIL')
-    password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
-    name = os.environ.get('DJANGO_SUPERUSER_NAME', 'Super Admin')
+    email = 'muhammadhelal228@gmail.com'
+    password = 'helal@123'
+    name = 'mdhelal'
 
     if not email or not password:
         print("⚠️  Skipping superuser creation. Set DJANGO_SUPERUSER_EMAIL and DJANGO_SUPERUSER_PASSWORD to enable it.")

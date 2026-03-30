@@ -2,10 +2,16 @@ const APP_CONFIG = window.__APP_CONFIG__ || {};
 const isFileProtocol = window.location.protocol === 'file:';
 
 // Single source-of-truth: global API base URL
-const API_BASE_URL = 'http://localhost:8000/api';
+// Dynamically set based on environment
+if (typeof API_BASE_URL === 'undefined') {
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || isFileProtocol;
+    window.API_BASE_URL = isDevelopment 
+        ? 'http://localhost:8000/api'
+        : `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/api`;
+}
 
 const CONFIG = {
-    API_BASE_URL,
+    API_BASE_URL: APP_CONFIG.API_BASE_URL || window.API_BASE_URL,
     GOOGLE_CLIENT_ID: APP_CONFIG.GOOGLE_CLIENT_ID || '615098838513-hnphi7ekcv9nhjv94f0mfj0509nd63hu.apps.googleusercontent.com',
     VAPID_PUBLIC_KEY: APP_CONFIG.VAPID_PUBLIC_KEY || 'BL_wQ4AU0MABrcB7uQc5dX7d725RZmGktXdlp9YD6m1MWopxpFcFMLjiBdF8pMjuAKOJmwX4a596wC0mj4HlMQ8',
     SENTRY_DSN: APP_CONFIG.SENTRY_DSN || '',

@@ -1,6 +1,6 @@
 // js/forgot-password.js
 
-// Aapke Django backend ka forgot-password endpoint (abhi backend mein banana baaki hai)
+// Forgot password endpoint - backend endpoint: /api/users/forgot-password/
 const FORGOT_PASSWORD_API = `${CONFIG.API_BASE_URL}/users/forgot-password/`;
 
 document.addEventListener('DOMContentLoaded', () => {

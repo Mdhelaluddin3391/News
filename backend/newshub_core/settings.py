@@ -37,7 +37,7 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-ALLOWED_HOSTS = _get_list_env('ALLOWED_HOSTS', '127.0.0.1,localhost')
+ALLOWED_HOSTS = _get_list_env('ALLOWED_HOSTS', '127.0.0.1,localhost,0.0.0.0')
 
 WHITENOISE_MANIFEST_STRICT = False
 
@@ -263,7 +263,7 @@ if CORS_ALLOW_ALL_ORIGINS:
 else:
     CORS_ALLOWED_ORIGINS = _get_list_env(
         'CORS_ALLOWED_ORIGINS',
-        'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000'
+        'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000,http://0.0.0.0:8000'
     )
 
 CORS_ALLOW_CREDENTIALS = _get_bool_env('CORS_ALLOW_CREDENTIALS', True)

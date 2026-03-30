@@ -241,7 +241,7 @@ class ActivePollView(APIView):
         poll = Poll.objects.filter(is_active=True).first()
         if poll:
             return Response(PollSerializer(poll).data)
-        return Response({"error": "No active poll found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "No active poll found", "active_poll_exists": False}, status=status.HTTP_200_OK)
 
 class VotePollView(APIView):
     permission_classes = [permissions.AllowAny]

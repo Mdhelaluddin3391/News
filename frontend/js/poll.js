@@ -7,15 +7,28 @@ async function loadActivePoll() {
     
     if (!pollSection || !pollContainer) return;
 
+    // 1. Sabse pehle poll section ko hide kar do. 
+    // Isse empty container frontend par nahi dikhega jab tak data load na ho jaye.
+    pollSection.style.display = 'none';
+
     try {
         const response = await fetch(`${POLL_API_URL}/active/`);
+        
+        // 2. Agar API response sahi nahi hai (jaise 404 No Active Poll), toh yahin ruk jao (section hide hi rahega)
         if (!response.ok) {
-            pollSection.style.display = 'none'; // Agar poll nahi hai toh hide kar do
             return;
         }
 
         const poll = await response.json();
-        pollSection.style.display = 'block'; // Poll mil gaya, toh show karo
+
+        // 3. Check karein ki poll valid hai aur usme options majood hain ya nahi
+        if (!poll || !poll.options || !Array.isArray(poll.options) || poll.options.length === 0) {
+            console.warn("No active poll or options available.");
+            return; // Agar options nahi hain, toh bhi section hide hi rahega
+        }
+
+        // 4. Agar yahan tak code aaya hai, iska matlab valid poll mil gaya hai. Ab section ko show kar do.
+        pollSection.style.display = 'block'; 
 
         // Check karein ki user pehle hi vote de chuka hai ya nahi
         const hasVoted = localStorage.getItem(`poll_voted_${poll.id}`);
@@ -28,11 +41,13 @@ async function loadActivePoll() {
 
     } catch (error) {
         console.error("Poll load error:", error);
+        // Error aane par bhi section by default hide hi rahega, so frontend kharab nahi hoga
     }
 }
 
 function renderPollForm(poll, container) {
     let optionsHtml = '';
+    
     poll.options.forEach(opt => {
         optionsHtml += `
             <label class="poll-option-label">
@@ -61,20 +76,24 @@ function renderPollForm(poll, container) {
         }
 
         const btn = e.target.querySelector('button');
+        const originalText = btn.textContent;
         btn.textContent = "Voting...";
         btn.disabled = true;
 
         try {
             const res = await fetch(`${POLL_API_URL}/vote/${selectedOption.value}/`, { method: 'POST' });
             if (res.ok) {
-                // Vote count ho gaya, local storage mein mark kar do
                 localStorage.setItem(`poll_voted_${poll.id}`, 'true');
                 if(typeof showToast === 'function') showToast("Vote submitted successfully!", "success");
-                // Reload poll to show results
                 loadActivePoll();
+            } else {
+                if(typeof showToast === 'function') showToast("Failed to submit vote.", "error");
+                btn.textContent = originalText;
+                btn.disabled = false;
             }
         } catch (err) {
-            btn.textContent = "Submit Vote";
+            console.error("Vote submission error:", err);
+            btn.textContent = originalText;
             btn.disabled = false;
         }
     });
@@ -87,9 +106,11 @@ function renderPollResults(poll, container) {
         <div style="margin-top: 15px;">
     `;
 
+    const totalVotes = poll.total_votes || 0;
+
     poll.options.forEach(opt => {
-        // Percentage nikalna
-        const percentage = poll.total_votes > 0 ? Math.round((opt.votes / poll.total_votes) * 100) : 0;
+        const optVotes = opt.votes || 0;
+        const percentage = totalVotes > 0 ? Math.round((optVotes / totalVotes) * 100) : 0;
         
         resultsHtml += `
             <div class="poll-result-item">
@@ -106,7 +127,7 @@ function renderPollResults(poll, container) {
 
     resultsHtml += `
         </div>
-        <div class="poll-total-votes"><i class="fas fa-users"></i> Total Votes: ${poll.total_votes}</div>
+        <div class="poll-total-votes"><i class="fas fa-users"></i> Total Votes: ${totalVotes}</div>
         <div style="text-align:center; font-size:0.8rem; color:var(--primary); margin-top:10px; font-weight:bold;">✓ You have already voted</div>
     `;
 

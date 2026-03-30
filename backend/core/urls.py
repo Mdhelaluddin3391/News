@@ -1,9 +1,10 @@
-# news-backend/core/urls.py
 from django.urls import path
-from .views import ActiveAdsAPIView
-from .views import ActiveAdsAPIView, ActiveJobPostingsAPIView # Import add kiya
+
+from .views import ActiveAdsAPIView, ActiveJobPostingsAPIView, AdvertisePageAPIView
+
 
 urlpatterns = [
-    path('ads/active/', ActiveAdsAPIView.as_view(), name='active-ads'),
-    path('jobs/active/', ActiveJobPostingsAPIView.as_view(), name='active-jobs'), # Nayi API
+    path("ads/active/", ActiveAdsAPIView.as_view(), name="active-ads"),
+    path("advertise-page/", AdvertisePageAPIView.as_view(), name="advertise-page"),
+    path("jobs/active/", ActiveJobPostingsAPIView.as_view(), name="active-jobs"),
 ]

@@ -60,10 +60,27 @@ function formatDate(isoString) {
     });
 }
 
+async function normalizeApiPayload(payload) {
+    if (payload instanceof Response) {
+        if (!payload.ok) {
+            const text = await payload.text();
+            throw new Error(`API error ${payload.status}: ${text}`);
+        }
+
+        return payload.json();
+    }
+
+    return payload;
+}
+
 // ==================== Rendering ====================
 function renderArticles(articles) {
-    if (!articles || articles.length === 0) {
-        articlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray);">No articles found.</p>';
+    // FIX: Check karein ki articles sach mein ek array hai ya nahi
+    if (!articles || !Array.isArray(articles) || articles.length === 0) {
+        if (articlesContainer) {
+            // 'grid-column: 1 / -1' isliye takki ye message center mein aaye
+            articlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray); grid-column: 1 / -1; padding: 2rem;">No articles found in this category.</p>';
+        }
         return;
     }
 
@@ -119,12 +136,12 @@ function renderArticles(articles) {
                     unsaveArticle(articleId);
                     btn.classList.remove('saved');
                     btn.textContent = 'Save';
-                    showToast('Removed from saved articles', 'info'); // NAYA: Toast Alert
+                    showToast('Removed from saved articles', 'info'); 
                 } else {
                     saveArticle(article);
                     btn.classList.add('saved');
                     btn.textContent = 'Saved';
-                    showToast('Article saved successfully!', 'success'); // NAYA: Toast Alert
+                    showToast('Article saved successfully!', 'success'); 
                 }
             });
         });
@@ -135,41 +152,49 @@ function renderArticles(articles) {
 async function fetchNews(category = DEFAULT_CATEGORY, page = 1) {
     showLoader();
     clearError();
-    articlesContainer.innerHTML = '';
+    if (articlesContainer) articlesContainer.innerHTML = '';
 
     try {
-        // Construct API URL with category filter and pagination using centralized fetch helper
-        const endpoint = `/news/articles/?category__slug=${encodeURIComponent(category)}&page=${encodeURIComponent(page)}`;
+        // FIX 1: Category ko hamesha lowercase mein convert karein taaki exact match ho
+        const cleanCategory = category.toLowerCase();
+        
+        // Yahan cleanCategory use karein
+        const endpoint = `/news/articles/?category__slug=${encodeURIComponent(cleanCategory)}&page=${encodeURIComponent(page)}`;
+        
         const data = await window.apiFetch(endpoint);
         
-        // DRF returns paginated data in 'results', total count in 'count'
-        const articles = data.results || data;
-        const totalResults = data.count || articles.length;
+        let articles = [];
+        let totalResults = 0;
+
+        if (data && Array.isArray(data.results)) {
+            articles = data.results;
+            totalResults = data.count || articles.length;
+        } else if (Array.isArray(data)) {
+            articles = data;
+            totalResults = articles.length;
+        }
 
         renderArticles(articles);
         updatePagination(page, totalResults, category);
         
         if(categoryHeading) {
-            // Category ke pehle letter ko capital banate hain
             const formattedCategoryName = category.charAt(0).toUpperCase() + category.slice(1);
             categoryHeading.textContent = formattedCategoryName + ' News';
             
-            // === NAYA CODE YAHAN ADD KAREIN ===
-            // Category Page SEO Update
             if (typeof updateSEOMetaTags === 'function') {
                 updateSEOMetaTags(
                     `${formattedCategoryName} News`, 
-                    `Read the latest breaking news, updates, and deep dives about ${formattedCategoryName} on Forex Times.`, 
-                    'images/default-news.png', // Aap chahein toh category ke hisaab se dynamic image pass kar sakte hain
+                    `Read the latest breaking news about ${formattedCategoryName} on Forex Times.`, 
+                    'images/default-news.png',
                     window.location.href
                 );
             }
-            // ===================================
         }
         
     } catch (error) {
         console.error('Fetch failed:', error);
         showError('Failed to load news. Please try again later.');
+        renderArticles([]); 
     } finally {
         hideLoader();
     }

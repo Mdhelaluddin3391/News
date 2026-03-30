@@ -1,5 +1,4 @@
 from django.db import models
-from tinymce.models import HTMLField
 
 
 class BaseModel(models.Model):
@@ -55,7 +54,82 @@ class Advertisement(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.get_slot_display()} ({self.ad_type})"
-    
+
+
+class AdvertisePage(models.Model):
+    hero_title = models.CharField(
+        max_length=200,
+        default="Grow Your Brand With Forex Times",
+    )
+    hero_description = models.TextField(
+        default=(
+            "Reach a highly engaged audience through our premium digital news "
+            "platform. We offer strategic ad placements to maximize your visibility."
+        ),
+    )
+    slots_section_title = models.CharField(
+        max_length=200,
+        default="Available Ad Slots",
+    )
+    inquiry_title = models.CharField(
+        max_length=200,
+        default="Advertisement Inquiry",
+    )
+    inquiry_description = models.TextField(
+        default=(
+            "Fill out the form below and our advertising team will get back to you "
+            "with pricing and analytics details."
+        ),
+    )
+    submit_button_text = models.CharField(
+        max_length=80,
+        default="Submit Inquiry",
+    )
+    success_message = models.CharField(
+        max_length=255,
+        default="Thank you for your interest! Our advertising team will contact you shortly.",
+    )
+
+    class Meta:
+        verbose_name = "Advertise Page"
+        verbose_name_plural = "Advertise Page"
+
+    def __str__(self):
+        return "Advertise With Us Page"
+
+
+class AdvertiseOption(models.Model):
+    title = models.CharField(max_length=150)
+    description = models.TextField()
+    icon_class = models.CharField(
+        max_length=100,
+        default="fas fa-bullhorn",
+        help_text="Font Awesome class, e.g. fas fa-rectangle-ad",
+    )
+    inquiry_value = models.CharField(
+        max_length=150,
+        help_text="Dropdown me yahi option value use hogi.",
+    )
+    sort_order = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    show_on_page = models.BooleanField(
+        default=True,
+        help_text="Enable ho to advertise page ke cards me dikhega.",
+    )
+    show_in_inquiry_form = models.BooleanField(
+        default=True,
+        help_text="Enable ho to inquiry dropdown me dikhega.",
+    )
+
+    class Meta:
+        ordering = ("sort_order", "id")
+        verbose_name = "Advertise Option"
+        verbose_name_plural = "Advertise Options"
+
+    def __str__(self):
+        return self.title
+
+
 class SiteSetting(models.Model):
     ga4_tracking_id = models.CharField(
         max_length=50, 

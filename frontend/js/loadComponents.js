@@ -16,6 +16,8 @@ async function loadComponents() {
         if (typeof updateAuthUI === 'function') {
             updateAuthUI();
         }
+
+        document.dispatchEvent(new CustomEvent('layout:components-loaded'));
     } catch (error) {
         if (typeof window.reportFrontendError === 'function') {
             window.reportFrontendError(error, { scope: 'layout', action: 'loadComponents' });

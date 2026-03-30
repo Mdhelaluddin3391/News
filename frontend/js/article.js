@@ -63,7 +63,7 @@ function renderArticle(article) {
 
     // Puraana refresh interval clear karein
     if (liveRefreshInterval) clearInterval(liveRefreshInterval);
-    if (liveSocket) liveSocket.close(); // NAYA: Agar purana socket khula hai toh use band karein
+    if (liveSocket) liveSocket.close();
 
     const user = getCurrentUser(); 
     const isSaved = user ? isArticleSaved(article.id) : false;
@@ -74,17 +74,30 @@ function renderArticle(article) {
     const source = article.source_name || 'Forex Times';
     const date = article.published_at ? formatArticleDate(article.published_at) : 'Unknown date';
     const description = article.description || '';
-    const content = article.content || article.description || '';
+    let content = article.content || article.description || '';
     const categorySlug = article.category ? article.category.slug : 'general';
     const categoryName = article.category ? article.category.name : 'News';
 
+    // ======== IN-ARTICLE AD INJECTION LOGIC ========
+    const inArticleAdHTML = `<div id="ad-in_article" class="ad-container" style="display: none; margin: 25px 0; text-align: center;"></div>`;
+    const paragraphs = content.split('</p>');
+    
+    if (paragraphs.length > 2) {
+        // 2nd paragraph ke baad ad inject karo
+        paragraphs.splice(2, 0, inArticleAdHTML);
+        content = paragraphs.join('</p>'); 
+    } else {
+        // Agar article 2 paragraph se chota hai, toh aakhir mein laga do
+        content += inArticleAdHTML;
+    }
+    // ===============================================
+
     // --- TAGS HTML BLOCK AUR SEO KEYWORDS ---
     let tagsHTML = '';
-    let seoKeywords = "news, daily news, breaking news"; // Default keywords
+    let seoKeywords = "news, daily news, breaking news"; 
     
     if (article.tags && article.tags.length > 0) {
         tagsHTML = '<div class="article-tags">';
-        // Tags array se comma-separated string banayein SEO ke liye
         seoKeywords = article.tags.map(t => t.name).join(', ');
         
         article.tags.forEach(tag => {
@@ -93,20 +106,16 @@ function renderArticle(article) {
         tagsHTML += '</div>';
     }
 
-    // Ek clean aur absolute canonical URL banayein
     const cleanPageUrl = `${window.location.origin}${window.location.pathname}?id=${article.id}`;
 
-    // --- ADVANCED SEO META TAGS ---
     if (typeof updateSEOMetaTags === 'function') {
         const seoDescription = description.length > 150 ? description.substring(0, 150) + '...' : description;
         updateSEOMetaTags(title, seoDescription, imageUrl, cleanPageUrl, seoKeywords);
     }
 
-    // --- ADVANCED ARTICLE & BREADCRUMB SCHEMA MARKUP ---
     if (typeof injectSchema === 'function') {
         const authorName = article.author ? article.author.name : 'Forex Times Staff';
         
-        // 1. News Article Schema
         const articleSchema = {
             "@type": "NewsArticle",
             "mainEntityOfPage": {
@@ -133,7 +142,6 @@ function renderArticle(article) {
             "description": description.substring(0, 150)
         };
 
-        // 2. Breadcrumb Schema (Google search results me nav structure dikhane ke liye)
         const breadcrumbSchema = {
             "@type": "BreadcrumbList",
             "itemListElement": [
@@ -158,7 +166,6 @@ function renderArticle(article) {
             ]
         };
 
-        // Dono schemas ko array format me pass karein
         injectSchema([breadcrumbSchema, articleSchema]);
     }
 
@@ -166,7 +173,6 @@ function renderArticle(article) {
         `<button class="save-btn detail-save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save for Later'}</button>` 
         : '';
 
-    // --- SOCIAL SHARING ---
     const backendShareUrl = `${CONFIG.API_BASE_URL}/news/articles/${article.id}/share/`;
     const shareUrl = encodeURIComponent(backendShareUrl);
     const shareTitle = encodeURIComponent(title);
@@ -195,12 +201,10 @@ function renderArticle(article) {
         </section>
     `;
 
-    // ==================== LIVE UPDATES LOGIC ====================
     const liveBadgeHTML = article.is_live ? `<div class="live-badge"><i class="fas fa-circle"></i> LIVE UPDATE</div>` : '';
     
     let liveUpdatesHTML = '';
     if (article.is_live) {
-        // NAYA: Pehli baar load hone par latest ID set kar lein
         if (article.live_updates && article.live_updates.length > 0) {
             latestUpdateId = article.live_updates[0].id;
         }
@@ -219,13 +223,11 @@ function renderArticle(article) {
             </div>
         `;
         
-        // NAYA: Yahan hum startLivePolling() ki jagah naya WebSocket function call kar rahe hain
         setTimeout(() => {
             initLiveUpdates(article.id);
         }, 100); 
     }
 
-    // --- MAIN HTML INJECTION ---
     const html = `
         <div class="detail-content" style="padding-bottom: 1rem;">
             ${liveBadgeHTML}
@@ -263,7 +265,6 @@ function renderArticle(article) {
     if (typeof renderRelated === 'function') renderRelated('related-container', categorySlug, article.id);
     if (typeof renderComments === 'function') renderComments(article.id, 'comments-list');
 
-    // Save button event listener
     if (user) {
         const saveBtn = document.querySelector('.detail-save-btn');
         if (saveBtn) {
@@ -445,7 +446,6 @@ window.addEventListener('beforeunload', () => {
     // 1. Polling interval clear karein
     if (liveRefreshInterval) clearInterval(liveRefreshInterval);
     
-    // 2. WebSocket connection securely close karein
     if (typeof liveSocket !== 'undefined' && liveSocket && liveSocket.readyState === WebSocket.OPEN) {
         liveSocket.close();
     }
@@ -464,7 +464,15 @@ async function fetchArticle(articleId) {
         }
         
         const article = await response.json();
+        
         renderArticle(article);
+        
+        if (typeof window.fetchActiveAds === 'function') {
+            window.fetchActiveAds();
+        } else {
+            console.warn("fetchActiveAds function not found. Ensure ad-manager.js is loaded.");
+        }
+        
     } catch (error) {
         console.error('Failed to fetch article:', error);
         showArticleError('Could not load the article. Please try again later.');

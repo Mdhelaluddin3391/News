@@ -69,40 +69,20 @@
     <main class="container page-container" style="max-width: 1000px;">
         
         <div class="advertise-hero">
-            <h1>Grow Your Brand With Forex Times</h1>
-            <p style="font-size: 1.1rem; max-width: 600px; margin: 0 auto; opacity: 0.9;">
+            <h1 id="advertise-hero-title">Grow Your Brand With Forex Times</h1>
+            <p id="advertise-hero-description" style="font-size: 1.1rem; max-width: 600px; margin: 0 auto; opacity: 0.9;">
                 Reach a highly engaged audience through our premium digital news platform. We offer strategic ad placements to maximize your visibility.
             </p>
         </div>
 
-        <h2 style="text-align: center; margin-bottom: 2rem; color: var(--dark);">Available Ad Slots</h2>
-        <div class="ad-slots-grid">
-            <div class="ad-slot-card">
-                <i class="fas fa-rectangle-ad"></i>
-                <h3>Header Banner</h3>
-                <p style="color: var(--gray); font-size: 0.95rem; margin-top: 10px;">
-                    Premium visibility at the very top of our website. Appears on all pages. Highly recommended for maximum reach.
-                </p>
-            </div>
-            <div class="ad-slot-card">
-                <i class="fas fa-border-all"></i>
-                <h3>Sidebar Top</h3>
-                <p style="color: var(--gray); font-size: 0.95rem; margin-top: 10px;">
-                    Sticky advertisement on the right sidebar. Stays visible as users scroll through breaking news and articles.
-                </p>
-            </div>
-            <div class="ad-slot-card">
-                <i class="fas fa-newspaper"></i>
-                <h3>In-Article Ad</h3>
-                <p style="color: var(--gray); font-size: 0.95rem; margin-top: 10px;">
-                    Placed directly inside our news articles. Great for capturing the attention of highly engaged readers.
-                </p>
-            </div>
+        <h2 id="advertise-slots-title" style="text-align: center; margin-bottom: 2rem; color: var(--dark);">Available Ad Slots</h2>
+        <div class="ad-slots-grid" id="advertise-slots-grid">
+            <p id="advertise-slots-loading" style="text-align: center; grid-column: 1 / -1; color: var(--gray);">Loading advertising options...</p>
         </div>
 
         <div class="ad-form-container">
-            <h2 style="margin-bottom: 1rem; color: var(--primary);">Advertisement Inquiry</h2>
-            <p style="color: var(--gray); margin-bottom: 2rem;">Fill out the form below and our advertising team will get back to you with pricing and analytics details.</p>
+            <h2 id="advertise-inquiry-title" style="margin-bottom: 1rem; color: var(--primary);">Advertisement Inquiry</h2>
+            <p id="advertise-inquiry-description" style="color: var(--gray); margin-bottom: 2rem;">Fill out the form below and our advertising team will get back to you with pricing and analytics details.</p>
             
             <div id="ad-status" style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;"></div>
 
@@ -119,14 +99,9 @@
                 </div>
 
                 <div class="form-group" style="margin-top: 1.5rem;">
-                    <label for="interested-slot">Interested Ad Slot</label>
+                    <label for="interested-slot" id="advertise-slot-label">Interested Ad Slot</label>
                     <select id="interested-slot" style="padding: 0.8rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: white;" required>
                         <option value="">-- Select an option --</option>
-                        <option value="Header Banner">Header Banner</option>
-                        <option value="Sidebar Ad">Sidebar Ad</option>
-                        <option value="In-Article Ad">In-Article Ad</option>
-                        <option value="Brand Collaboration">Brand Collaboration / Sponsored Post</option>
-                        <option value="Not Sure yet">Not sure yet, need consultation</option>
                     </select>
                 </div>
 
@@ -135,7 +110,7 @@
                     <textarea id="message" rows="5" placeholder="What are you looking to promote? Do you have a specific budget or timeline in mind?" required></textarea>
                 </div>
 
-                <button type="submit" class="submit-btn" style="margin-top: 1.5rem; width: 100%; text-align: center; display: block;">Submit Inquiry</button>
+                <button type="submit" class="submit-btn" id="advertise-submit-btn" style="margin-top: 1.5rem; width: 100%; text-align: center; display: block;">Submit Inquiry</button>
             </form>
         </div>
 
@@ -148,5 +123,6 @@
     <script src="js/auth.js"></script>
     <script src="js/search.js"></script>
     <script src="js/advertise.js"></script>
+    <script src="js/ad-manager.js"></script>
 </body>
 </html>

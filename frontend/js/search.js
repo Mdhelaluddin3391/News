@@ -245,6 +245,12 @@ function updateSearchPagination(currentPage, totalItems, query) {
 
 // ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
+    // FIX: Check if we are currently on the search page. 
+    // If we are NOT on the search page, stop executing this script.
+    if (!window.location.pathname.includes('search.html')) {
+        return; 
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const query = urlParams.get('q') || urlParams.get('search') || '';
     const page = parseInt(urlParams.get('page')) || 1;
@@ -261,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!query) {
-        // NAYA: Null check added here
+        // Null check added here
         if (searchHeading) {
             searchHeading.textContent = 'Search Results';
         }

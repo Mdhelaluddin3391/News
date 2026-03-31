@@ -39,9 +39,9 @@ async function fetchAndRenderAuthors() {
             const twitterHtml = author.twitter_url ? `<a href="${author.twitter_url}" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>` : '';
             const linkedinHtml = author.linkedin_url ? `<a href="${author.linkedin_url}" target="_blank" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>` : '';
 
-            // Author Card HTML
+            // Author Card HTML (Fixed explicit .html routing and trailing quote typo)
             html += `
-                <div class="author-card" onclick="window.location.href='/author?slug=${author.slug}'"'">
+                <div class="author-card" onclick="window.location.href='/author.html?slug=${author.slug}'">
                     <img src="${avatarUrl}" alt="${author.name}" class="author-card-avatar ${avatarContainClass}" loading="lazy">
                     <h3 class="author-card-name">${author.name}</h3>
                     <div class="author-card-role">${role}</div>

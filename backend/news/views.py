@@ -19,8 +19,8 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
+    lookup_field = 'slug' # Added lookup_field for slug-based routing
 
-    # Categories jaldi change nahi hoti, isliye 15 minute (60 * 15 seconds) tak cache karenge
     @method_decorator(cache_page(60 * 15))
     def dispatch(self, *args, **kwargs):
         return super().dispatch(*args, **kwargs)
@@ -94,20 +94,19 @@ class ArticleViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    # Naya Endpoint: Views badhane ke liye
     @action(detail=True, methods=['post'], permission_classes=[permissions.AllowAny])
-    def increment_view(self, request, pk=None):
+    def increment_view(self, request, slug=None): # Swapped pk for slug
         article = self.get_object()
         article.views += 1
         article.save(update_fields=['views'])
         return Response({'message': 'View count updated', 'views': article.views})
     
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
-    def share(self, request, slug=None):
+    def share(self, request, slug=None): # Swapped pk for slug
         article = self.get_object()
         
-        # Frontend ka actual URL jahan user ko redirect karna hai
-        frontend_url = f"{settings.FRONTEND_URL}/article?slug={article.slug}"
+        # Frontend ka actual URL jahan user ko redirect karna hai (Added .html)
+        frontend_url = f"{settings.FRONTEND_URL}/article.html?slug={article.slug}"
         
         # Article ki Image (Agar nahi hai toh default lagayein)
         if article.featured_image:
@@ -154,6 +153,8 @@ class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
     permission_classes = [permissions.AllowAny]
+    lookup_field = 'user__username' # Map the slug to the OneToOne user's username
+    lookup_url_kwarg = 'slug'       # Bind the URL param 'slug' to user__username
     
     # Authors bhi jaldi change nahi hote, isliye 15 minutes cache
     @method_decorator(cache_page(60 * 15))

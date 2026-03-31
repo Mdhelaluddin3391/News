@@ -21,13 +21,14 @@ class TagSerializer(serializers.ModelSerializer):
 class AuthorSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='user.name', read_only=True)
     username = serializers.CharField(source='user.username', read_only=True)
+    slug = serializers.CharField(source='user.username', read_only=True) # NAYA: Dynamically created slug field
     profile_picture = serializers.ImageField(source='user.profile_picture', read_only=True)
-    bio = serializers.CharField(source='user.bio', read_only=True) # Naya field add kiya
+    bio = serializers.CharField(source='user.bio', read_only=True)
     
     class Meta:
         model = Author
-        # fields mein 'bio' ko bhi shamil kar diya hai
-        fields = ('id', 'name', 'username', 'profile_picture', 'bio', 'role', 'twitter_url', 'linkedin_url')
+        # fields mein 'slug' ko shamil kar diya hai
+        fields = ('id', 'name', 'username', 'slug', 'profile_picture', 'bio', 'role', 'twitter_url', 'linkedin_url')
 
 class ArticleSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)

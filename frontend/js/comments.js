@@ -173,75 +173,54 @@ function buildReportModal() {
     return overlay;
 }
 
-async function renderComments(articleId, containerId, articleSlug) {
-    const container = document.getElementById(containerId);
-    if (!container) {
+function renderCommentForm(articleId, containerId, user, articleSlug) {
+    const formContainer = document.getElementById('comment-form-container');
+    if (!formContainer) {
         return;
     }
 
-    const user = getCurrentUser();
-    const comments = await fetchComments(articleId);
-
-    if (!comments.length) {
-        container.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment.</p>';
-    } else {
-        container.innerHTML = comments.map((comment) => {
-            const authorId = comment.user_detail ? comment.user_detail.id : null;
-            const authorName = comment.user_detail ? comment.user_detail.name : 'Unknown User';
-            const isAuthor = user && authorId === user.id;
-
-            return `
-                <article class="comment" data-comment-id="${comment.id}">
-                    <div class="comment-header">
-                        <span class="comment-author">${escapeHtml(authorName)}</span>
-                        <span class="comment-date">${new Date(comment.created_at).toLocaleString()}</span>
-                    </div>
-                    <div class="comment-text">${escapeHtml(comment.text)}</div>
-                    <div class="comment-actions">
-                        ${isAuthor ? `
-                            <button type="button" class="delete-comment" data-comment-id="${comment.id}">
-                                <i class="fas fa-trash-alt"></i> Delete
-                            </button>
-                        ` : ''}
-                        ${user && !isAuthor ? `
-                            <button type="button" class="report-comment" data-comment-id="${comment.id}">
-                                <i class="fas fa-flag"></i> Report Flag
-                            </button>
-                        ` : ''}
-                    </div>
-                </article>
-            `;
-        }).join('');
-
-        container.querySelectorAll('.delete-comment').forEach((button) => {
-            button.addEventListener('click', (event) => {
-                const actionButton = event.currentTarget;
-                const commentId = actionButton.dataset.commentId;
-
-                showCustomConfirm('Are you sure you want to delete this comment? This action cannot be undone.', async () => {
-                    try {
-                        actionButton.disabled = true;
-                        actionButton.textContent = 'Deleting...';
-                        await deleteComment(commentId);
-                        showCommentFeedback('Comment deleted successfully.');
-                        await renderComments(articleId, containerId, articleSlug);
-                    } catch (error) {
-                        actionButton.disabled = false;
-                        actionButton.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
-                        showCommentFeedback(error.message, 'error');
-                    }
-                });
-            });
-        });
-
-        container.querySelectorAll('.report-comment').forEach((button) => {
-            button.addEventListener('click', (event) => {
-                showReportModal(event.currentTarget.dataset.commentId);
-            });
-        });
+    if (!user) {
+        // Appended .html to login and article paths
+        formContainer.innerHTML = `
+            <p class="login-prompt">
+                <a href="/login.html?redirect=/article.html?slug=${articleSlug}">Log in</a> to post a comment or flag one for review.
+            </p>
+        `;
+        return;
     }
 
-    renderCommentForm(articleId, containerId, user, articleSlug);
+    formContainer.innerHTML = `
+        <div class="comment-form">
+            <h4>Add a Comment</h4>
+            <textarea id="new-comment-text" rows="3" placeholder="Write your comment..."></textarea>
+            <button id="submit-comment" type="button">Post Comment</button>
+        </div>
+    `;
+
+    document.getElementById('submit-comment').addEventListener('click', async () => {
+        const textarea = document.getElementById('new-comment-text');
+        const button = document.getElementById('submit-comment');
+        const text = textarea.value.trim();
+
+        if (!text) {
+            showCommentFeedback('Please write a comment before posting.', 'error');
+            return;
+        }
+
+        button.disabled = true;
+        button.textContent = 'Posting...';
+
+        try {
+            await postComment(articleId, text); // Keep articleId here for DB relation rules
+            textarea.value = '';
+            showCommentFeedback('Comment posted successfully.');
+            await renderComments(articleId, containerId, articleSlug);
+        } catch (error) {
+            showCommentFeedback(error.message, 'error');
+            button.disabled = false;
+            button.textContent = 'Post Comment';
+        }
+    });
 }
 
 function renderCommentForm(articleId, containerId, user, articleSlug) {

@@ -13,7 +13,10 @@ if (typeof API_BASE_URL === 'undefined') {
 const CONFIG = {
     API_BASE_URL: APP_CONFIG.API_BASE_URL || window.API_BASE_URL,
     GOOGLE_CLIENT_ID: APP_CONFIG.GOOGLE_CLIENT_ID || '615098838513-hnphi7ekcv9nhjv94f0mfj0509nd63hu.apps.googleusercontent.com',
-    VAPID_PUBLIC_KEY: APP_CONFIG.VAPID_PUBLIC_KEY || 'BL_wQ4AU0MABrcB7uQc5dX7d725RZmGktXdlp9YD6m1MWopxpFcFMLjiBdF8pMjuAKOJmwX4a596wC0mj4HlMQ8',
+    
+    // YAHAN PAR NAYI PUBLIC KEY UPDATE KARNI HAI 👇
+    VAPID_PUBLIC_KEY: APP_CONFIG.VAPID_PUBLIC_KEY || 'BKRjaNs4FmbucsdQbG-dyzcPmgMJWbbEFl8Ln1i-tE-A28xTGscEIzQITNvkZnWGKOwH-JTs0YZsvncxbvl_6Qg',
+    
     SENTRY_DSN: APP_CONFIG.SENTRY_DSN || '',
     SENTRY_ENVIRONMENT: APP_CONFIG.SENTRY_ENVIRONMENT || (window.location.hostname === 'localhost' || isFileProtocol ? 'development' : 'production'),
     SENTRY_RELEASE: APP_CONFIG.SENTRY_RELEASE || '',

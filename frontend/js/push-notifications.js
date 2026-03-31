@@ -35,10 +35,17 @@ async function registerSiteServiceWorker() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Ye pehle se apke code me hai, jo SW register karta hai
     registerSiteServiceWorker().catch((error) => {
         reportPushError(error, { action: 'registerServiceWorker' });
         console.error('Service worker registration failed:', error);
     });
+
+    // NAYA CODE: Yahan par apne "Subscribe" button par event listener lagayein
+    const subscribeBtn = document.getElementById('subscribe-notification-btn');
+    if (subscribeBtn) {
+        subscribeBtn.addEventListener('click', subscribeToPush);
+    }
 });
 
 async function subscribeToPush() {

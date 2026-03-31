@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!user) {
         // Not logged in, redirect to login
-        window.location.href="/login?redirect=/profile";
+        window.location.href="/login.html?redirect=/profile.html";
         return;
     }
 
@@ -34,10 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         
         <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-            <a href="/edit-profile" style="background-color: var(--primary); color: white; text-decoration: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 160px; text-align: center;">
+            <a href="/edit-profile.html" style="background-color: var(--primary); color: white; text-decoration: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 160px; text-align: center;">
                 <i class="fas fa-user-edit" style="margin-right: 8px;"></i> Edit Profile
             </a>
-            <a href="/" style="background-color: transparent; color: var(--primary); border: 2px solid var(--primary); text-decoration: none; padding: 10px 30px; border-radius: 30px; font-weight: 600; transition: all 0.3s ease; min-width: 160px; text-align: center;" 
+            <a href="/index.html" style="background-color: transparent; color: var(--primary); border: 2px solid var(--primary); text-decoration: none; padding: 10px 30px; border-radius: 30px; font-weight: 600; transition: all 0.3s ease; min-width: 160px; text-align: center;" 
                onmouseover="this.style.backgroundColor='var(--primary)'; this.style.color='white';" 
                onmouseout="this.style.backgroundColor='transparent'; this.style.color='var(--primary)';">
                 <i class="fas fa-home" style="margin-right: 8px;"></i> Back to Home

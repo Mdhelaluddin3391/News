@@ -1,11 +1,9 @@
-const PROFILE_API_URL = `${CONFIG.API_BASE_URL}/users/profile/`;
-
 document.addEventListener('DOMContentLoaded', () => {
     const user = getCurrentUser(); // Using function from auth.js
     
     // Agar user logged in nahi hai
     if (!user) {
-        window.location.href="/login?redirect=/edit-profile";
+        window.location.href="/login.html?redirect=/edit-profile.html";
         return;
     }
 
@@ -121,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // NAYA: 2 second (2000 ms) ke baad profile.html par auto-redirect karein
                 setTimeout(() => {
-                    window.location.href="/"';
+                    window.location.href="/profile.html";
                 }, 2000);
                 
             } else {

@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginLink = document.getElementById('register-login-link');
 
     openVerificationPageBtn.addEventListener('click', () => {
-        window.location.href="/"';
+        window.location.href="/index.html";
     });
 
     resendLink.addEventListener('click', async (event) => {

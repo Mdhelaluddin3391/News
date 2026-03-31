@@ -1,4 +1,3 @@
-// js/login.js
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('login-form');
     const errorDiv = document.getElementById('login-error');
@@ -12,19 +11,18 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Logging in...';
 
-        const result = await loginUser(email, password); // Async call from auth.js
+        const result = await loginUser(email, password);
         
         if (result.success) {
             const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || '/';
+            const redirect = urlParams.get('redirect') || '/index.html';
             window.location.href = redirect;
         } else {
-            // Handle email verification requirement
             if (result.needsVerification) {
                 errorDiv.textContent = result.message;
                 errorDiv.style.display = 'block';
                 setTimeout(() => {
-                    window.location.href="/"';
+                    window.location.href="/index.html";
                 }, 2000);
             } else {
                 errorDiv.textContent = result.message;

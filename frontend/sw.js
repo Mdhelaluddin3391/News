@@ -5,27 +5,27 @@ const ASSET_CACHE = `ferox-times-assets-${CACHE_VERSION}`;
 const API_CACHE = `ferox-times-api-${CACHE_VERSION}`;
 const OFFLINE_FALLBACK_URL = '/';
 const PRECACHE_URLS = [
-    '/',
+    '/index.html',
     '/404.html',
-    '/about',
+    '/about.html',
     '/advertise.html',
-    '/article',
-    '/author',
-    '/authors',
+    '/article.html',
+    '/author.html',
+    '/authors.html',
     '/careers.html',
-    '/contact',
-    '/edit-profile',
-    '/faq',
-    '/forgot-password',
-    '/login',
-    '/privacy',
-    '/profile',
-    '/register',
-    '/reset-password',
-    '/saved',
-    '/search',
-    '/tag',
-    '/terms',
+    '/contact.html',
+    '/edit-profile.html',
+    '/faq.html',
+    '/forgot-password.html',
+    '/login.html',
+    '/privacy.html',
+    '/profile.html',
+    '/register.html',
+    '/reset-password.html',
+    '/saved.html',
+    '/search.html',
+    '/tag.html',
+    '/terms.html',
     '/unsubscribe.html',
     '/verify-email.html',
     '/manifest.json',
@@ -239,7 +239,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
+    const urlToOpen = new URL(event.notification.data?.url || '/index.html', self.location.origin).href;
 
     event.waitUntil((async () => {
         const windowClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });

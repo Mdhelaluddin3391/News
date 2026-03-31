@@ -46,11 +46,8 @@ window.fetchActiveAds = function() {
         .catch(error => console.error("Error fetching ads:", error));
 };
 
-// Auto-load Logic
 document.addEventListener("DOMContentLoaded", function() {
-    // Agar URL mein 'article.html' NAHI hai, tabhi page load par ad show karein
-    // (Article page par article load hone ke baad ad aayegi)
-    if (!window.location.pathname.includes('/article')) {
+    if (!window.location.pathname.includes('/article.html')) {
         window.fetchActiveAds();
     }
 });

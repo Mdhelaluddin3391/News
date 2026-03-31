@@ -13,6 +13,19 @@ from datetime import timedelta
 from .models import Article, Category, Author
 from .serializers import ArticleSerializer, CategorySerializer, AuthorSerializer
 from users.permissions import IsReporterAuthorOrAbove, IsOwnerOrEditorOrAdmin
+from django_filters import rest_framework as filters
+
+
+class ArticleFilter(filters.FilterSet):
+    # Relational fields ke liye CharFilter define kar rahe hain
+    category__slug = filters.CharFilter(field_name='category__slug', lookup_expr='exact')
+    author__user__username = filters.CharFilter(field_name='author__user__username', lookup_expr='exact')
+    tags__slug = filters.CharFilter(field_name='tags__slug', lookup_expr='exact')
+
+    class Meta:
+        model = Article
+        # Yahan sirf model ki direct fields aayengi
+        fields = ['is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'is_top_story', 'is_web_story']
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """Frontend par categories dikhane ke liye (ReadOnly)"""
@@ -31,19 +44,18 @@ class ArticleViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
     filter_backends = [DjangoFilterBackend]
-    
-    # 'is_editors_pick' aur 'tags__slug' yahan filter mein hain
-    filterset_fields = ['category__slug', 'author__user__username', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'tags__slug', 'is_top_story', 'is_web_story']
+    filterset_class = ArticleFilter
 
+    @method_decorator(cache_page(60 * 5))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+    
     def get_queryset(self):
         queryset = Article.objects.select_related('category', 'author__user').prefetch_related('tags').filter(status='published', published_at__isnull=False).order_by('-published_at')
         
-        # --- 24 HOURS STORY EXPIRY LOGIC ---
         is_web_story = self.request.query_params.get('is_web_story')
         if is_web_story == 'true':
-            # Current time se exactly 24 ghante (24 hours) piche ka time nikalein
             time_threshold = timezone.now() - timedelta(hours=24)
-            # Sirf wahi stories filter karein jinka time threshold se bada (nyaya) ho
             queryset = queryset.filter(is_web_story=True, web_story_created_at__gte=time_threshold)
 
         search_term = (self.request.query_params.get('search') or '').strip()
@@ -67,8 +79,8 @@ class ArticleViewSet(viewsets.ModelViewSet):
         return queryset
     
     def get_permissions(self):
-        # Yahan 'increment_view' add kiya gaya hai taaki public access ho
-        if self.action in ['list', 'retrieve', 'increment_view']:
+        # ⚡ [FIX 2]: Added 'share' here so public users aren't blocked by IsAuthenticated
+        if self.action in ['list', 'retrieve', 'increment_view', 'share']:
             permission_classes = [permissions.AllowAny]
         
         elif self.action == 'create':
@@ -85,17 +97,8 @@ class ArticleViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user.author_profile)
 
-    # ⚡ Sirf List (Sabhi articles) aur Retrieve (Single article) ko cache karenge 5 minute ke liye
-    @method_decorator(cache_page(60 * 5))
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
-    @method_decorator(cache_page(60 * 5))
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
-
     @action(detail=True, methods=['post'], permission_classes=[permissions.AllowAny])
-    def increment_view(self, request, slug=None): # Swapped pk for slug
+    def increment_view(self, request, slug=None):
         article = self.get_object()
         article.views += 1
         article.save(update_fields=['views'])

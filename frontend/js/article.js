@@ -69,6 +69,7 @@ function renderArticle(article) {
     const isSaved = user ? isArticleSaved(article.id) : false;
     
     const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+    const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
     
     const title = article.title || 'Untitled';
     const source = article.source_name || 'Ferox Times';
@@ -239,7 +240,7 @@ function renderArticle(article) {
             </div>
         </div>
         
-        <img src="${imageUrl}" alt="${title}" class="detail-image">
+        <img src="${imageUrl}" alt="${title}" class="detail-image ${containClass}">
         
         <div class="detail-content" style="padding-top: 2rem;">
             ${description ? `<p class="detail-description">${description}</p>` : ''}

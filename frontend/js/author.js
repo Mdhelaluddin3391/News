@@ -34,6 +34,7 @@ async function fetchAuthorAndArticles() {
         // Extract author details
         // NAYA CODE: Global helper function for profile picture
         const avatar = window.getFullImageUrl(author.profile_picture, 'images/default-avatar.png');
+        const avatarContainClass = avatar.includes('default-avatar.png') ? 'img-contain' : '';
         const role = author.role || 'Contributor';
         const bio = author.bio || 'This author has not added a bio yet.';
         
@@ -42,7 +43,7 @@ async function fetchAuthorAndArticles() {
 
         // Render Author Profile
         authorCard.innerHTML = `
-            <img src="${avatar}" alt="${author.name}" class="author-avatar">
+            <img src="${avatar}" alt="${author.name}" class="author-avatar ${avatarContainClass}">
             <div class="author-info">
                 <h1>${author.name}</h1>
                 <div class="author-role">${role}</div>
@@ -106,11 +107,12 @@ async function fetchAuthorAndArticles() {
         articles.forEach(article => {
             const date = article.published_at ? formatDate(article.published_at) : 'Unknown Date';
             // NAYA CODE: Global helper function for article image
-            const imageUrl = window.getFullImageUrl(article.featured_image, '');
+            const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+            const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
             
             articlesHtml += `
                 <div class="article-card">
-                    <img src="${imageUrl}" alt="${article.title}" class="article-image">
+                    <img src="${imageUrl}" alt="${article.title}" class="article-image ${containClass}">
                     <div class="article-content">
                         <h3 class="article-title">${article.title}</h3>
                         <p class="article-description">${article.description}</p>

@@ -60,6 +60,7 @@ async function renderRelated(containerId, categorySlug, currentArticleId) {
     related.forEach(a => {
         // NAYA CODE: Global helper function for image URL (Production ready)
         const imageUrl = window.getFullImageUrl(a.featured_image, 'images/default-news.png');
+        const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         const timeAgo = getRelatedTimeAgo(a.published_at);
         const liveBadge = a.is_live ? `<div class="related-live-badge"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
         
@@ -67,7 +68,7 @@ async function renderRelated(containerId, categorySlug, currentArticleId) {
             <div class="related-card">
                 <a href="article.html?id=${a.id}">
                     ${liveBadge}
-                    <img src="${imageUrl}" alt="${a.title}" loading="lazy">
+                    <img src="${imageUrl}" alt="${a.title}" class="${containClass}" loading="lazy">
                     <div class="related-content">
                         <h4>${a.title}</h4>
                         <div class="related-meta-time"><i class="far fa-clock"></i> ${timeAgo}</div>

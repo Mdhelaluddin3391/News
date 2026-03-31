@@ -32,6 +32,7 @@ async function fetchAndRenderAuthors() {
         authors.forEach(author => {
             // Global helper function se profile picture URL nikalna
             const avatarUrl = window.getFullImageUrl(author.profile_picture, 'images/default-avatar.png');
+            const avatarContainClass = avatarUrl.includes('default-avatar.png') ? 'img-contain' : '';
             const role = author.role || 'Contributor';
             
             // Social Media Links
@@ -41,7 +42,7 @@ async function fetchAndRenderAuthors() {
             // Author Card HTML
             html += `
                 <div class="author-card" onclick="window.location.href='author.html?id=${author.id}'">
-                    <img src="${avatarUrl}" alt="${author.name}" class="author-card-avatar" loading="lazy">
+                    <img src="${avatarUrl}" alt="${author.name}" class="author-card-avatar ${avatarContainClass}" loading="lazy">
                     <h3 class="author-card-name">${author.name}</h3>
                     <div class="author-card-role">${role}</div>
                     <div class="author-card-social" onclick="event.stopPropagation();">

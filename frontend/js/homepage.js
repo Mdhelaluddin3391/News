@@ -117,10 +117,11 @@ function renderEditorsPicks(picks) {
     picks.forEach(item => {
         // NAYA CODE: Global helper function for image URL
         const imageUrl = window.getFullImageUrl(item.featured_image, 'images/default-news.png');
+        const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         html += `
             <div class="side-post" onclick="window.location.href='article.html?id=${item.id}'" style="margin-bottom: 15px; cursor: pointer;">
-                <img src="${imageUrl}" alt="${item.title}">
+                <img src="${imageUrl}" alt="${item.title}" class="${containClass}">
                 <div class="side-post-content">
                     <h4 style="font-size: 0.95rem;">${item.title}</h4>
                     <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(item.published_at)}</span>
@@ -205,11 +206,12 @@ async function loadNextCategories(count = 1) {
             let sideHtml = sideArticles.map(a => {
                 const sideLiveBadge = a.is_live ? `<div class="live-badge-card" style="padding: 2px 5px; font-size: 0.6rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
                 // NAYA CODE: Global helper function for image URL
-                const sideImageUrl = window.getFullImageUrl(a.featured_image, '');
+                const sideImageUrl = window.getFullImageUrl(a.featured_image, 'images/default-news.png');
+                const sideContainClass = sideImageUrl.includes('default-news.png') ? 'img-contain' : '';
                 return `
                 <div class="side-post" onclick="window.location.href='article.html?id=${a.id}'" style="position: relative;">
                     ${sideLiveBadge}
-                    <img src="${sideImageUrl}" alt="${a.title}">
+                    <img src="${sideImageUrl}" alt="${a.title}" class="${sideContainClass}">
                     <div class="side-post-content">
                         <h4>${a.title}</h4>
                         <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(a.published_at)}</span>
@@ -637,11 +639,12 @@ function renderStoryThumbnails() {
     dynamicStories.forEach((story, index) => {
         // Production ready image URL
         const imageUrl = window.getFullImageUrl(story.featured_image, 'images/default-news.png');
+        const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         html += `
             <div class="story-thumb" onclick="openStoryModal(${index})">
                 <div class="story-thumb-inner">
-                    <img src="${imageUrl}" alt="${story.title}">
+                    <img src="${imageUrl}" alt="${story.title}" class="${containClass}">
                     <div class="story-thumb-overlay">
                         <div class="story-thumb-title">${story.title}</div>
                     </div>
@@ -678,11 +681,12 @@ function showStory() {
     const progressBar = document.getElementById('story-progress-bar');
     
     const imageUrl = window.getFullImageUrl(story.featured_image, 'images/default-news.png');
+    const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
     const categoryName = story.category ? story.category.name : 'News';
     const shortDesc = story.description ? (story.description.length > 100 ? story.description.substring(0, 100) + '...' : story.description) : '';
     
     display.innerHTML = `
-        <img src="${imageUrl}" alt="Story">
+        <img src="${imageUrl}" alt="Story" class="${containClass}">
         <div class="story-text-container">
             <span class="story-badge">${categoryName}</span>
             <h2 class="story-modal-title">${story.title}</h2>

@@ -181,10 +181,12 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
                     // Title mein query ko highlight karna (Case Insensitive)
                     const regex = new RegExp(`(${query})`, 'gi');
                     const highlightedTitle = article.title.replace(regex, '<span class="suggestion-highlight">$1</span>');
+                    const imgUrl = article.featured_image || 'images/default-news.png';
+                    const containClass = imgUrl.includes('default-news.png') ? 'img-contain' : '';
                     
                     html += `
                         <a href="article.html?id=${article.id}" class="suggestion-item">
-                            <img src="${article.featured_image || 'images/default-news.png'}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                            <img src="${imgUrl}" class="${containClass}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
                             <div style="flex: 1; min-width: 0;">
                                 <div class="suggestion-title">${highlightedTitle}</div>
                                 <div style="font-size: 0.75rem; color: var(--gray);">${article.category ? article.category.name : 'News'}</div>

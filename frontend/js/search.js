@@ -74,6 +74,7 @@ function renderSearchArticles(articles, query) {
         // Map backend fields
         // NAYA CODE: Global helper function use kiya gaya image URL ke liye
         const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+        const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         // Fetch Title & Description and apply Truncation and Highlighting
         const rawTitle = article.title || 'Untitled';
@@ -94,7 +95,7 @@ function renderSearchArticles(articles, query) {
 
         return `
             <div class="article-card">
-                <img src="${imageUrl}" alt="${rawTitle}" class="article-image" loading="lazy">
+                <img src="${imageUrl}" alt="${rawTitle}" class="article-image ${containClass}" loading="lazy">
                 <div class="article-content">
                     <h3 class="article-title">${title}</h3>
                     <p class="article-description">${description}</p>

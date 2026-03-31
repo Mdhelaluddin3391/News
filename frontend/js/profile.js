@@ -14,11 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // NAYA CODE: Global helper function for profile picture URL
     const profilePic = window.getFullImageUrl(user.profile_picture, 'images/default-avatar.png');
+    const containClass = profilePic.includes('default-avatar.png') ? 'img-contain' : '';
 
     profileContent.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 30px;">
             <div style="position: relative; margin-bottom: 15px;">
-                <img src="${profilePic}" alt="Profile Picture" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <img src="${profilePic}" alt="Profile Picture" class="${containClass}" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
             </div>
             <h2 style="font-size: 2rem; color: var(--dark); margin-bottom: 5px;">${user.name}</h2>
             <p style="color: var(--gray); font-size: 1.1rem; background: var(--accent); padding: 5px 15px; border-radius: 20px; display: inline-block;">${user.email}</p>

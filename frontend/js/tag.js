@@ -18,6 +18,7 @@ function renderTagArticles(articles) {
     const html = articles.map(article => {
         // NAYA CODE: Global helper function for image URL (Production ready)
         const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+        const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         const isSaved = user ? isArticleSaved(article.id) : false;
         const saveBtn = user ? `<button class="save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save'}</button>` : '';
@@ -31,7 +32,7 @@ function renderTagArticles(articles) {
 
         return `
             <div class="article-card">
-                <img src="${imageUrl}" alt="${article.title}" class="article-image">
+                <img src="${imageUrl}" alt="${article.title}" class="article-image ${containClass}">
                 <div class="article-content">
                     <h3 class="article-title">${article.title}</h3>
                     <p class="article-description">${description}</p>

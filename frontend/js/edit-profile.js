@@ -21,7 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // === NAYA CODE: Profile Picture Preview Set Karna ===
     const previewImg = document.getElementById('profile-pic-preview');
     if (previewImg) {
-        previewImg.src = window.getFullImageUrl(user.profile_picture, 'images/default-avatar.png');
+        const previewSrc = window.getFullImageUrl(user.profile_picture, 'images/default-avatar.png');
+        previewImg.src = previewSrc;
+        if (previewSrc.includes('default-avatar.png')) {
+            previewImg.classList.add('img-contain');
+        } else {
+            previewImg.classList.remove('img-contain');
+        }
     }
 
     const profilePicInput = document.getElementById('edit-profile-pic');

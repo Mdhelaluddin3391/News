@@ -23,6 +23,7 @@ function renderSavedArticles(articles) {
     const html = articles.map(article => {
         // NAYA CODE: Global helper function for image URL (Production ready)
         const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+        const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         const title = article.title || 'Untitled';
         const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';
@@ -32,7 +33,7 @@ function renderSavedArticles(articles) {
 
         return `
             <div class="article-card">
-                <img src="${imageUrl}" alt="${title}" class="article-image" loading="lazy">
+                <img src="${imageUrl}" alt="${title}" class="article-image ${containClass}" loading="lazy">
                 <div class="article-content">
                     <h3 class="article-title">${title}</h3>
                     <p class="article-description">${description}</p>

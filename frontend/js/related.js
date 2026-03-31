@@ -41,7 +41,7 @@ async function fetchRelatedArticles(categorySlug, currentArticleId) {
     }
 }
 
-// Render related articles in container
+
 async function renderRelated(containerId, categorySlug, currentArticleId) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -66,7 +66,7 @@ async function renderRelated(containerId, categorySlug, currentArticleId) {
         
         html += `
             <div class="related-card">
-                <a href="/article?slug=${a.slug}">
+                <a href="/article.html?slug=${a.slug}">
                     ${liveBadge}
                     <img src="${imageUrl}" alt="${a.title}" class="${containClass}" loading="lazy">
                     <div class="related-content">

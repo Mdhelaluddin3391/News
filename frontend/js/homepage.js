@@ -81,7 +81,7 @@ function renderCategories(categories) {
     let html = '';
     categories.forEach(cat => {
         html += `
-            <li><a href="/?category=${cat.slug}">${cat.name}</a></li>
+            <li><a href="/index.html?category=${cat.slug}">${cat.name}</a></li>
         `;
     });
     container.innerHTML = html;
@@ -94,7 +94,7 @@ function renderBreakingTicker(articles) {
     if (articles && articles.length > 0) {
         // Har article ke liye ek clickable link banayein
         const html = articles.map(article => 
-            `<a href="/article?slug=${article.slug}" class="breaking-link">${article.title}</a>`
+            `<a href="/article.html?slug=${article.slug}" class="breaking-link">${article.title}</a>`
         ).join(' &nbsp;&bull;&nbsp; '); // Beech mein ek dot (•) laga rahe hain
         
         container.innerHTML = html;
@@ -120,7 +120,7 @@ function renderEditorsPicks(picks) {
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         html += `
-            <div class="side-post" onclick="window.location.href=\'/article?slug=${item.slug}\'" style="margin-bottom: 15px; cursor: pointer;">
+            <div class="side-post" onclick="window.location.href='/article.html?slug=${item.slug}'" style="margin-bottom: 15px; cursor: pointer;">
                 <img src="${imageUrl}" alt="${item.title}" class="${containClass}">
                 <div class="side-post-content">
                     <h4 style="font-size: 0.95rem;">${item.title}</h4>
@@ -178,7 +178,6 @@ function formatTimeAgo(isoString) {
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
 }
 
-// ==================== Load Categories in Batches (Lazy Loading) ====================
 async function loadNextCategories(count = 1) {
     if (isLoadingCategory || currentCategoryIndex >= allCategoriesList.length) return;
     
@@ -229,7 +228,7 @@ async function loadNextCategories(count = 1) {
             html += `
                 <div class="category-block">
                     <h2 class="category-heading" style="margin-top: 1rem; margin-bottom: 1.5rem; font-size: 1.8rem;">
-                        <a href="/?category=${cat.slug}" style="text-decoration:none; color:inherit; display:flex; justify-content:space-between; align-items:center;">
+                        <a href="/index.html?category=${cat.slug}" style="text-decoration:none; color:inherit; display:flex; justify-content:space-between; align-items:center;">
                             ${cat.name} 
                             <span style="font-size:0.9rem; color:var(--primary); font-family:'Roboto', sans-serif;">View All →</span>
                         </a>

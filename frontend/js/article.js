@@ -54,7 +54,6 @@ function formatLiveTime(isoString) {
     });
 }
 
-// ==================== Render Article ====================
 function renderArticle(article) {
     if (!article) {
         articleContainer.innerHTML = '<p style="text-align: center;">Article not found.</p>';
@@ -130,8 +129,8 @@ function renderArticle(article) {
             "author": {
                 "@type": "Person",
                 "name": authorName,
-                // FIX: Safely check for username or fallback to ID, and use .html
-                "url": article.author ? `${window.location.origin}/author.html?slug=${article.author?.username || article.author?.id}` : window.location.origin
+                // FIX: Safely check for username or fallback to slug, and use .html
+                "url": article.author ? `${window.location.origin}/author.html?slug=${article.author?.username || article.author?.slug}` : window.location.origin
             },
             "publisher": {
                 "@type": "Organization",

@@ -6,7 +6,6 @@ function formatTagDate(isoString) {
     return new Date(isoString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-// Render HTML
 function renderTagArticles(articles) {
     const tagArticlesContainer = document.getElementById('articles-container');
     if (!articles || articles.length === 0) {
@@ -39,7 +38,7 @@ function renderTagArticles(articles) {
                     <div class="article-meta">
                         <span class="article-source">${article.source_name || 'Ferox Times'}</span>
                         <span class="article-date">${formatTagDate(article.published_at)}</span>
-                        <a href="/article?slug=${article.slug}" class="read-more">Read more →</a>
+                        <a href="/article.html?slug=${article.slug}" class="read-more">Read more →</a>
                         ${saveBtn}
                     </div>
                 </div>

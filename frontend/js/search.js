@@ -44,7 +44,6 @@ function formatSearchDate(isoString) {
     });
 }
 
-// ==================== Rendering ====================
 function renderSearchArticles(articles, query) {
     if (!searchArticlesContainer) return; // Safety check
 
@@ -102,7 +101,7 @@ function renderSearchArticles(articles, query) {
                     <div class="article-meta">
                         <span class="article-source">${source}</span>
                         <span class="article-date">${date}</span>
-                        <a href="/article?slug=${article.slug}" class="read-more">Read more →</a>
+                        <a href="/article.html?slug=${article.slug}" class="read-more">Read more →</a>
                         ${saveButton}
                     </div>
                 </div>

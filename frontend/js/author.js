@@ -118,7 +118,7 @@ async function fetchAuthorAndArticles() {
                         <p class="article-description">${article.description}</p>
                         <div class="article-meta">
                             <span class="article-date">${date}</span>
-                            <a href="/article?slug=${article.slug}" class="read-more">Read more →</a>
+                            <a href="/article.html?slug=${article.slug}" class="read-more">Read more →</a>
                         </div>
                     </div>
                 </div>

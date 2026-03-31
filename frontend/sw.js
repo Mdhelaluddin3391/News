@@ -6,7 +6,6 @@ const API_CACHE = `ferox-times-api-${CACHE_VERSION}`;
 const OFFLINE_FALLBACK_URL = '/';
 const PRECACHE_URLS = [
     '/',
-    '/',
     '/404.html',
     '/about',
     '/advertise.html',

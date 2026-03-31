@@ -173,7 +173,7 @@ function buildReportModal() {
     return overlay;
 }
 
-async function renderComments(articleId, containerId) {
+async function renderComments(articleId, containerId, articleSlug) {
     const container = document.getElementById(containerId);
     if (!container) {
         return;
@@ -224,7 +224,7 @@ async function renderComments(articleId, containerId) {
                         actionButton.textContent = 'Deleting...';
                         await deleteComment(commentId);
                         showCommentFeedback('Comment deleted successfully.');
-                        await renderComments(articleId, containerId);
+                        await renderComments(articleId, containerId, articleSlug);
                     } catch (error) {
                         actionButton.disabled = false;
                         actionButton.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
@@ -241,10 +241,10 @@ async function renderComments(articleId, containerId) {
         });
     }
 
-    renderCommentForm(articleId, containerId, user);
+    renderCommentForm(articleId, containerId, user, articleSlug);
 }
 
-function renderCommentForm(articleId, containerId, user) {
+function renderCommentForm(articleId, containerId, user, articleSlug) {
     const formContainer = document.getElementById('comment-form-container');
     if (!formContainer) {
         return;
@@ -284,7 +284,7 @@ function renderCommentForm(articleId, containerId, user) {
             await postComment(articleId, text);
             textarea.value = '';
             showCommentFeedback('Comment posted successfully.');
-            await renderComments(articleId, containerId);
+            await renderComments(articleId, containerId, articleSlug);
         } catch (error) {
             showCommentFeedback(error.message, 'error');
             button.disabled = false;

@@ -120,7 +120,7 @@ function renderEditorsPicks(picks) {
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         html += `
-            <div class="side-post" onclick="window.location.href=\'/article?slug=${item}.slug\'" style="margin-bottom: 15px; cursor: pointer;">
+            <div class="side-post" onclick="window.location.href=\'/article?slug=${item.slug}\'" style="margin-bottom: 15px; cursor: pointer;">
                 <img src="${imageUrl}" alt="${item.title}" class="${containClass}">
                 <div class="side-post-content">
                     <h4 style="font-size: 0.95rem;">${item.title}</h4>

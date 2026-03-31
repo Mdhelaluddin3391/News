@@ -264,7 +264,7 @@ function renderArticle(article) {
     articleContainer.innerHTML = html;
 
     if (typeof renderRelated === 'function') renderRelated('related-container', categorySlug, article.id);
-    if (typeof renderComments === 'function') renderComments(article.id, 'comments-list');
+    if (typeof renderComments === 'function') renderComments(article.id, 'comments-list', article.slug);
 
     if (user) {
         const saveBtn = document.querySelector('.detail-save-btn');

@@ -40,7 +40,7 @@ function renderSavedArticles(articles) {
                     <div class="article-meta">
                         <span class="article-source">${source}</span>
                         <span class="article-date">${date}</span>
-                        <a href="/article?slug=${articleId}" class="read-more">Read more →</a>
+                        <a href="/article?slug=${article.slug}" class="read-more">Read more →</a>
                         <button class="save-btn saved" data-id="${articleId}">Saved</button>
                     </div>
                 </div>

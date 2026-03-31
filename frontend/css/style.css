@@ -981,15 +981,19 @@ nav {
 #ad-header img,
 #ad-header iframe,
 #ad-header ins {
-    height: 20px !important;      /* Height strictly 20px set kar di */
-    width: auto !important;       /* Width height ke hisaab se apne aap adjust ho jayegi */
-    max-width: 100%;              /* Screen se bahar na jaye */
+    height: 50px !important;      /* Matched with footer app download button size */
+    width: auto !important;       /* Width automatically adjusts based on height */
+    max-width: 100%;              /* Won't exceed screen width */
     display: inline-block;
     object-fit: contain;          /* Image ko stretch hone se rokne ke liye */
 }
 
 #ad-header {
-    margin: 5px 0 !important;     /* Pehle ye 15px tha, ab 5px kar diya */
+    margin: 15px 0 !important;    /* Top & bottom margin for spacing */
+    min-height: 50px;             /* Minimum height to match app buttons */
+    display: flex;                /* Flexbox for better alignment */
+    align-items: center;          /* Vertically center content */
+    justify-content: center;      /* Horizontally center content */
 }
 
 /* ==================== TOAST NOTIFICATIONS ==================== */

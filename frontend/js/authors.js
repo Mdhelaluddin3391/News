@@ -41,7 +41,7 @@ async function fetchAndRenderAuthors() {
 
             // Author Card HTML
             html += `
-                <div class="author-card" onclick="window.location.href='author.html?id=${author.id}'">
+                <div class="author-card" onclick="window.location.href='/author?slug=${author.slug}'"'">
                     <img src="${avatarUrl}" alt="${author.name}" class="author-card-avatar ${avatarContainClass}" loading="lazy">
                     <h3 class="author-card-name">${author.name}</h3>
                     <div class="author-card-role">${role}</div>

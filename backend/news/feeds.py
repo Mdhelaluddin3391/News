@@ -20,7 +20,7 @@ class LatestArticlesFeed(Feed):
 
     def item_link(self, item):
         # Frontend article page ka direct link
-        return f"{settings.FRONTEND_URL}/article.html?id={item.id}"
+        return f"{settings.FRONTEND_URL}/article?slug={item.slug}"
         
     def item_pubdate(self, item):
         return item.published_at

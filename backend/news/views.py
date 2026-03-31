@@ -28,7 +28,8 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Article.objects.all().order_by('-published_at')
     serializer_class = ArticleSerializer
-    
+    lookup_field = 'slug'
+
     filter_backends = [DjangoFilterBackend]
     
     # 'is_editors_pick' aur 'tags__slug' yahan filter mein hain
@@ -102,11 +103,11 @@ class ArticleViewSet(viewsets.ModelViewSet):
         return Response({'message': 'View count updated', 'views': article.views})
     
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
-    def share(self, request, pk=None):
+    def share(self, request, slug=None):
         article = self.get_object()
         
         # Frontend ka actual URL jahan user ko redirect karna hai
-        frontend_url = f"{settings.FRONTEND_URL}/article.html?id={article.id}"
+        frontend_url = f"{settings.FRONTEND_URL}/article?slug={article.slug}"
         
         # Article ki Image (Agar nahi hai toh default lagayein)
         if article.featured_image:

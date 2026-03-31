@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginLink = document.getElementById('register-login-link');
 
     openVerificationPageBtn.addEventListener('click', () => {
-        window.location.href = 'verify-email.html';
+        window.location.href="/"';
     });
 
     resendLink.addEventListener('click', async (event) => {

@@ -102,12 +102,12 @@ function renderArticle(article) {
         seoKeywords = article.tags.map(t => t.name).join(', ');
         
         article.tags.forEach(tag => {
-            tagsHTML += `<a href="tag.html?slug=${tag.slug}&name=${encodeURIComponent(tag.name)}" class="tag-pill">#${tag.name}</a>`;
+            tagsHTML += `<a href="/tag?slug=${tag.slug}&name=${encodeURIComponent(tag.name)}" class="tag-pill">#${tag.name}</a>`;
         });
         tagsHTML += '</div>';
     }
 
-    const cleanPageUrl = `${window.location.origin}${window.location.pathname}?id=${article.id}`;
+    const cleanPageUrl = `${window.location.origin}${window.location.pathname}?slug=${article.slug}`;
 
     if (typeof updateSEOMetaTags === 'function') {
         const seoDescription = description.length > 150 ? description.substring(0, 150) + '...' : description;
@@ -130,7 +130,7 @@ function renderArticle(article) {
             "author": {
                 "@type": "Person",
                 "name": authorName,
-                "url": article.author ? `${window.location.origin}/author.html?id=${article.author.id}` : window.location.origin
+                "url": article.author ? `${window.location.origin}/author?slug=${article.author.user.username || article.author.id}` : window.location.origin
             },
             "publisher": {
                 "@type": "Organization",
@@ -150,13 +150,13 @@ function renderArticle(article) {
                     "@type": "ListItem",
                     "position": 1,
                     "name": "Home",
-                    "item": `${window.location.origin}/index.html`
+                    "item": `${window.location.origin}/`
                 },
                 {
                     "@type": "ListItem",
                     "position": 2,
                     "name": categoryName,
-                    "item": `${window.location.origin}/index.html?category=${categorySlug}`
+                    "item": `${window.location.origin}/?category=${categorySlug}`
                 },
                 {
                     "@type": "ListItem",
@@ -255,7 +255,7 @@ function renderArticle(article) {
             ${commentsHTML}
             
             <div class="detail-actions">
-                <a href="index.html" class="back-link">← Back to Home</a>
+                <a href="/" class="back-link">← Back to Home</a>
                 ${saveButton}
             </div>
         </div>
@@ -484,25 +484,25 @@ async function fetchArticle(articleId) {
 }
 
 // ==================== Get ID from URL ====================
-function getArticleIdFromUrl() {
+function getArticleSlugFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('id');
+    return params.get('slug') || params.get('id');
 }
 
 // ==================== Initial Load ====================
 document.addEventListener('DOMContentLoaded', () => {
-    const articleId = getArticleIdFromUrl();
-    if (!articleId) {
+    const articleSlug = getArticleSlugFromUrl();
+    if (!articleSlug) {
         showArticleError('No article ID specified.');
         articleContainer.innerHTML = '<p style="text-align: center;">Please select an article from the homepage.</p>';
         return;
     }
     
     // Pehle article fetch aur render karo
-    fetchArticle(articleId);
+    fetchArticle(articleSlug);
     
     // View count ko silently badhao
-    incrementArticleView(articleId);
+    incrementArticleView(articleSlug);
 });
 
 // ==================== Increment Views ====================

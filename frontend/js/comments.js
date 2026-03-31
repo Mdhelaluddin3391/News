@@ -253,7 +253,7 @@ function renderCommentForm(articleId, containerId, user) {
     if (!user) {
         formContainer.innerHTML = `
             <p class="login-prompt">
-                <a href="login.html?redirect=article.html?id=${articleId}">Log in</a> to post a comment or flag one for review.
+                <a href="/login?redirect=/article?slug=${articleSlug}">Log in</a> to post a comment or flag one for review.
             </p>
         `;
         return;

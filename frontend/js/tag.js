@@ -39,7 +39,7 @@ function renderTagArticles(articles) {
                     <div class="article-meta">
                         <span class="article-source">${article.source_name || 'Ferox Times'}</span>
                         <span class="article-date">${formatTagDate(article.published_at)}</span>
-                        <a href="article.html?id=${article.id}" class="read-more">Read more →</a>
+                        <a href="/article?slug=${article.slug}" class="read-more">Read more →</a>
                         ${saveBtn}
                     </div>
                 </div>

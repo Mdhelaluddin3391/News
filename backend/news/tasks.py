@@ -91,7 +91,7 @@ def send_push_notifications_task(article_id):
         payload = {
             "title": notif_title,
             "body": short_desc,
-            "url": f"{base_url}/article.html?id={article.id}",
+            "url": f"{base_url}/article?slug={article.slug}",
             "icon": icon_url
         }
 

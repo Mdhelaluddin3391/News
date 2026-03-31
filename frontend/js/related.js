@@ -66,7 +66,7 @@ async function renderRelated(containerId, categorySlug, currentArticleId) {
         
         html += `
             <div class="related-card">
-                <a href="article.html?id=${a.id}">
+                <a href="/article?slug=${a.slug}">
                     ${liveBadge}
                     <img src="${imageUrl}" alt="${a.title}" class="${containClass}" loading="lazy">
                     <div class="related-content">

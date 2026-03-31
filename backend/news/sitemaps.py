@@ -13,7 +13,7 @@ class ArticleSitemap(Sitemap):
         return obj.updated_at
 
     def location(self, obj):
-        return f"{settings.FRONTEND_URL}/article.html?id={obj.id}"
+        return f"{settings.FRONTEND_URL}/article?slug={obj.slug}"
 
 class CategorySitemap(Sitemap):
     changefreq = "daily"
@@ -23,7 +23,7 @@ class CategorySitemap(Sitemap):
         return Category.objects.all()
 
     def location(self, obj):
-        return f"{settings.FRONTEND_URL}/index.html?category={obj.slug}"
+        return f"{settings.FRONTEND_URL}/?category={obj.slug}"
 
 class AuthorSitemap(Sitemap):
     changefreq = "weekly"
@@ -33,7 +33,7 @@ class AuthorSitemap(Sitemap):
         return Author.objects.all()
 
     def location(self, obj):
-        return f"{settings.FRONTEND_URL}/author.html?id={obj.id}"
+        return f"{settings.FRONTEND_URL}/author?slug={obj.user.username if hasattr(obj.user, 'username') else obj.id}"
 
 class TagSitemap(Sitemap):
     changefreq = "daily"

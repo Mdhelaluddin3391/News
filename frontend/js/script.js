@@ -113,7 +113,7 @@ function renderArticles(articles) {
                     <div class="article-meta">
                         <span class="article-source">${source}</span>
                         <span class="article-date">${date}</span>
-                        <a href="article.html?id=${articleId}" class="read-more">Read more →</a>
+                        <a href="/article?slug=${articleId}" class="read-more">Read more →</a>
                         ${saveButton}
                     </div>
                 </div>

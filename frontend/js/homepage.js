@@ -36,7 +36,7 @@ function renderFeatured(article) {
     `;
     // Add click event to open article
     container.addEventListener('click', () => {
-        window.location.href = `article.html?id=${article.id}`;
+        window.location.href = `/article?slug=${article.slug}`;
     });
 }
 
@@ -55,7 +55,7 @@ function renderTrending(trending) {
         const categoryName = item.category ? item.category.name : 'News';
 
         html += `
-            <div class="trending-news-item" data-id="${item.id}">
+            <div class="trending-news-item" data-slug="${item.slug}">
                 <div class="trending-number">${number}</div>
                 <div class="trending-content">
                     <h4>${item.title}</h4>
@@ -68,8 +68,8 @@ function renderTrending(trending) {
 
     container.querySelectorAll('.trending-news-item').forEach(item => {
         item.addEventListener('click', () => {
-            const id = item.dataset.id;
-            window.location.href = `article.html?id=${id}`;
+            const slug = item.dataset.slug || item.dataset.id;
+            window.location.href = `/article?slug=${slug}`;
         });
     });
 }
@@ -81,7 +81,7 @@ function renderCategories(categories) {
     let html = '';
     categories.forEach(cat => {
         html += `
-            <li><a href="index.html?category=${cat.slug}">${cat.name}</a></li>
+            <li><a href="/?category=${cat.slug}">${cat.name}</a></li>
         `;
     });
     container.innerHTML = html;
@@ -94,7 +94,7 @@ function renderBreakingTicker(articles) {
     if (articles && articles.length > 0) {
         // Har article ke liye ek clickable link banayein
         const html = articles.map(article => 
-            `<a href="article.html?id=${article.id}" class="breaking-link">${article.title}</a>`
+            `<a href="/article?slug=${article.slug}" class="breaking-link">${article.title}</a>`
         ).join(' &nbsp;&bull;&nbsp; '); // Beech mein ek dot (•) laga rahe hain
         
         container.innerHTML = html;
@@ -120,7 +120,7 @@ function renderEditorsPicks(picks) {
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         html += `
-            <div class="side-post" onclick="window.location.href='article.html?id=${item.id}'" style="margin-bottom: 15px; cursor: pointer;">
+            <div class="side-post" onclick="window.location.href=\'/article?slug=${item}.slug\'" style="margin-bottom: 15px; cursor: pointer;">
                 <img src="${imageUrl}" alt="${item.title}" class="${containClass}">
                 <div class="side-post-content">
                     <h4 style="font-size: 0.95rem;">${item.title}</h4>
@@ -209,7 +209,7 @@ async function loadNextCategories(count = 1) {
                 const sideImageUrl = window.getFullImageUrl(a.featured_image, 'images/default-news.png');
                 const sideContainClass = sideImageUrl.includes('default-news.png') ? 'img-contain' : '';
                 return `
-                <div class="side-post" onclick="window.location.href='article.html?id=${a.id}'" style="position: relative;">
+                <div class="side-post" onclick="window.location.href=\'/article?slug=${a}.slug\'" style="position: relative;">
                     ${sideLiveBadge}
                     <img src="${sideImageUrl}" alt="${a.title}" class="${sideContainClass}">
                     <div class="side-post-content">
@@ -229,13 +229,13 @@ async function loadNextCategories(count = 1) {
             html += `
                 <div class="category-block">
                     <h2 class="category-heading" style="margin-top: 1rem; margin-bottom: 1.5rem; font-size: 1.8rem;">
-                        <a href="index.html?category=${cat.slug}" style="text-decoration:none; color:inherit; display:flex; justify-content:space-between; align-items:center;">
+                        <a href="/?category=${cat.slug}" style="text-decoration:none; color:inherit; display:flex; justify-content:space-between; align-items:center;">
                             ${cat.name} 
                             <span style="font-size:0.9rem; color:var(--primary); font-family:'Roboto', sans-serif;">View All →</span>
                         </a>
                     </h2>
                     <div class="category-grid">
-                        <div class="main-post" onclick="window.location.href='article.html?id=${mainArticle.id}'">
+                        <div class="main-post" onclick="window.location.href=\'/article?slug=${mainArticle}.slug\'">
                             ${mainLiveBadge}
                             <img src="${mainImageUrl}" alt="${mainArticle.title}" class="${containClass}">
                             <div class="main-post-content">
@@ -363,7 +363,7 @@ async function initHomepage() {
                             "url": "https://www.feroxtimes.com/", // Apna actual domain use karein
                             "potentialAction": {
                                 "@type": "SearchAction",
-                                "target": "https://www.feroxtimes.com/search.html?q={search_term_string}",
+                                "target": "https://www.feroxtimes.com/search?q={search_term_string}",
                                 "query-input": "required name=search_term_string"
                             }
                         },
@@ -521,7 +521,7 @@ function renderRecentNews(articles) {
         const liveBadge = article.is_live ? `<div class="live-badge-card" style="padding: 2px 4px; font-size: 0.65rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
 
         html += `
-            <div class="recent-news-card" onclick="window.location.href='article.html?id=${article.id}'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
+            <div class="recent-news-card" onclick="window.location.href=\'/article?slug=${article}.slug\'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
                 ${liveBadge}
                 <img src="${imageUrl}" alt="${article.title}" class="${containClass}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);">
                 <div style="padding: 12px 10px;">
@@ -567,7 +567,7 @@ function renderTopStories(stories) {
 
         // Isko Trending jaisa ek sundar numbered list format diya hai
         html += `
-            <div class="trending-news-item" data-id="${item.id}" style="cursor: pointer;">
+            <div class="trending-news-item" data-slug="${item.slug}" style="cursor: pointer;">
                 <div class="trending-number" style="color: var(--primary); font-size: 1.8rem;">${number}</div>
                 <div class="trending-content">
                     <h4 style="font-size: 0.95rem; margin-bottom: 5px;">${item.title}</h4>
@@ -581,8 +581,8 @@ function renderTopStories(stories) {
     // Click event add karne ke liye
     container.querySelectorAll('.trending-news-item').forEach(item => {
         item.addEventListener('click', () => {
-            const id = item.dataset.id;
-            window.location.href = `article.html?id=${id}`;
+            const slug = item.dataset.slug || item.dataset.id;
+            window.location.href = `/article?slug=${slug}`;
         });
     });
 }
@@ -691,7 +691,7 @@ function showStory() {
             <span class="story-badge">${categoryName}</span>
             <h2 class="story-modal-title">${story.title}</h2>
             <p class="story-modal-desc">${shortDesc}</p>
-            <a href="article.html?id=${story.id}" class="story-read-more">Swipe up or Click to Read More</a>
+            <a href="/article?slug=${story.slug}" class="story-read-more">Swipe up or Click to Read More</a>
         </div>
     `;
 

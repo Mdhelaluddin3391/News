@@ -102,7 +102,7 @@ function renderSearchArticles(articles, query) {
                     <div class="article-meta">
                         <span class="article-source">${source}</span>
                         <span class="article-date">${date}</span>
-                        <a href="article.html?id=${articleId}" class="read-more">Read more →</a>
+                        <a href="/article?slug=${articleId}" class="read-more">Read more →</a>
                         ${saveButton}
                     </div>
                 </div>
@@ -248,7 +248,7 @@ function updateSearchPagination(currentPage, totalItems, query) {
 document.addEventListener('DOMContentLoaded', () => {
     // FIX: Check if we are currently on the search page. 
     // If we are NOT on the search page, stop executing this script.
-    if (!window.location.pathname.includes('search.html')) {
+    if (!window.location.pathname.includes('/search')) {
         return; 
     }
 

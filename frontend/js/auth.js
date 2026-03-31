@@ -359,7 +359,7 @@ async function handleGoogleLogin(response) {
         await syncBookmarks();
 
         const urlParams = new URLSearchParams(window.location.search);
-        const redirect = urlParams.get('redirect') || 'index.html';
+        const redirect = urlParams.get('redirect') || '/';
         window.location.href = redirect;
     } catch (error) {
         reportAuthError(error, { action: 'googleLogin' });

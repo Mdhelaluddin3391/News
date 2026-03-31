@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector
 from django.db import models
@@ -97,7 +98,18 @@ class Article(BaseModel):
     def save(self, *args, **kwargs):
         # 1. Slug banayein
         if not self.slug:
-            self.slug = slugify(self.title)
+            base_slug = slugify(self.title)
+            slug_candidate = base_slug
+            # Duplicate slug hone par random suffix (6 characters) add karein
+            while Article.objects.filter(slug=slug_candidate).exclude(id=self.id).exists():
+                slug_candidate = f"{base_slug}-{uuid.uuid4().hex[:6]}"
+            self.slug = slug_candidate
+        else:
+            base_slug = self.slug
+            slug_candidate = base_slug
+            while Article.objects.filter(slug=slug_candidate).exclude(id=self.id).exists():
+                slug_candidate = f"{base_slug}-{uuid.uuid4().hex[:6]}"
+            self.slug = slug_candidate
 
         # 2. WEB STORY 24-HOUR EXPIRY LOGIC
         if self.is_web_story and not self.web_story_created_at:

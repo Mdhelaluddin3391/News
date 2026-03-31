@@ -58,7 +58,7 @@ function initHeaderScripts() {
             e.preventDefault();
             const query = inlineSearchForm.querySelector('input').value.trim();
             if (query) {
-                window.location.href = `search.html?q=${encodeURIComponent(query)}`;
+                window.location.href = `/search?q=${encodeURIComponent(query)}`;
             }
         });
     }
@@ -107,15 +107,15 @@ async function fetchAndRenderNavCategories() {
         const urlParams = new URLSearchParams(window.location.search);
         const currentCategory = urlParams.get('category') || 'general';
 
-        let desktopHtml = `<li><a href="index.html?category=general" class="category-link ${currentCategory === 'general' ? 'active' : ''}">Home</a></li>`;
-        let mobileHtml = `<a href="index.html?category=general" class="${currentCategory === 'general' ? 'active' : ''}">Home</a>`;
-        let footerHtml = `<li><a href="index.html?category=general">General News</a></li>`;
+        let desktopHtml = `<li><a href="/?category=general" class="category-link ${currentCategory === 'general' ? 'active' : ''}">Home</a></li>`;
+        let mobileHtml = `<a href="/?category=general" class="${currentCategory === 'general' ? 'active' : ''}">Home</a>`;
+        let footerHtml = `<li><a href="/?category=general">General News</a></li>`;
 
         categories.forEach(cat => {
             const isActive = currentCategory === cat.slug ? 'active' : '';
-            desktopHtml += `<li><a href="index.html?category=${cat.slug}" class="category-link ${isActive}">${cat.name}</a></li>`;
-            mobileHtml += `<a href="index.html?category=${cat.slug}" class="${isActive}">${cat.name}</a>`;
-            footerHtml += `<li><a href="index.html?category=${cat.slug}">${cat.name}</a></li>`;
+            desktopHtml += `<li><a href="/?category=${cat.slug}" class="category-link ${isActive}">${cat.name}</a></li>`;
+            mobileHtml += `<a href="/?category=${cat.slug}" class="${isActive}">${cat.name}</a>`;
+            footerHtml += `<li><a href="/?category=${cat.slug}">${cat.name}</a></li>`;
         });
 
         if (desktopNav) desktopNav.innerHTML = desktopHtml;
@@ -135,7 +135,7 @@ document.addEventListener('click', (e) => {
             (async () => {
                 await logoutUser();
                 if (typeof updateAuthUI === 'function') updateAuthUI();
-                window.location.href = 'index.html';
+                window.location.href="/";
             })();
         }
     }
@@ -185,7 +185,7 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
                     const containClass = imgUrl.includes('default-news.png') ? 'img-contain' : '';
                     
                     html += `
-                        <a href="article.html?id=${article.id}" class="suggestion-item">
+                        <a href="/article?slug=${article.slug}" class="suggestion-item">
                             <img src="${imgUrl}" class="${containClass}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
                             <div style="flex: 1; min-width: 0;">
                                 <div class="suggestion-title">${highlightedTitle}</div>
@@ -197,7 +197,7 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
                 
                 // Sabhi results dekhne ka button
                 html += `
-                    <a href="search.html?q=${encodeURIComponent(query)}" class="suggestion-item" style="justify-content: center; color: var(--primary); font-size: 0.9rem; font-weight: 600; background: #f8fafc; border-top: 1px solid var(--border);">
+                    <a href="/search?q=${encodeURIComponent(query)}" class="suggestion-item" style="justify-content: center; color: var(--primary); font-size: 0.9rem; font-weight: 600; background: #f8fafc; border-top: 1px solid var(--border);">
                         View all search results <i class="fas fa-arrow-right" style="font-size: 0.8rem; margin-left: 5px;"></i>
                     </a>
                 `;
@@ -241,7 +241,7 @@ async function injectGoogleAnalytics() {
             // 1. GTAG external script add karein
             const script1 = document.createElement('script');
             script1.async = true;
-            script1.src = `https://www.googletagmanager.com/gtag/js?id=${trackingId}`;
+            script1.src = `https://www.googletagmanager.com/gtag/js?slug="`;
             document.head.appendChild(script1);
 
             // 2. GTAG inline configuration add karein

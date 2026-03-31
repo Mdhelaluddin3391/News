@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Agar user logged in nahi hai
     if (!user) {
-        window.location.href = 'login.html?redirect=edit-profile.html';
+        window.location.href="/login?redirect=/edit-profile";
         return;
     }
 
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // NAYA: 2 second (2000 ms) ke baad profile.html par auto-redirect karein
                 setTimeout(() => {
-                    window.location.href = 'profile.html';
+                    window.location.href="/"';
                 }, 2000);
                 
             } else {

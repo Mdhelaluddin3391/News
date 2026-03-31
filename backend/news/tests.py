@@ -49,3 +49,34 @@ class ArticleSearchApiTests(APITestCase):
         results = response.data['results']
         self.assertGreaterEqual(len(results), 1)
         self.assertEqual(results[0]['id'], self.primary_article.id)
+
+    def test_slug_is_unique_with_uuid_suffix_on_conflict(self):
+        existing_slug = 'duplicate-article'
+        Article.objects.create(
+            title='Duplicate Article',
+            slug=existing_slug,
+            category=self.category,
+            author=self.author,
+            description='First.
+',
+            content='First content.',
+            status='published',
+        )
+
+        second = Article.objects.create(
+            title='Duplicate Article',
+            category=self.category,
+            author=self.author,
+            description='Second content.',
+            content='Second content.',
+            status='published',
+        )
+
+        self.assertNotEqual(second.slug, existing_slug)
+        self.assertTrue(second.slug.startswith(existing_slug + '-'))
+        self.assertEqual(len(second.slug), len(existing_slug) + 1 + 6)
+
+    def test_retrieve_article_by_slug(self):
+        response = self.client.get(reverse('article-detail', kwargs={'slug': self.primary_article.slug}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['slug'], self.primary_article.slug)

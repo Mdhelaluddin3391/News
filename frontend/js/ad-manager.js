@@ -50,7 +50,7 @@ window.fetchActiveAds = function() {
 document.addEventListener("DOMContentLoaded", function() {
     // Agar URL mein 'article.html' NAHI hai, tabhi page load par ad show karein
     // (Article page par article load hone ke baad ad aayegi)
-    if (!window.location.pathname.includes('article.html')) {
+    if (!window.location.pathname.includes('/article')) {
         window.fetchActiveAds();
     }
 });

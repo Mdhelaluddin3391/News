@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (result.success) {
             const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || 'index.html';
+            const redirect = urlParams.get('redirect') || '/';
             window.location.href = redirect;
         } else {
             // Handle email verification requirement
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 errorDiv.textContent = result.message;
                 errorDiv.style.display = 'block';
                 setTimeout(() => {
-                    window.location.href = 'verify-email.html';
+                    window.location.href="/"';
                 }, 2000);
             } else {
                 errorDiv.textContent = result.message;

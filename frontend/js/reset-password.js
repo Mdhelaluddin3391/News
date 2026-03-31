@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Redirect to login after 3 seconds
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    window.location.href="/"';
                 }, 3000);
             } else {
                 // Handle API error (e.g., invalid or expired token)

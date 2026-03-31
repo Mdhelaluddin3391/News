@@ -426,11 +426,11 @@ USE_X_FORWARDED_HOST = True
 
 # Jazzmin Admin Settings
 JAZZMIN_SETTINGS = {
-    "site_title": "Forex Times Admin",
-    "site_header": "Forex Times",
-    "site_brand": "Forex Times Dashboard",
-    "welcome_sign": "Welcome to Forex Times Admin Panel",
-    "copyright": "Forex Times",
+    "site_title": "Ferox Times Admin",
+    "site_header": "Ferox Times",
+    "site_brand": "Ferox Times Dashboard",
+    "welcome_sign": "Welcome to Ferox Times Admin Panel",
+    "copyright": "Ferox Times",
     "search_model": ["news.Article", "users.User"],
     "custom_css": "css/admin_custom.css",
     "topmenu_links": [

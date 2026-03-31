@@ -98,7 +98,7 @@ function renderBreakingTicker(articles) {
         
         container.innerHTML = html;
     } else {
-        container.innerHTML = 'Welcome to Forex Times!';
+        container.innerHTML = 'Welcome to Ferox Times!';
     }
 }
 
@@ -340,11 +340,11 @@ async function initHomepage() {
             // Homepage SEO Update
             if (typeof updateSEOMetaTags === 'function') {
                 updateSEOMetaTags(
-                    'Forex Times - Premium Global News', 
-                    'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on Forex Times.', 
+                    'Ferox Times - Premium Global News', 
+                    'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on Ferox Times.', 
                     'images/default-news.png', 
                     window.location.href,
-                    "global news, breaking news, latest updates, world news, Forex Times" // <-- NAYA: Keywords add kiye
+                    "global news, breaking news, latest updates, world news, Ferox Times" // <-- NAYA: Keywords add kiye
                 );
             }
 
@@ -355,22 +355,22 @@ async function initHomepage() {
                     "@graph": [
                         {
                             "@type": "WebSite",
-                            "name": "Forex Times",
-                            "url": "https://www.dharmanagarlive.com/", // Apna actual domain use karein
+                            "name": "Ferox Times",
+                            "url": "https://www.feroxtimes.com/", // Apna actual domain use karein
                             "potentialAction": {
                                 "@type": "SearchAction",
-                                "target": "https://www.dharmanagarlive.com/search.html?q={search_term_string}",
+                                "target": "https://www.feroxtimes.com/search.html?q={search_term_string}",
                                 "query-input": "required name=search_term_string"
                             }
                         },
                         {
                             "@type": "Organization",
-                            "name": "Forex Times",
-                            "url": "https://www.dharmanagarlive.com/",
-                            "logo": "https://www.dharmanagarlive.com/images/logo.png", // Apne logo ka sahi URL daalein
+                            "name": "Ferox Times",
+                            "url": "https://www.feroxtimes.com/",
+                            "logo": "https://www.feroxtimes.com/images/logo.png", // Apne logo ka sahi URL daalein
                             "sameAs": [
-                                "https://www.facebook.com/dharmanagarlive",
-                                "https://twitter.com/dharmanagarlive"
+                                "https://www.facebook.com/feroxtimes",
+                                "https://twitter.com/feroxtimes"
                             ]
                         }
                     ]

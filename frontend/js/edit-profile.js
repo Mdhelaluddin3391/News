@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const updatedUser = await response.json();
                 
                 // Update current session data in localStorage
-                localStorage.setItem('forexTimes_currentUser', JSON.stringify(updatedUser));
+                localStorage.setItem('feroxTimes_currentUser', JSON.stringify(updatedUser));
                 
                 // Header UI me naam update karne ke liye
                 if (typeof updateAuthUI === 'function') updateAuthUI();

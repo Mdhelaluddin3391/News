@@ -1,7 +1,7 @@
 // js/verify-email.js
 
 const API_BASE_URL = CONFIG.API_BASE_URL;
-const TOKEN_KEY = 'forexTimes_accessToken';
+const TOKEN_KEY = 'feroxTimes_accessToken';
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('verify-email-form');

@@ -59,7 +59,7 @@ class Advertisement(models.Model):
 class AdvertisePage(models.Model):
     hero_title = models.CharField(
         max_length=200,
-        default="Grow Your Brand With Forex Times",
+        default="Grow Your Brand With Ferox Times",
     )
     hero_description = models.TextField(
         default=(

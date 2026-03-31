@@ -10,7 +10,7 @@ class AdvertisePageAPITests(APITestCase):
         response = self.client.get(reverse("advertise-page"))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["hero_title"], "Grow Your Brand With Forex Times")
+        self.assertEqual(response.data["hero_title"], "Grow Your Brand With Ferox Times")
         self.assertGreaterEqual(len(response.data["options"]), 3)
 
     def test_returns_admin_managed_page_content(self):

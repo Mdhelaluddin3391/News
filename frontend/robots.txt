@@ -10,4 +10,4 @@ Disallow: /*?q=*
 Disallow: /search.html?*
 
 # Apni website ka Sitemap path daalein
-Sitemap: https://www.dharmanagarlive.com/sitemap.xml
+Sitemap: https://www.feroxtimes.com/sitemap.xml

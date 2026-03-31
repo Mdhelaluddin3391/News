@@ -1,8 +1,8 @@
 const CACHE_VERSION = 'v5';
-const SHELL_CACHE = `forex-times-shell-${CACHE_VERSION}`;
-const PAGE_CACHE = `forex-times-pages-${CACHE_VERSION}`;
-const ASSET_CACHE = `forex-times-assets-${CACHE_VERSION}`;
-const API_CACHE = `forex-times-api-${CACHE_VERSION}`;
+const SHELL_CACHE = `ferox-times-shell-${CACHE_VERSION}`;
+const PAGE_CACHE = `ferox-times-pages-${CACHE_VERSION}`;
+const ASSET_CACHE = `ferox-times-assets-${CACHE_VERSION}`;
+const API_CACHE = `ferox-times-api-${CACHE_VERSION}`;
 const OFFLINE_FALLBACK_URL = '/index.html';
 const PRECACHE_URLS = [
     '/',
@@ -218,7 +218,7 @@ self.addEventListener('push', (event) => {
     try {
         data = event.data.json();
     } catch (_error) {
-        data = { title: 'Forex Times', body: event.data.text() };
+        data = { title: 'Ferox Times', body: event.data.text() };
     }
 
     const options = {
@@ -235,7 +235,7 @@ self.addEventListener('push', (event) => {
         ]
     };
 
-    event.waitUntil(self.registration.showNotification(data.title || 'Forex Times', options));
+    event.waitUntil(self.registration.showNotification(data.title || 'Ferox Times', options));
 });
 
 self.addEventListener('notificationclick', (event) => {

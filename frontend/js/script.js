@@ -91,7 +91,7 @@ function renderArticles(articles) {
         
         const title = article.title || 'Untitled';
         const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';
-        const source = article.source_name || 'Forex Times';
+        const source = article.source_name || 'Ferox Times';
         const date = article.published_at ? formatDate(article.published_at) : 'Unknown date';
         const articleId = article.id || '';
         
@@ -187,7 +187,7 @@ async function fetchNews(category = DEFAULT_CATEGORY, page = 1) {
             if (typeof updateSEOMetaTags === 'function') {
                 updateSEOMetaTags(
                     `${formattedCategoryName} News`, 
-                    `Read the latest breaking news about ${formattedCategoryName} on Forex Times.`, 
+                    `Read the latest breaking news about ${formattedCategoryName} on Ferox Times.`, 
                     'images/default-news.png',
                     window.location.href
                 );
@@ -367,7 +367,7 @@ function showToast(message, type = 'success') {
 /// ==================== SEO META TAGS & CANONICAL UPDATER ====================
 function updateSEOMetaTags(title, description, imageUrl, pageUrl, keywords = "") {
     // 1. Page ka Title update karein
-    document.title = title ? `${title} - Forex Times` : 'Forex Times - Premium News';
+    document.title = title ? `${title} - Ferox Times` : 'Ferox Times - Premium News';
 
     // Helper function: Agar tag pehle se hai toh update karein, nahi toh naya banayein
     function setMetaTag(attrName, attrValue, content) {
@@ -393,7 +393,7 @@ function updateSEOMetaTags(title, description, imageUrl, pageUrl, keywords = "")
     setMetaTag('property', 'og:image', imageUrl);
     setMetaTag('property', 'og:url', pageUrl);
     setMetaTag('property', 'og:type', 'article');
-    setMetaTag('property', 'og:site_name', 'Forex Times');
+    setMetaTag('property', 'og:site_name', 'Ferox Times');
 
     // 4. Twitter Card Tags
     setMetaTag('name', 'twitter:card', 'summary_large_image');

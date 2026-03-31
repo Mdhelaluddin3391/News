@@ -17,7 +17,7 @@ from .serializers import (
 
 
 DEFAULT_ADVERTISE_PAGE = {
-    "hero_title": "Grow Your Brand With Forex Times",
+    "hero_title": "Grow Your Brand With Ferox Times",
     "hero_description": (
         "Reach a highly engaged audience through our premium digital news platform. "
         "We offer strategic ad placements to maximize your visibility."

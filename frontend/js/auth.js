@@ -1,5 +1,5 @@
-const AUTH_STORAGE_KEY = 'forexTimes_currentUser';
-const BOOKMARKS_KEY = 'forexTimes_bookmarks';
+const AUTH_STORAGE_KEY = 'feroxTimes_currentUser';
+const BOOKMARKS_KEY = 'feroxTimes_bookmarks';
 const API_BASE_URL_AUTH = CONFIG.API_BASE_URL;
 const CSRF_URL = `${API_BASE_URL_AUTH}/auth/csrf/`;
 const REFRESH_URL = `${API_BASE_URL_AUTH}/auth/refresh/`;

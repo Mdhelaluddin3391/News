@@ -71,7 +71,7 @@ function renderArticle(article) {
     const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
     
     const title = article.title || 'Untitled';
-    const source = article.source_name || 'Forex Times';
+    const source = article.source_name || 'Ferox Times';
     const date = article.published_at ? formatArticleDate(article.published_at) : 'Unknown date';
     const description = article.description || '';
     let content = article.content || article.description || '';
@@ -114,7 +114,7 @@ function renderArticle(article) {
     }
 
     if (typeof injectSchema === 'function') {
-        const authorName = article.author ? article.author.name : 'Forex Times Staff';
+        const authorName = article.author ? article.author.name : 'Ferox Times Staff';
         
         const articleSchema = {
             "@type": "NewsArticle",
@@ -133,7 +133,7 @@ function renderArticle(article) {
             },
             "publisher": {
                 "@type": "Organization",
-                "name": "Forex Times",
+                "name": "Ferox Times",
                 "logo": {
                     "@type": "ImageObject",
                     "url": `${window.location.origin}/images/logo.png`

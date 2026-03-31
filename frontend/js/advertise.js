@@ -2,7 +2,7 @@ const ADVERTISE_PAGE_API_URL = `${CONFIG.API_BASE_URL}/advertise-page/`;
 const AD_INQUIRY_API_URL = `${CONFIG.API_BASE_URL}/contact/`;
 
 const DEFAULT_ADVERTISE_PAGE = {
-    hero_title: "Grow Your Brand With Forex Times",
+    hero_title: "Grow Your Brand With Ferox Times",
     hero_description: "Reach a highly engaged audience through our premium digital news platform. We offer strategic ad placements to maximize your visibility.",
     slots_section_title: "Available Ad Slots",
     inquiry_title: "Advertisement Inquiry",

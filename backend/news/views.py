@@ -124,14 +124,14 @@ class ArticleViewSet(viewsets.ModelViewSet):
         <html lang="en">
         <head>
             <meta charset="UTF-8">
-            <title>{safe_title} - Forex Times</title>
+            <title>{safe_title} - Ferox Times</title>
             
             <meta property="og:type" content="article">
             <meta property="og:title" content="{safe_title}">
             <meta property="og:description" content="{safe_desc}">
             <meta property="og:image" content="{image_url}">
             <meta property="og:url" content="{frontend_url}">
-            <meta property="og:site_name" content="Forex Times">
+            <meta property="og:site_name" content="Ferox Times">
             
             <meta name="twitter:card" content="summary_large_image">
             <meta name="twitter:title" content="{safe_title}">

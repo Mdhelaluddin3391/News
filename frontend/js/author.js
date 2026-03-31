@@ -58,11 +58,11 @@ async function fetchAuthorAndArticles() {
         if (typeof updateSEOMetaTags === 'function') {
             const seoBio = bio.length > 150 ? bio.substring(0, 150) + '...' : bio;
             updateSEOMetaTags(
-                `${author.name} - Forex Times Author`, 
+                `${author.name} - Ferox Times Author`, 
                 seoBio, 
                 avatar, 
                 window.location.href,
-                `${author.name}, journalist, author, Forex Times reporter` // <-- NAYA: Keywords
+                `${author.name}, journalist, author, Ferox Times reporter` // <-- NAYA: Keywords
             );
         }
 
@@ -75,7 +75,7 @@ async function fetchAuthorAndArticles() {
                 "jobTitle": role,
                 "worksFor": {
                     "@type": "Organization",
-                    "name": "Forex Times"
+                    "name": "Ferox Times"
                 },
                 "image": avatar,
                 "description": bio,

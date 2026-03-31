@@ -87,7 +87,7 @@ class Migration(migrations.Migration):
             name="AdvertisePage",
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("hero_title", models.CharField(default="Grow Your Brand With Forex Times", max_length=200)),
+                ("hero_title", models.CharField(default="Grow Your Brand With Ferox Times", max_length=200)),
                 (
                     "hero_description",
                     models.TextField(

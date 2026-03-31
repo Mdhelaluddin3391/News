@@ -74,10 +74,10 @@ def send_verification_email(user, regenerate_token=False):
         user.generate_email_verification_token()
 
     verification_link = build_verification_link(user)
-    subject = "Verify Your Email - Forex Times"
+    subject = "Verify Your Email - Ferox Times"
     text_content = (
         f"Hello {user.name},\n\n"
-        "Welcome to Forex Times.\n"
+        "Welcome to Ferox Times.\n"
         "Please verify your email address to activate your account.\n\n"
         f"Verification link: {verification_link}\n\n"
         f"Verification token: {user.email_verification_token}\n\n"
@@ -102,7 +102,7 @@ def send_verification_email(user, regenerate_token=False):
     <body>
         <div class="email-container">
             <div class="header">
-                <h1>Forex Times</h1>
+                <h1>Ferox Times</h1>
             </div>
             <div class="content">
                 <h2 style="color: #1a365d;">Verify your email</h2>
@@ -114,7 +114,7 @@ def send_verification_email(user, regenerate_token=False):
                 <p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you did not sign up for this account, you can ignore this email.</p>
             </div>
             <div class="footer">
-                &copy; 2026 Forex Times. All rights reserved.
+                &copy; 2026 Ferox Times. All rights reserved.
             </div>
         </div>
     </body>
@@ -304,7 +304,7 @@ class ForgotPasswordView(APIView):
             <body>
                 <div class="email-container">
                     <div class="header">
-                        <h1>Forex Times</h1>
+                        <h1>Ferox Times</h1>
                     </div>
                     <div class="content">
                         <h2 style="color: #1a365d;">Password Reset Request</h2>
@@ -314,7 +314,7 @@ class ForgotPasswordView(APIView):
                         <p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you did not request this, please ignore this email. Your account is safe.</p>
                     </div>
                     <div class="footer">
-                        &copy; 2026 Forex Times. All rights reserved.
+                        &copy; 2026 Ferox Times. All rights reserved.
                     </div>
                 </div>
             </body>
@@ -322,7 +322,7 @@ class ForgotPasswordView(APIView):
             """
 
             email_message = EmailMultiAlternatives(
-                subject="Password Reset Request - Forex Times",
+                subject="Password Reset Request - Ferox Times",
                 body=f"Hello {user.name},\n\nClick the link below to reset your password:\n{reset_link}",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[user.email],

@@ -4,9 +4,9 @@ from django.conf import settings
 from .models import Article
 
 class LatestArticlesFeed(Feed):
-    title = "Forex Times - Latest News"
+    title = "Ferox Times - Latest News"
     link = settings.FRONTEND_URL
-    description = "Latest breaking news, trending stories, and in-depth articles from Forex Times."
+    description = "Latest breaking news, trending stories, and in-depth articles from Ferox Times."
 
     def items(self):
         # Sirf published articles le rahe hain, latest pehle aayenge

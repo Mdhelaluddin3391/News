@@ -36,7 +36,7 @@ function renderFeatured(article) {
     `;
     // Add click event to open article
     container.addEventListener('click', () => {
-        window.location.href = `/article?slug=${article.slug}`;
+        window.location.href = `/article.html?slug=${article.slug}`;
     });
 }
 
@@ -69,7 +69,7 @@ function renderTrending(trending) {
     container.querySelectorAll('.trending-news-item').forEach(item => {
         item.addEventListener('click', () => {
             const slug = item.dataset.slug || item.dataset.id;
-            window.location.href = `/article?slug=${slug}`;
+            window.location.href = `/article.html?slug=${slug}`;
         });
     });
 }
@@ -209,7 +209,7 @@ async function loadNextCategories(count = 1) {
                 const sideImageUrl = window.getFullImageUrl(a.featured_image, 'images/default-news.png');
                 const sideContainClass = sideImageUrl.includes('default-news.png') ? 'img-contain' : '';
                 return `
-                <div class="side-post" onclick="window.location.href=\'/article?slug=${a}.slug\'" style="position: relative;">
+                <div class="side-post" onclick="window.location.href='/article.html?slug=${a.slug}'" style="position: relative;">
                     ${sideLiveBadge}
                     <img src="${sideImageUrl}" alt="${a.title}" class="${sideContainClass}">
                     <div class="side-post-content">
@@ -235,7 +235,7 @@ async function loadNextCategories(count = 1) {
                         </a>
                     </h2>
                     <div class="category-grid">
-                        <div class="main-post" onclick="window.location.href=\'/article?slug=${mainArticle}.slug\'">
+                        <div class="main-post" onclick="window.location.href='/article.html?slug=${mainArticle.slug}'">
                             ${mainLiveBadge}
                             <img src="${mainImageUrl}" alt="${mainArticle.title}" class="${containClass}">
                             <div class="main-post-content">
@@ -521,7 +521,7 @@ function renderRecentNews(articles) {
         const liveBadge = article.is_live ? `<div class="live-badge-card" style="padding: 2px 4px; font-size: 0.65rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
 
         html += `
-            <div class="recent-news-card" onclick="window.location.href=\'/article?slug=${article}.slug\'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
+            <div class="recent-news-card" onclick="window.location.href='/article.html?slug=${article.slug}'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
                 ${liveBadge}
                 <img src="${imageUrl}" alt="${article.title}" class="${containClass}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);">
                 <div style="padding: 12px 10px;">
@@ -582,7 +582,7 @@ function renderTopStories(stories) {
     container.querySelectorAll('.trending-news-item').forEach(item => {
         item.addEventListener('click', () => {
             const slug = item.dataset.slug || item.dataset.id;
-            window.location.href = `/article?slug=${slug}`;
+            window.location.href = `/article.html?slug=${slug}`;
         });
     });
 }
@@ -691,7 +691,7 @@ function showStory() {
             <span class="story-badge">${categoryName}</span>
             <h2 class="story-modal-title">${story.title}</h2>
             <p class="story-modal-desc">${shortDesc}</p>
-            <a href="/article?slug=${story.slug}" class="story-read-more">Swipe up or Click to Read More</a>
+            <a href="/article.html?slug=${story.slug}" class="story-read-more">Swipe up or Click to Read More</a>
         </div>
     `;
 

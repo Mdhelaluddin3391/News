@@ -65,12 +65,12 @@ function renderArticle(article) {
     if (liveRefreshInterval) clearInterval(liveRefreshInterval);
     if (liveSocket) liveSocket.close();
 
-    const user = getCurrentUser(); 
+    const user = getCurrentUser();
     const isSaved = user ? isArticleSaved(article.id) : false;
-    
+
     const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
     const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
-    
+
     const title = article.title || 'Untitled';
     const source = article.source_name || 'Ferox Times';
     const date = article.published_at ? formatArticleDate(article.published_at) : 'Unknown date';
@@ -82,11 +82,11 @@ function renderArticle(article) {
     // ======== IN-ARTICLE AD INJECTION LOGIC ========
     const inArticleAdHTML = `<div id="ad-in_article" class="ad-container" style="display: none; margin: 25px 0; text-align: center;"></div>`;
     const paragraphs = content.split('</p>');
-    
+
     if (paragraphs.length > 2) {
         // 2nd paragraph ke baad ad inject karo
         paragraphs.splice(2, 0, inArticleAdHTML);
-        content = paragraphs.join('</p>'); 
+        content = paragraphs.join('</p>');
     } else {
         // Agar article 2 paragraph se chota hai, toh aakhir mein laga do
         content += inArticleAdHTML;
@@ -95,14 +95,14 @@ function renderArticle(article) {
 
     // --- TAGS HTML BLOCK AUR SEO KEYWORDS ---
     let tagsHTML = '';
-    let seoKeywords = "news, daily news, breaking news"; 
-    
+    let seoKeywords = "news, daily news, breaking news";
+
     if (article.tags && article.tags.length > 0) {
         tagsHTML = '<div class="article-tags">';
         seoKeywords = article.tags.map(t => t.name).join(', ');
-        
+
         article.tags.forEach(tag => {
-            tagsHTML += `<a href="/tag?slug=${tag.slug}&name=${encodeURIComponent(tag.name)}" class="tag-pill">#${tag.name}</a>`;
+            tagsHTML += `<a href="/tag.html?slug=${tag.slug}&name=${encodeURIComponent(tag.name)}" class="tag-pill">#${tag.name}</a>`;
         });
         tagsHTML += '</div>';
     }
@@ -116,7 +116,7 @@ function renderArticle(article) {
 
     if (typeof injectSchema === 'function') {
         const authorName = article.author ? article.author.name : 'Ferox Times Staff';
-        
+
         const articleSchema = {
             "@type": "NewsArticle",
             "mainEntityOfPage": {
@@ -130,7 +130,8 @@ function renderArticle(article) {
             "author": {
                 "@type": "Person",
                 "name": authorName,
-                "url": article.author ? `${window.location.origin}/author?slug=${article.author.user.username || article.author.id}` : window.location.origin
+                // FIX: Safely check for username or fallback to ID, and use .html
+                "url": article.author ? `${window.location.origin}/author.html?slug=${article.author?.username || article.author?.id}` : window.location.origin
             },
             "publisher": {
                 "@type": "Organization",
@@ -150,13 +151,13 @@ function renderArticle(article) {
                     "@type": "ListItem",
                     "position": 1,
                     "name": "Home",
-                    "item": `${window.location.origin}/`
+                    "item": `${window.location.origin}/index.html`
                 },
                 {
                     "@type": "ListItem",
                     "position": 2,
                     "name": categoryName,
-                    "item": `${window.location.origin}/?category=${categorySlug}`
+                    "item": `${window.location.origin}/index.html?category=${categorySlug}`
                 },
                 {
                     "@type": "ListItem",
@@ -170,8 +171,8 @@ function renderArticle(article) {
         injectSchema([breadcrumbSchema, articleSchema]);
     }
 
-    const saveButton = user ? 
-        `<button class="save-btn detail-save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save for Later'}</button>` 
+    const saveButton = user ?
+        `<button class="save-btn detail-save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save for Later'}</button>`
         : '';
 
     const backendShareUrl = `${CONFIG.API_BASE_URL}/news/articles/${article.id}/share/`;
@@ -203,7 +204,7 @@ function renderArticle(article) {
     `;
 
     const liveBadgeHTML = article.is_live ? `<div class="live-badge"><i class="fas fa-circle"></i> LIVE UPDATE</div>` : '';
-    
+
     let liveUpdatesHTML = '';
     if (article.is_live) {
         if (article.live_updates && article.live_updates.length > 0) {
@@ -223,10 +224,10 @@ function renderArticle(article) {
                 </div>
             </div>
         `;
-        
+
         setTimeout(() => {
             initLiveUpdates(article.id);
-        }, 100); 
+        }, 100);
     }
 
     const html = `
@@ -255,7 +256,7 @@ function renderArticle(article) {
             ${commentsHTML}
             
             <div class="detail-actions">
-                <a href="/" class="back-link">← Back to Home</a>
+                <a href="/index.html" class="back-link">← Back to Home</a>
                 ${saveButton}
             </div>
         </div>
@@ -311,32 +312,32 @@ function generateTimelineHTML(updates) {
 // ==================== WEBSOCKET LOGIC WITH FALLBACK ====================
 function initLiveUpdates(articleId) {
     const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
-    
+
     const backendBase = CONFIG.API_BASE_URL.replace('/api', '').replace(/^https?:\/\//, `${wsScheme}://`);
     const wsUrl = `${backendBase}/ws/live-updates/${articleId}/`;
 
     try {
         liveSocket = new WebSocket(wsUrl);
 
-        liveSocket.onopen = function(e) {
+        liveSocket.onopen = function (e) {
             const indicator = document.querySelector('.auto-refresh-indicator');
             if (indicator) {
                 indicator.innerHTML = '<i class="fas fa-bolt" style="color: #f59e0b;"></i> Real-time updates active';
             }
         };
 
-        liveSocket.onmessage = function(e) {
+        liveSocket.onmessage = function (e) {
             const data = JSON.parse(e.data);
             if (data.update_data) {
                 appendNewUpdateToTimeline(data.update_data);
             }
         };
 
-        liveSocket.onclose = function(e) {
+        liveSocket.onclose = function (e) {
             fallbackToPolling(articleId);
         };
 
-        liveSocket.onerror = function(e) {
+        liveSocket.onerror = function (e) {
             if (liveSocket.readyState !== WebSocket.CLOSED) {
                 liveSocket.close();
             }
@@ -350,14 +351,14 @@ function initLiveUpdates(articleId) {
 function fallbackToPolling(articleId) {
     if (useFallbackPolling) return; // Ek baar fallback shuru ho gaya toh dobara na karein
     useFallbackPolling = true;
-    
+
     const indicator = document.querySelector('.auto-refresh-indicator');
     if (indicator) {
         indicator.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Connection weak. Auto-refreshing...';
     }
-    
+
     // Aapka original polling function yahan call hoga
-    startLivePolling(articleId); 
+    startLivePolling(articleId);
 }
 
 function appendNewUpdateToTimeline(update) {
@@ -391,11 +392,11 @@ function appendNewUpdateToTimeline(update) {
         newItem.style.opacity = '1';
         newItem.style.transform = 'translateY(0)';
         newItem.style.transition = 'all 0.5s ease';
-        
+
         // Highlight color dheere-dheere hatayein
         setTimeout(() => {
             const content = newItem.querySelector('.timeline-content');
-            if(content) content.style.backgroundColor = '#f8fafc';
+            if (content) content.style.backgroundColor = '#f8fafc';
         }, 2000);
     }, 50);
 
@@ -411,24 +412,24 @@ function startLivePolling(articleId) {
             if (response.ok) {
                 const article = await response.json();
                 const timelineContainer = document.getElementById('timeline-container');
-                
+
                 if (timelineContainer && article.live_updates && article.live_updates.length > 0) {
                     // Check karein ki latest update ki ID kya hai
                     const currentLatestId = article.live_updates[0].id;
-                    
+
                     // Agar naya update aaya hai, sirf tabhi HTML change karo
                     if (currentLatestId !== latestUpdateId) {
                         latestUpdateId = currentLatestId; // ID update kar lo
-                        
+
                         // Pura HTML update karein
                         timelineContainer.innerHTML = generateTimelineHTML(article.live_updates);
-                        
+
                         // Naye update par ek chota sa smooth highlight effect daalein taaki user ko pata chale
                         const firstItemContent = timelineContainer.querySelector('.timeline-content');
                         if (firstItemContent) {
                             firstItemContent.style.transition = 'background-color 1s ease';
                             firstItemContent.style.backgroundColor = '#fecdd3'; // Soft red highlight
-                            
+
                             setTimeout(() => {
                                 firstItemContent.style.backgroundColor = '#f8fafc'; // Wapas normal color
                             }, 2000);
@@ -446,7 +447,7 @@ function startLivePolling(articleId) {
 window.addEventListener('beforeunload', () => {
     // 1. Polling interval clear karein
     if (liveRefreshInterval) clearInterval(liveRefreshInterval);
-    
+
     if (typeof liveSocket !== 'undefined' && liveSocket && liveSocket.readyState === WebSocket.OPEN) {
         liveSocket.close();
     }
@@ -463,21 +464,21 @@ async function fetchArticle(articleId) {
         if (!response.ok) {
             throw new Error(`HTTP error ${response.status}`);
         }
-        
+
         const article = await response.json();
-        
+
         renderArticle(article);
-        
+
         if (typeof window.fetchActiveAds === 'function') {
             window.fetchActiveAds();
         } else {
             console.warn("fetchActiveAds function not found. Ensure ad-manager.js is loaded.");
         }
-        
+
     } catch (error) {
         console.error('Failed to fetch article:', error);
         showArticleError('Could not load the article. Please try again later.');
-        articleContainer.innerHTML = ''; 
+        articleContainer.innerHTML = '';
     } finally {
         hideArticleLoader();
     }
@@ -497,10 +498,10 @@ document.addEventListener('DOMContentLoaded', () => {
         articleContainer.innerHTML = '<p style="text-align: center;">Please select an article from the homepage.</p>';
         return;
     }
-    
+
     // Pehle article fetch aur render karo
     fetchArticle(articleSlug);
-    
+
     // View count ko silently badhao
     incrementArticleView(articleSlug);
 });

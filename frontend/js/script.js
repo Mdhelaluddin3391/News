@@ -94,6 +94,10 @@ function renderArticles(articles) {
         const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';
         const source = article.source_name || 'Ferox Times';
         const date = article.published_at ? formatDate(article.published_at) : 'Unknown date';
+        
+        // FIX: Extract slug first, fallback to id
+        const articleSlug = article.slug || article.id || ''; 
+        // Note: data-id mein .id hi rakh rahe hain kyunki backend save/bookmark feature id par depend karta hai
         const articleId = article.id || '';
         
         const isSaved = user ? isArticleSaved(articleId) : false;
@@ -113,7 +117,7 @@ function renderArticles(articles) {
                     <div class="article-meta">
                         <span class="article-source">${source}</span>
                         <span class="article-date">${date}</span>
-                        <a href="/article?slug=${articleId}" class="read-more">Read more →</a>
+                        <a href="/article.html?slug=${articleSlug}" class="read-more">Read more →</a>
                         ${saveButton}
                     </div>
                 </div>

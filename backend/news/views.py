@@ -33,7 +33,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     
     # 'is_editors_pick' aur 'tags__slug' yahan filter mein hain
-    filterset_fields = ['category__slug', 'author', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'tags__slug', 'is_top_story', 'is_web_story']
+    filterset_fields = ['category__slug', 'author__user__username', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'tags__slug', 'is_top_story', 'is_web_story']
 
     def get_queryset(self):
         queryset = Article.objects.select_related('category', 'author__user').prefetch_related('tags').filter(status='published', published_at__isnull=False).order_by('-published_at')

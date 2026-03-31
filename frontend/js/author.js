@@ -4,9 +4,9 @@
 const AUTHOR_API_URL = `${CONFIG.API_BASE_URL}/news`;
 
 // Get Author ID from URL (e.g., author.html?id=1)
-function getAuthorIdFromUrl() {
+function getAuthorSlugFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('id');
+    return params.get('slug');
 }
 
 function formatDate(isoString) {
@@ -14,25 +14,25 @@ function formatDate(isoString) {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+
 async function fetchAuthorAndArticles() {
-    const authorId = getAuthorIdFromUrl();
+    const authorSlug = getAuthorSlugFromUrl();
     const authorCard = document.getElementById('author-details');
     const articlesContainer = document.getElementById('author-articles');
 
-    if (!authorId) {
+    if (!authorSlug) {
         authorCard.innerHTML = '<p>No author specified. Please select an author from an article.</p>';
         return;
     }
 
     try {
         // 1. Sabse pehle API se sirf Author ki details fetch karenge
-        const authorResponse = await fetch(`${AUTHOR_API_URL}/authors/${authorId}/`);
+        const authorResponse = await fetch(`${AUTHOR_API_URL}/authors/${authorSlug}/`);
         if (!authorResponse.ok) throw new Error('Author not found');
         
         const author = await authorResponse.json();
 
         // Extract author details
-        // NAYA CODE: Global helper function for profile picture
         const avatar = window.getFullImageUrl(author.profile_picture, 'images/default-avatar.png');
         const avatarContainClass = avatar.includes('default-avatar.png') ? 'img-contain' : '';
         const role = author.role || 'Contributor';
@@ -63,7 +63,7 @@ async function fetchAuthorAndArticles() {
                 seoBio, 
                 avatar, 
                 window.location.href,
-                `${author.name}, journalist, author, Ferox Times reporter` // <-- NAYA: Keywords
+                `${author.name}, journalist, author, Ferox Times reporter`
             );
         }
 
@@ -91,8 +91,8 @@ async function fetchAuthorAndArticles() {
         }
         // =======================================
 
-        // 2. Ab is author ke likhe hue Articles fetch karenge
-        const articlesResponse = await fetch(`${AUTHOR_API_URL}/articles/?author=${authorId}`);
+        // 2. Ab is author ke likhe hue Articles fetch karenge (Filtering with slug)
+        const articlesResponse = await fetch(`${AUTHOR_API_URL}/articles/?author__user__username=${authorSlug}`);
         const articleData = await articlesResponse.json();
         const articles = articleData.results || articleData;
 
@@ -106,7 +106,6 @@ async function fetchAuthorAndArticles() {
         let articlesHtml = '';
         articles.forEach(article => {
             const date = article.published_at ? formatDate(article.published_at) : 'Unknown Date';
-            // NAYA CODE: Global helper function for article image
             const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
             const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
             

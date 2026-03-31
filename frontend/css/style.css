@@ -478,8 +478,10 @@ nav {
 
 .featured-image {
     width: 100%;
-    height: 400px;
+    aspect-ratio: 16 / 9; /* Fixed height ki jagah yeh use karein */
     object-fit: cover;
+    object-position: center; /* Image ko center mein focus rakhega */
+    background-color: var(--light);
 }
 
 .featured-overlay {
@@ -550,8 +552,9 @@ nav {
 
 .article-image {
     width: 100%;
-    height: 200px;
+    aspect-ratio: 16 / 9; /* Fixed height 200px hata diya */
     object-fit: cover;
+    object-position: center;
     background-color: var(--border);
 }
 
@@ -852,8 +855,9 @@ nav {
 
 .main-post img {
     width: 100%;
-    height: 250px;
+    aspect-ratio: 16 / 9; /* Fixed height 250px hata diya */
     object-fit: cover;
+    object-position: center;
 }
 
 .main-post-content {
@@ -1355,7 +1359,7 @@ nav {
     }
 
     .featured-image {
-        height: 350px;
+        aspect-ratio: 16 / 9;
     }
 
     .footer-grid {
@@ -1445,7 +1449,7 @@ nav {
     }
 
     .featured-image {
-        height: 300px;
+        aspect-ratio: 4 / 3; /* Mobile par thodi lambi image achi lagti hai */
     }
 
     .articles-container {
@@ -1461,7 +1465,7 @@ nav {
     }
 
     .main-post img {
-        height: 200px;
+        aspect-ratio: 16 / 9; /* Height 200px hata dein */
     }
 
     .side-post img {
@@ -1478,7 +1482,7 @@ nav {
     }
 
     .featured-image {
-        height: 200px;
+        aspect-ratio: 4 / 3;
     }
 
     .featured-overlay {
@@ -1572,6 +1576,11 @@ nav {
     }
 }
 
+.img-contain {
+    object-fit: contain !important;
+    background-color: var(--light);
+    padding: 10px;
+}
 
 
 

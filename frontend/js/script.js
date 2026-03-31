@@ -88,6 +88,7 @@ function renderArticles(articles) {
     const html = articles.map(article => {
         // NAYA CODE: Yahan global helper use kiya gaya hai production-ready image URL ke liye
         const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+        const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         const title = article.title || 'Untitled';
         const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';
@@ -105,7 +106,7 @@ function renderArticles(articles) {
         return `
             <div class="article-card" style="position: relative;">
                 ${liveBadgeHTML}
-                <img src="${imageUrl}" alt="${title}" class="article-image" loading="lazy">
+                <img src="${imageUrl}" alt="${title}" class="article-image ${containClass}" loading="lazy">
                 <div class="article-content">
                     <h3 class="article-title">${title}</h3>
                     <p class="article-description">${description}</p>

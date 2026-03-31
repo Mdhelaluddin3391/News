@@ -16,13 +16,14 @@ function renderFeatured(article) {
     const timeAgo = formatTimeAgo(article.published_at);
     // NAYA CODE: Global helper function for image URL
     const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+    const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
     const categoryName = article.category ? article.category.name : 'World';
     const authorName = article.author ? article.author.name : 'Staff';
     const liveBadgeHTML = article.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
 
     container.innerHTML = `
         ${liveBadgeHTML}
-        <img src="${imageUrl}" alt="${article.title}" class="featured-image">
+        <img src="${imageUrl}" alt="${article.title}" class="featured-image ${containClass}">
         <div class="featured-overlay">
             <span class="featured-category">${categoryName.toUpperCase()}</span>
             <h2 class="featured-title">${article.title}</h2>
@@ -221,6 +222,7 @@ async function loadNextCategories(count = 1) {
             const mainLiveBadge = mainArticle.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
             // NAYA CODE: Global helper function for image URL
             const mainImageUrl = window.getFullImageUrl(mainArticle.featured_image, 'images/default-news.png');
+            const containClass = mainImageUrl.includes('default-news.png') ? 'img-contain' : '';
 
             html += `
                 <div class="category-block">
@@ -233,7 +235,7 @@ async function loadNextCategories(count = 1) {
                     <div class="category-grid">
                         <div class="main-post" onclick="window.location.href='article.html?id=${mainArticle.id}'">
                             ${mainLiveBadge}
-                            <img src="${mainImageUrl}" alt="${mainArticle.title}">
+                            <img src="${mainImageUrl}" alt="${mainArticle.title}" class="${containClass}">
                             <div class="main-post-content">
                                 <h3>${mainArticle.title}</h3>
                                 <p>${mainArticle.description ? (mainArticle.description.length > 110 ? mainArticle.description.substring(0, 110) + '...' : mainArticle.description) : ''}</p>
@@ -513,12 +515,13 @@ function renderRecentNews(articles) {
         const timeAgo = formatTimeAgo(article.published_at);
         // NAYA CODE: Global helper function for image URL
         const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+        const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         const liveBadge = article.is_live ? `<div class="live-badge-card" style="padding: 2px 4px; font-size: 0.65rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
 
         html += `
             <div class="recent-news-card" onclick="window.location.href='article.html?id=${article.id}'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
                 ${liveBadge}
-                <img src="${imageUrl}" alt="${article.title}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);">
+                <img src="${imageUrl}" alt="${article.title}" class="${containClass}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);">
                 <div style="padding: 12px 10px;">
                     <h4 style="font-size: 0.85rem; margin-bottom: 8px; line-height: 1.4; color: var(--dark); font-family: 'Roboto', sans-serif; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${article.title}</h4>
                     <span style="font-size: 0.75rem; color: var(--secondary); font-weight: 600;"><i class="far fa-clock"></i> ${timeAgo}</span>

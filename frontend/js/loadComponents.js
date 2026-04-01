@@ -35,11 +35,13 @@ function initHeaderScripts() {
         menuBtn.addEventListener("click", () => {
             mobileMenu.classList.add("active");
             document.body.classList.add("no-scroll");
+            document.documentElement.classList.add("no-scroll"); // Naya add kiya: html tag ke liye
         });
         
         closeBtn.addEventListener("click", () => {
             mobileMenu.classList.remove("active");
             document.body.classList.remove("no-scroll");
+            document.documentElement.classList.remove("no-scroll"); // Naya add kiya: html tag ke liye
         });
     }
 

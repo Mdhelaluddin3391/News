@@ -37,8 +37,11 @@ body {
     background-color: var(--light);
 }
 
+html.no-scroll,
 body.no-scroll {
-    overflow: hidden;
+    overflow: hidden !important;
+    height: 100vh !important;
+    touch-action: none; /* Touch devices par extra protection ke liye */
 }
 
 /* ==================== Typography & Layout Containers ==================== */

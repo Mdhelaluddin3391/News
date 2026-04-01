@@ -69,6 +69,8 @@ class Article(BaseModel):
     
     # External sources (e.g. BBC News, TechCrunch)
     source_name = models.CharField(max_length=100, blank=True, null=True)
+    source_url = models.URLField(max_length=500, blank=True, null=True, help_text="Original article link")
+    is_imported = models.BooleanField(default=False, help_text="Flag to identify auto-imported articles")
     
     description = models.TextField(help_text="Short excerpt for homepage")
     # content = models.TextField(help_text="Full article content")
@@ -94,6 +96,8 @@ class Article(BaseModel):
     post_to_telegram = models.BooleanField(default=False, help_text="Tick karein Telegram channel par post karne ke liye")
     newsletter_sent = models.BooleanField(default=False, help_text="Tick ho jayega jab subscribers ko email bhej diya jayega")
     push_sent = models.BooleanField(default=False, help_text="Tick ho jayega jab push notification bhej diya jayega")
+
+
 
     def save(self, *args, **kwargs):
         # 1. Slug banayein

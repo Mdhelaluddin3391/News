@@ -27,8 +27,8 @@ class AuthorAdmin(admin.ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'author', 'status', 'published_at', 'views', 'is_editors_pick', 'is_live')
-    list_filter = ('status', 'category', 'is_featured', 'is_breaking', 'is_editors_pick', 'is_live', 'published_at')
+    list_display = ('title', 'category', 'author', 'status','is_imported', 'published_at', 'views', 'is_editors_pick', 'is_live')
+    list_filter = ('status', 'is_imported', 'category', 'is_featured', 'is_breaking', 'is_editors_pick', 'is_live', 'published_at')
     search_fields = ('title', 'content', 'description', 'author__user__name')
     prepopulated_fields = {'slug': ('title',)}
     filter_horizontal = ('tags',)
@@ -40,10 +40,10 @@ class ArticleAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('📝 Article Content', {
-            'fields': ('title', 'slug', 'category', 'author', 'source_name', 'description', 'content', 'featured_image', 'tags')
+            'fields': ('title', 'slug', 'category', 'author', 'source_name', 'source_url' 'description', 'content', 'featured_image', 'tags')
         }),
         ('⚙️ Settings & Flags', {
-            'fields': ('status', 'published_at', 'views', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'is_top_story', 'is_live', 'is_web_story')
+            'fields': ('status', 'published_at',  'is_imported', 'views', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'is_top_story', 'is_live', 'is_web_story')
         }),
         ('🚀 Social Media Auto-Post', {
             'fields': ('post_to_facebook', 'post_to_twitter', 'post_to_telegram'),

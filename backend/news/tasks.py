@@ -2,12 +2,13 @@ import json
 import os
 from io import BytesIO
 from PIL import Image
-
+import os
+from .importer import fetch_and_import_news
 from celery import shared_task
 from django.conf import settings
 from django.core.files.base import ContentFile
 from pywebpush import webpush, WebPushException
-
+from .importer import fetch_and_import_news
 from interactions.models import PushSubscription
 from .models import Article
 
@@ -119,3 +120,56 @@ def send_push_notifications_task(article_id):
         return f"❌ Article {article_id} not found."
     except Exception as e:
         return f"❌ Push notification error: {str(e)}"
+    
+
+@shared_task
+def run_news_importer_task():
+    """
+    Background task to fetch external news every 30 minutes.
+    Has fallback API logic.
+    """
+    # Try API 1 (e.g. GNews)
+    api_key_1 = os.getenv("GNEWS_API_KEY")
+    url_1 = f"https://gnews.io/api/v4/top-headlines?category=general&lang=en&apikey={api_key_1}"
+    
+    result = fetch_and_import_news(url_1)
+    
+    # API Fallback Logic
+    if "failed" in result:
+        print("Primary API failed. Trying fallback API...")
+        api_key_2 = os.getenv("NEWSDATA_API_KEY")
+        url_2 = f"https://newsdata.io/api/1/news?apikey={api_key_2}&language=en"
+        result = fetch_and_import_news(url_2)
+        
+    return result
+
+
+@shared_task
+def auto_import_news_task():
+    """
+    Background Celery task jo har 30 minute mein chalega.
+    Primary: GNews | Fallback: NewsData.io
+    """
+    gnews_key = os.getenv('GNEWS_API_KEY')
+    newsdata_key = os.getenv('NEWSDATA_API_KEY')
+    
+    # Primary API (GNews)
+    if gnews_key:
+        print("Fetching from GNews...")
+        url = f"https://gnews.io/api/v4/top-headlines?category=general&lang=en&apikey={gnews_key}"
+        result = fetch_and_import_news(url, provider='gnews')
+        
+        # Agar success hua aur koi error nahi aayi, toh yahi ruk jao
+        if "✅" in result:
+            return result
+        else:
+            print("GNews failed or limit reached. Trying NewsData.io...")
+
+    # Fallback API (NewsData.io)
+    if newsdata_key:
+        print("Fetching from NewsData.io...")
+        url = f"https://newsdata.io/api/1/news?apikey={newsdata_key}&language=en&category=top"
+        result = fetch_and_import_news(url, provider='newsdata')
+        return result
+
+    return "❌ No API keys found in .env file."

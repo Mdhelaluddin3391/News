@@ -463,7 +463,7 @@ nav {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 30px;
-    margin: 40px auto;
+    margin: 15px auto 40px auto;
 }
 
 /* ==================== Featured News Section ==================== */
@@ -1399,7 +1399,7 @@ nav {
 
     .main-content {
         gap: 15px;
-        margin: 20px auto;
+        margin: 10px auto;
     }
 
     /* Top Bar & Header Adjustments */

@@ -40,8 +40,9 @@ class ArticleAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('📝 Article Content', {
-            'fields': ('title', 'slug', 'category', 'author', 'source_name', 'source_url' 'description', 'content', 'featured_image', 'tags')
+            'fields': ('title', 'slug', 'category', 'author', 'source_name', 'source_url', 'description', 'content', 'featured_image', 'tags')
         }),
+
         ('⚙️ Settings & Flags', {
             'fields': ('status', 'published_at',  'is_imported', 'views', 'is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'is_top_story', 'is_live', 'is_web_story')
         }),

@@ -122,26 +122,6 @@ def send_push_notifications_task(article_id):
         return f"❌ Push notification error: {str(e)}"
     
 
-@shared_task
-def run_news_importer_task():
-    """
-    Background task to fetch external news every 30 minutes.
-    Has fallback API logic.
-    """
-    # Try API 1 (e.g. GNews)
-    api_key_1 = os.getenv("GNEWS_API_KEY")
-    url_1 = f"https://gnews.io/api/v4/top-headlines?category=general&lang=en&apikey={api_key_1}"
-    
-    result = fetch_and_import_news(url_1)
-    
-    # API Fallback Logic
-    if "failed" in result:
-        print("Primary API failed. Trying fallback API...")
-        api_key_2 = os.getenv("NEWSDATA_API_KEY")
-        url_2 = f"https://newsdata.io/api/1/news?apikey={api_key_2}&language=en"
-        result = fetch_and_import_news(url_2)
-        
-    return result
 
 
 @shared_task

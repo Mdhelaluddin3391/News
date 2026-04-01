@@ -46,13 +46,14 @@ services:
       - db
       - redis
 
-  celery:
+  celery-beat:
     build:
       context: ./backend
       dockerfile: Dockerfile
       args:
         SKIP_COLLECTSTATIC: "true"
-    command: celery -A newshub_core worker --loglevel=info
+    # Yahan hum 'worker' ki jagah 'beat' chala rahe hain
+    command: celery -A newshub_core beat --loglevel=info
     restart: always
     env_file:
       - .env
@@ -63,7 +64,6 @@ services:
       SKIP_COLLECTSTATIC: "true"
     volumes:
       - ./backend:/app
-      - media_volume:/app/media
     depends_on:
       - db
       - redis

@@ -17,18 +17,19 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
 
-  celery:
+  celery-beat:
     build:
       context: ./backend
       dockerfile: Dockerfile
     entrypoint: []
-    command: celery -A newshub_core worker --loglevel=info
+    # Yahan 'worker' ki jagah 'beat' chalega
+    command: celery -A newshub_core beat --loglevel=info
     restart: unless-stopped
     init: true
     env_file:
       - .env
-    volumes:
-      - media_volume:/app/media
+    depends_on:
+      - backend
 
   nginx:
     image: nginx:1.27-alpine

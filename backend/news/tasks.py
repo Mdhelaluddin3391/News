@@ -108,8 +108,9 @@ def send_push_notifications_task(article_id):
                     headers={"urgency": "high"}
                 )
             except WebPushException as ex:
+                response = getattr(ex, 'response', None)
                 # Agar user ne permission revoke kar di hai toh database se delete kar do
-                if ex.response and ex.response.status_code in [404, 410]:
+                if response is not None and response.status_code in [404, 410]:
                     sub.delete()
 
         # Update flag after sending

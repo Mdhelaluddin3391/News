@@ -330,12 +330,42 @@ SENTRY_SEND_DEFAULT_PII = _get_bool_env('SENTRY_SEND_DEFAULT_PII', False)
 
 # TinyMCE Setup
 TINYMCE_DEFAULT_CONFIG = {
-    'height': 500,
-    'width': 'auto',
-    'menubar': 'file edit view insert format tools table help',
-    'plugins': 'advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount',
-    'toolbar': 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
-    'custom_undo_redo_levels': 10,
+    "height": "700px",  # Editor ki height thodi badi kar di
+    "width": "100%",
+    "menubar": "file edit view insert format tools table help",
+    # Saare advanced plugins add kar diye: image, media, table, lists, etc.
+    "plugins": "advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount codesample directionality",
+    
+    # Ye wo buttons hain jo editor ke top bar par dikhenge
+    "toolbar": "undo redo | formatselect | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | blockquote | link image media | forecolor backcolor | removeformat | fullscreen help",
+    
+    # Format options (H1, H2, H3, Blockquote etc.)
+    "block_formats": "Paragraph=p; Header 1=h1; Header 2=h2; Header 3=h3; Header 4=h4; Header 5=h5; Header 6=h6; Blockquote=blockquote",
+    
+    "image_caption": True,
+    "image_advtab": True,
+    
+    # 🎯 YAHAN AAPKA "NEWS QUOTE" WALA MAGIC HAI (Custom CSS inject kar rahe hain editor ke andar)
+    # Taaki admin panel mein likhte waqt hi exactly waisa design dikhe jaisa website par dikhega
+    "content_style": """
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            font-size: 16px; line-height: 1.6; color: #333;
+        }
+        /* 📰 News Style Blockquote (Jaise 'Trump said...' wala left line aur italic text) */
+        blockquote {
+            border-left: 5px solid #d32f2f; /* Red colour ki left line */
+            margin: 1.5em 10px;
+            padding: 0.5em 15px;
+            background-color: #f9f9f9;
+            font-style: italic;
+            font-size: 1.1em;
+            color: #555;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
+        }
+        img { max-width: 100%; height: auto; border-radius: 8px; }
+        h1, h2, h3 { font-weight: bold; color: #111; }
+    """,
 }
 
 REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')

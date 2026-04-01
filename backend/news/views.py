@@ -1,4 +1,3 @@
-from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -14,12 +13,15 @@ from .models import Article, Category, Author
 from .serializers import ArticleSerializer, CategorySerializer, AuthorSerializer
 from users.permissions import IsReporterAuthorOrAbove, IsOwnerOrEditorOrAdmin
 from django_filters import rest_framework as filters
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramSimilarity
+from django.db.models import Q
 
 
 class ArticleFilter(filters.FilterSet):
     # Relational fields ke liye CharFilter define kar rahe hain
     category__slug = filters.CharFilter(field_name='category__slug', lookup_expr='exact')
-    author__user__username = filters.CharFilter(field_name='author__user__username', lookup_expr='exact')
+    # ⚡ FIX 1: 'author__user__username' ko 'author__user__name' me badal diya
+    author__user__name = filters.CharFilter(field_name='author__user__name', lookup_expr='exact')
     tags__slug = filters.CharFilter(field_name='tags__slug', lookup_expr='exact')
 
     class Meta:
@@ -51,7 +53,10 @@ class ArticleViewSet(viewsets.ModelViewSet):
         return super().dispatch(*args, **kwargs)
     
     def get_queryset(self):
-        queryset = Article.objects.select_related('category', 'author__user').prefetch_related('tags').filter(status='published', published_at__isnull=False).order_by('-published_at')
+        queryset = Article.objects.select_related('category', 'author__user') \
+            .prefetch_related('tags') \
+            .filter(status='published', published_at__isnull=False) \
+            .order_by('-published_at')
         
         is_web_story = self.request.query_params.get('is_web_story')
         if is_web_story == 'true':
@@ -59,18 +64,26 @@ class ArticleViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(is_web_story=True, web_story_created_at__gte=time_threshold)
 
         search_term = (self.request.query_params.get('search') or '').strip()
+        
         if search_term:
+            # 1. Advanced Search Vector: A, B, C weights ke sath
             search_vector = (
                 SearchVector('title', weight='A', config='english')
-                + SearchVector('description', weight='B', config='english')
-                + SearchVector('content', weight='C', config='english')
+                + SearchVector('tags__name', weight='A', config='english') 
                 + SearchVector('category__name', weight='B', config='english')
-                + SearchVector('author__user__name', weight='B', config='english')
+                + SearchVector('description', weight='B', config='english')
+                + SearchVector('author__user__name', weight='C', config='english')
+                + SearchVector('content', weight='C', config='english') 
             )
             search_query = SearchQuery(search_term, search_type='websearch', config='english')
+            
+            # 2. Industry Level Query (Bina Trigram ke - No similarity function)
             queryset = (
                 queryset
-                .annotate(search=search_vector, rank=SearchRank(search_vector, search_query))
+                .annotate(
+                    search=search_vector, 
+                    rank=SearchRank(search_vector, search_query)
+                )
                 .filter(search=search_query)
                 .order_by('-rank', '-published_at')
                 .distinct()
@@ -79,7 +92,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
         return queryset
     
     def get_permissions(self):
-        # ⚡ [FIX 2]: Added 'share' here so public users aren't blocked by IsAuthenticated
+        # ⚡ [FIX]: Added 'share' here so public users aren't blocked by IsAuthenticated
         if self.action in ['list', 'retrieve', 'increment_view', 'share']:
             permission_classes = [permissions.AllowAny]
         
@@ -156,8 +169,9 @@ class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
     permission_classes = [permissions.AllowAny]
-    lookup_field = 'user__username' # Map the slug to the OneToOne user's username
-    lookup_url_kwarg = 'slug'       # Bind the URL param 'slug' to user__username
+    # ⚡ FIX 3: 'user__username' ko 'user__name' kar diya kyunki User model mein name hai
+    lookup_field = 'user__name' 
+    lookup_url_kwarg = 'slug'       
     
     # Authors bhi jaldi change nahi hote, isliye 15 minutes cache
     @method_decorator(cache_page(60 * 15))

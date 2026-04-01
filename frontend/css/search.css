@@ -119,3 +119,26 @@
     border-radius: 3px;
     font-weight: bold;
 }
+
+/* ==================== MOBILE SEARCH SUGGESTION FIX ==================== */
+.mobile-menu .search-suggestions .suggestion-item {
+    color: var(--dark) !important; /* Text color ko dark/black karne ke liye */
+    border-top: none; /* Mobile menu a ka default top border hatane ke liye */
+    border-bottom: 1px solid #f1f5f9; /* Standard suggestion border */
+    padding: 12px 15px; /* Standard suggestion padding */
+    background-color: #ffffff; /* Background hamesha white rakhne ke liye */
+}
+
+.mobile-menu .search-suggestions .suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.mobile-menu .search-suggestions .suggestion-item:hover {
+    background: #f8fafc !important; /* Hover pe halka light background */
+    color: var(--primary) !important; /* Hover pe primary (blue/navy) color */
+}
+
+/* Suggestion ke andar ke icon ka color theek karne ke liye */
+.mobile-menu .search-suggestions .suggestion-item i {
+    color: var(--gray) !important;
+}

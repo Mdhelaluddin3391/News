@@ -1,7 +1,7 @@
 // js/search.js
 // ==================== CONFIGURATION ====================
 const SEARCH_API_BASE_URL = `${CONFIG.API_BASE_URL}/news/articles/`;
-const SEARCH_ARTICLES_PER_PAGE = 12; // Isey aap 10 ya 12 bhi kar sakte hain industry standard ke hisaab se
+const SEARCH_ARTICLES_PER_PAGE = 12; 
 
 // ==================== DOM Elements ====================
 const searchHeading = document.getElementById('search-query') || document.getElementById('search-heading') || document.getElementById('search-query-heading');
@@ -40,7 +40,6 @@ function renderSearchArticles(articles, query) {
         return;
     }
 
-    // Advanced Highlighter: Case-insensitive & wraps in mark tag
     const highlightText = (text, searchWord) => {
         if (!searchWord || !text) return text;
         const escapedWord = searchWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -56,10 +55,9 @@ function renderSearchArticles(articles, query) {
         
         const rawTitle = article.title || 'Untitled';
         
-        // Smart Description: Agar content mein match hai, toh wo hissa dikhao
         let rawDescription = article.description || '';
         if(!rawDescription && article.content) {
-             rawDescription = article.content.replace(/<[^>]*>?/gm, '').substring(0, 150); // Fallback to content snippet
+             rawDescription = article.content.replace(/<[^>]*>?/gm, '').substring(0, 150); 
         }
         
         const shortDesc = rawDescription.length > 120 ? rawDescription.substring(0, 120) + '...' : rawDescription;
@@ -77,24 +75,32 @@ function renderSearchArticles(articles, query) {
                 <i class="fa${isSaved ? 's' : 'r'} fa-bookmark"></i> ${isSaved ? 'Saved' : 'Save'}
             </button>` : '';
 
-        // Added Tags Display in Search Results
-        const tagsHtml = (article.tags && article.tags.length > 0) 
-            ? `<div class="search-tags" style="margin-top: 10px; font-size: 0.8rem;">
-                 ${article.tags.slice(0, 3).map(tag => `<span style="background: #f1f1f1; padding: 2px 8px; border-radius: 12px; margin-right: 5px; color: #555;">#${highlightText(tag.name, query)}</span>`).join('')}
-               </div>` 
-            : '';
+        // ✅ SEO FIX: Use clean URL for tags
+        let tagsHtml = '';
+        if (article.tags && article.tags.length > 0) {
+            const tagLinks = article.tags.slice(0, 3).map(tag => 
+                `<a href="/tag/${tag.slug}" style="text-decoration: none; background: #f1f1f1; padding: 2px 8px; border-radius: 12px; margin-right: 5px; color: #555; display: inline-block;">#${highlightText(tag.name, query)}</a>`
+            ).join('');
+            
+            tagsHtml = `<div class="search-tags" style="margin-top: 10px; font-size: 0.8rem;">${tagLinks}</div>`;
+        }
 
+        // ✅ SEO FIX: Clean URLs for articles
         return `
             <div class="article-card" style="display: flex; flex-direction: column; height: 100%;">
-                <img src="${imageUrl}" alt="${rawTitle}" class="article-image ${containClass}" loading="lazy" style="height: 200px; object-fit: cover;">
+                <a href="/article/${article.slug}" style="text-decoration: none; color: inherit;">
+                    <img src="${imageUrl}" alt="${rawTitle}" class="article-image ${containClass}" loading="lazy" style="height: 200px; object-fit: cover;">
+                </a>
                 <div class="article-content" style="flex: 1; display: flex; flex-direction: column;">
                     <span class="article-source" style="font-size: 0.8rem; color: var(--primary); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">${highlightText(source, query)}</span>
-                    <h3 class="article-title" style="margin-bottom: 10px;">${title}</h3>
+                    <h3 class="article-title" style="margin-bottom: 10px;">
+                        <a href="/article/${article.slug}" style="text-decoration: none; color: inherit;">${title}</a>
+                    </h3>
                     <p class="article-description" style="flex: 1;">${description}</p>
                     ${tagsHtml}
                     <div class="article-meta" style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 10px;">
                         <span class="article-date"><i class="far fa-clock"></i> ${date}</span>
-                        <a href="/article.html?slug=${article.slug}" class="read-more" style="font-weight: 600;">Read more →</a>
+                        <a href="/article/${article.slug}" class="read-more" style="font-weight: 600;">Read more →</a>
                     </div>
                 </div>
             </div>
@@ -103,7 +109,6 @@ function renderSearchArticles(articles, query) {
 
     searchArticlesContainer.innerHTML = html;
 
-    // Attach Save Listeners
     if (user) {
         document.querySelectorAll('.save-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -162,11 +167,13 @@ async function fetchSearchResults(query, page = 1) {
         if (searchSubtitle) searchSubtitle.style.display = 'none';
 
         if (typeof updateSEOMetaTags === 'function') {
+            // ✅ SEO FIX: Create clean canonical specifically for search
+            const cleanSearchUrl = `${window.location.origin}/search?q=${encodeURIComponent(query)}`;
             updateSEOMetaTags(
                 `"${query}" - Search Results | Ferox Times`, 
                 `Explore news articles, authors, tags and stories related to "${query}" on Ferox Times.`, 
                 'images/default-news.png', 
-                window.location.href,
+                cleanSearchUrl,
                 `${query} news, search ${query}, Ferox Times results, trending ${query}`
             );
         }
@@ -228,7 +235,17 @@ function updateURL(query, page) {
 
 // ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
+    // ✅ SEO FIX: Support clean URL `/search`
     if (!window.location.pathname.includes('/search')) return; 
+
+    // ✅ PRO SEO FIX: Add 'noindex' to internal search result pages to prevent crawl bloat
+    let robotsMeta = document.querySelector('meta[name="robots"]');
+    if (!robotsMeta) {
+        robotsMeta = document.createElement('meta');
+        robotsMeta.name = "robots";
+        document.head.appendChild(robotsMeta);
+    }
+    robotsMeta.content = "noindex, follow";
 
     const urlParams = new URLSearchParams(window.location.search);
     const query = urlParams.get('q') || urlParams.get('search') || '';

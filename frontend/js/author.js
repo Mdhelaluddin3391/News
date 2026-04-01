@@ -3,8 +3,15 @@
 // NAYA: Variable ka naam change kar diya gaya hai taaki clash na ho
 const AUTHOR_API_URL = `${CONFIG.API_BASE_URL}/news`;
 
-// Get Author ID from URL (e.g., author.html?id=1)
+// Get Author ID from URL (e.g., /author/john-doe or author.html?slug=john-doe)
 function getAuthorSlugFromUrl() {
+    // ✅ SEO FIX: Support reading author from Clean URL path
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    if (pathParts.length >= 2 && pathParts[0] === 'author') {
+        return pathParts[1];
+    }
+    
+    // Fallback to old query param approach
     const params = new URLSearchParams(window.location.search);
     return params.get('slug');
 }
@@ -24,6 +31,9 @@ async function fetchAuthorAndArticles() {
         authorCard.innerHTML = '<p>No author specified. Please select an author from an article.</p>';
         return;
     }
+
+    // ✅ SEO FIX: Build clean URL for meta tags and schema
+    const cleanAuthorUrl = `${window.location.origin}/author/${authorSlug}`;
 
     try {
         // 1. Sabse pehle API se sirf Author ki details fetch karenge
@@ -62,7 +72,7 @@ async function fetchAuthorAndArticles() {
                 `${author.name} - Ferox Times Author`, 
                 seoBio, 
                 avatar, 
-                window.location.href,
+                cleanAuthorUrl, // ✅ SEO FIX: Use clean URL
                 `${author.name}, journalist, author, Ferox Times reporter`
             );
         }
@@ -80,7 +90,7 @@ async function fetchAuthorAndArticles() {
                 },
                 "image": avatar,
                 "description": bio,
-                "url": window.location.href,
+                "url": cleanAuthorUrl, // ✅ SEO FIX: Use clean URL
                 "sameAs": []
             };
 
@@ -92,7 +102,8 @@ async function fetchAuthorAndArticles() {
         // =======================================
 
         // 2. Ab is author ke likhe hue Articles fetch karenge (Filtering with slug)
-        const articlesResponse = await fetch(`${AUTHOR_API_URL}/articles/?author__user__username=${authorSlug}`);
+        // ✅ API FIX: Changed 'author__user__username' to 'author__user__name' to match your Django views.py
+        const articlesResponse = await fetch(`${AUTHOR_API_URL}/articles/?author__user__name=${authorSlug}`);
         const articleData = await articlesResponse.json();
         const articles = articleData.results || articleData;
 
@@ -109,6 +120,7 @@ async function fetchAuthorAndArticles() {
             const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
             const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
             
+            // ✅ SEO FIX: Use clean URL path for articles
             articlesHtml += `
                 <div class="article-card">
                     <img src="${imageUrl}" alt="${article.title}" class="article-image ${containClass}">
@@ -117,7 +129,7 @@ async function fetchAuthorAndArticles() {
                         <p class="article-description">${article.description}</p>
                         <div class="article-meta">
                             <span class="article-date">${date}</span>
-                            <a href="/article.html?slug=${article.slug}" class="read-more">Read more →</a>
+                            <a href="/article/${article.slug}" class="read-more">Read more →</a>
                         </div>
                     </div>
                 </div>

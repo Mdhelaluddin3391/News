@@ -15,20 +15,18 @@ function renderTagArticles(articles) {
 
     const user = getCurrentUser(); 
     const html = articles.map(article => {
-        // NAYA CODE: Global helper function for image URL (Production ready)
         const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         const isSaved = user ? isArticleSaved(article.id) : false;
         const saveBtn = user ? `<button class="save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save'}</button>` : '';
 
-        // --- NAYA TRUNCATION LOGIC ---
         const rawDescription = article.description || '';
         const description = rawDescription.length > 110 
             ? rawDescription.substring(0, 110) + '...' 
             : rawDescription;
-        // -----------------------------
 
+        // ✅ SEO FIX: Use clean URL for article links
         return `
             <div class="article-card">
                 <img src="${imageUrl}" alt="${article.title}" class="article-image ${containClass}">
@@ -38,7 +36,7 @@ function renderTagArticles(articles) {
                     <div class="article-meta">
                         <span class="article-source">${article.source_name || 'Ferox Times'}</span>
                         <span class="article-date">${formatTagDate(article.published_at)}</span>
-                        <a href="/article.html?slug=${article.slug}" class="read-more">Read more →</a>
+                        <a href="/article/${article.slug}" class="read-more">Read more →</a>
                         ${saveBtn}
                     </div>
                 </div>
@@ -48,6 +46,7 @@ function renderTagArticles(articles) {
 
     tagArticlesContainer.innerHTML = html;
 }
+
 // Fetch Logic
 async function fetchTagResults(slug, page = 1) {
     const tagLoader = document.getElementById('loader');
@@ -109,45 +108,54 @@ function setupTagPagination(currentPage, totalItems, slug) {
 
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {
+    // ✅ SEO FIX: Support reading tag from Clean URL path (e.g. /tag/technology)
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
     const urlParams = new URLSearchParams(window.location.search);
-    const tagSlug = urlParams.get('slug');
-    const tagName = urlParams.get('name');
+    
+    let tagSlug = urlParams.get('slug');
+    let tagName = urlParams.get('name');
+    
+    // If no query params, check the path
+    if (!tagSlug && pathParts.length >= 2 && pathParts[0] === 'tag') {
+        tagSlug = pathParts[1];
+        // Create a display-friendly name from the slug if no name is provided
+        tagName = tagName || tagSlug.charAt(0).toUpperCase() + tagSlug.slice(1).replace(/-/g, ' ');
+    }
+
     const tagHeading = document.getElementById('tag-heading');
 
     if (!tagSlug) {
         tagHeading.textContent = "Invalid Tag or No Tag Selected";
         
-        // === NAYA CODE YAHAN ADD KAREIN (Fallback) ===
         if (typeof updateSEOMetaTags === 'function') {
             updateSEOMetaTags(
                 `Tags - Ferox Times`, 
                 `Browse our collection of news articles by topics and tags on Ferox Times.`, 
                 'images/default-news.png', 
-                window.location.href
+                window.location.origin + '/tag/'
             );
         }
-        // =============================================
         return;
     }
 
-    // Display ke liye naam set karein (agar name na mile toh slug use karein)
     const displayTagName = tagName || tagSlug;
 
-    // Title ko update kar diya!
     tagHeading.innerHTML = `
     <i class="fas fa-tags tag-icon"></i> 
     Articles tagged with 
     <span class="highlight-tag">#${displayTagName}</span>
     `;
 
-    // === NAYA CODE YAHAN ADD KAREIN (SEO Update for specific tag) ===
+    // ✅ SEO FIX: Use clean URL for tag specific canonical and meta tags
+    const cleanTagUrl = `${window.location.origin}/tag/${tagSlug}`;
+
     if (typeof updateSEOMetaTags === 'function') {
         updateSEOMetaTags(
             `#${displayTagName} - Tagged Articles | Ferox Times`, 
             `Explore the latest news, updates, and deep-dive articles tagged with #${displayTagName} on Ferox Times.`, 
             '', 
-            window.location.href,
-            `${displayTagName} news, latest ${displayTagName} updates, #${displayTagName}` // <-- NAYA: Keywords
+            cleanTagUrl,
+            `${displayTagName} news, latest ${displayTagName} updates, #${displayTagName}` 
         );
     }
 

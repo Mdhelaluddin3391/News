@@ -3,6 +3,7 @@
 
 const HOMEPAGE_API_URL = `${CONFIG.API_BASE_URL}/news`;
 
+
 // ==================== Lazy Load Categories State ====================
 let allCategoriesList = [];
 let currentCategoryIndex = 0;
@@ -14,7 +15,6 @@ function renderFeatured(article) {
     const container = document.getElementById('featured-news-container');
     if (!container || !article) return;
     const timeAgo = formatTimeAgo(article.published_at);
-    // NAYA CODE: Global helper function for image URL
     const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
     const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
     const categoryName = article.category ? article.category.name : 'World';
@@ -34,9 +34,10 @@ function renderFeatured(article) {
             </div>
         </div>
     `;
-    // Add click event to open article
+    
+    // ✅ SEO FIX: Use clean URL path
     container.addEventListener('click', () => {
-        window.location.href = `/article.html?slug=${article.slug}`;
+        window.location.href = `/article/${article.slug}`;
     });
 }
 
@@ -69,7 +70,8 @@ function renderTrending(trending) {
     container.querySelectorAll('.trending-news-item').forEach(item => {
         item.addEventListener('click', () => {
             const slug = item.dataset.slug || item.dataset.id;
-            window.location.href = `/article.html?slug=${slug}`;
+            // ✅ SEO FIX: Use clean URL path
+            window.location.href = `/article/${slug}`;
         });
     });
 }
@@ -80,8 +82,9 @@ function renderCategories(categories) {
 
     let html = '';
     categories.forEach(cat => {
+        // ✅ SEO FIX: Use clean URL path for categories
         html += `
-            <li><a href="/index.html?category=${cat.slug}">${cat.name}</a></li>
+            <li><a href="/category/${cat.slug}">${cat.name}</a></li>
         `;
     });
     container.innerHTML = html;
@@ -92,10 +95,10 @@ function renderBreakingTicker(articles) {
     if (!container) return;
 
     if (articles && articles.length > 0) {
-        // Har article ke liye ek clickable link banayein
+        // ✅ SEO FIX: Use clean URL path for breaking news
         const html = articles.map(article => 
-            `<a href="/article.html?slug=${article.slug}" class="breaking-link">${article.title}</a>`
-        ).join(' &nbsp;&bull;&nbsp; '); // Beech mein ek dot (•) laga rahe hain
+            `<a href="/article/${article.slug}" class="breaking-link">${article.title}</a>`
+        ).join(' &nbsp;&bull;&nbsp; '); 
         
         container.innerHTML = html;
     } else {
@@ -115,12 +118,12 @@ function renderEditorsPicks(picks) {
 
     let html = '';
     picks.forEach(item => {
-        // NAYA CODE: Global helper function for image URL
         const imageUrl = window.getFullImageUrl(item.featured_image, 'images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
+        // ✅ SEO FIX: Use clean URL path for onclick
         html += `
-            <div class="side-post" onclick="window.location.href='/article.html?slug=${item.slug}'" style="margin-bottom: 15px; cursor: pointer;">
+            <div class="side-post" onclick="window.location.href='/article/${item.slug}'" style="margin-bottom: 15px; cursor: pointer;">
                 <img src="${imageUrl}" alt="${item.title}" class="${containClass}" loading="lazy">
                 <div class="side-post-content">
                     <h4 style="font-size: 0.95rem;">${item.title}</h4>
@@ -133,8 +136,6 @@ function renderEditorsPicks(picks) {
 }
 
 // ==================== GLOBAL SIDEBAR LOADING FUNCTIONS ====================
-// Inhein 'window' par isliye rakha hai taaki script.js har page par inhein call kar sake
-
 window.loadEditorsPicks = async function() {
     try {
         const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_editors_pick=true`);
@@ -204,11 +205,12 @@ async function loadNextCategories(count = 1) {
 
             let sideHtml = sideArticles.map(a => {
                 const sideLiveBadge = a.is_live ? `<div class="live-badge-card" style="padding: 2px 5px; font-size: 0.6rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
-                // NAYA CODE: Global helper function for image URL
                 const sideImageUrl = window.getFullImageUrl(a.featured_image, 'images/default-news.png');
                 const sideContainClass = sideImageUrl.includes('default-news.png') ? 'img-contain' : '';
+                
+                // ✅ SEO FIX: Clean URL for side-post
                 return `
-                <div class="side-post" onclick="window.location.href='/article.html?slug=${a.slug}'" style="position: relative;">
+                <div class="side-post" onclick="window.location.href='/article/${a.slug}'" style="position: relative;">
                     ${sideLiveBadge}
                     <img src="${sideImageUrl}" alt="${a.title}" class="${sideContainClass}" loading="lazy">
                     
@@ -222,20 +224,20 @@ async function loadNextCategories(count = 1) {
 
 
             const mainLiveBadge = mainArticle.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
-            // NAYA CODE: Global helper function for image URL
             const mainImageUrl = window.getFullImageUrl(mainArticle.featured_image, 'images/default-news.png');
             const containClass = mainImageUrl.includes('default-news.png') ? 'img-contain' : '';
 
+            // ✅ SEO FIX: Clean URL for category link and main post
             html += `
                 <div class="category-block">
                     <h2 class="category-heading" style="margin-top: 1rem; margin-bottom: 1.5rem; font-size: 1.8rem;">
-                        <a href="/index.html?category=${cat.slug}" style="text-decoration:none; color:inherit; display:flex; justify-content:space-between; align-items:center;">
+                        <a href="/category/${cat.slug}" style="text-decoration:none; color:inherit; display:flex; justify-content:space-between; align-items:center;">
                             ${cat.name} 
                             <span style="font-size:0.9rem; color:var(--primary); font-family:'Roboto', sans-serif;">View All →</span>
                         </a>
                     </h2>
                     <div class="category-grid">
-                        <div class="main-post" onclick="window.location.href='/article.html?slug=${mainArticle.slug}'">
+                        <div class="main-post" onclick="window.location.href='/article/${mainArticle.slug}'">
                             ${mainLiveBadge}
                             <img src="${mainImageUrl}" alt="${mainArticle.title}" class="${containClass}">
                             <div class="main-post-content">
@@ -280,57 +282,53 @@ function setupScrollObserver() {
 async function initHomepage() {
     try {
         const urlParams = new URLSearchParams(window.location.search);
-        const currentCategory = urlParams.get('category') || 'general';
+        
+        // Handle new URL pattern or fallback to query param
+        let currentCategory = urlParams.get('category');
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        if (!currentCategory && pathParts.length >= 2 && pathParts[0] === 'category') {
+            currentCategory = pathParts[1];
+        }
+        currentCategory = currentCategory || 'general';
 
-        // Sidebar data ab hamare global functions se load hoga (Clean code)
-        // window.loadTopStories()
         window.loadEditorsPicks();
         window.loadTrendingNews();
         window.loadCategoriesSidebar();
         window.loadWebStories();
 
-        // NAYA: 4th API call 'recentRes' add kiya gaya hai latest articles ke liye
         const [featuredRes, breakingRes, categoriesRes, recentRes] = await Promise.all([
             fetch(`${HOMEPAGE_API_URL}/articles/?is_featured=true`),
             fetch(`${HOMEPAGE_API_URL}/articles/?is_breaking=true`),
             fetch(`${HOMEPAGE_API_URL}/categories/`),
-            fetch(`${HOMEPAGE_API_URL}/articles/`) // Default list returns the latest articles
+            fetch(`${HOMEPAGE_API_URL}/articles/`) 
         ]);
 
         const featuredData = await featuredRes.json();
         const breakingData = await breakingRes.json();
         const categoriesData = await categoriesRes.json();
-        const recentData = await recentRes.json(); // NAYA: Recent news data
+        const recentData = await recentRes.json(); 
         
         const categoriesList = categoriesData.results || categoriesData;
 
-        // Render Top Featured
         if (featuredData.results && featuredData.results.length > 0) {
-            // 1. Pehle check karo ki featured list mein koi aisi news hai kya jo LIVE bhi ho?
             const liveFeaturedArticle = featuredData.results.find(article => article.is_live === true);
             
             if (liveFeaturedArticle) {
-                // Agar LIVE + FEATURED news mili, toh usko sabse top priority do
                 renderFeatured(liveFeaturedArticle);
             } else {
-                // Agar koi LIVE news nahi hai, toh bas normal sabse latest featured news dikha do
                 renderFeatured(featuredData.results[0]);
             }
         }
 
-        // Render Breaking News Ticker
         const breakingArticles = breakingData.results || breakingData;
         renderBreakingTicker(breakingArticles);
 
-        // === NAYA CODE: Render 5 Recent News ===
         if (recentData.results) {
             renderRecentNews(recentData.results.slice(0, 5));
         } else if (Array.isArray(recentData)) {
             renderRecentNews(recentData.slice(0, 5));
         }
-        // =======================================
 
-        // Render Category Blocks (Lazy Loading Setup)
         if (currentCategory === 'general') {
             allCategoriesList = categoriesList;
             currentCategoryIndex = 0;
@@ -341,18 +339,16 @@ async function initHomepage() {
                 setupScrollObserver();
             }
             
-            // Homepage SEO Update
             if (typeof updateSEOMetaTags === 'function') {
                 updateSEOMetaTags(
                     'Ferox Times - Premium Global News', 
                     'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on Ferox Times.', 
                     'images/default-news.png', 
                     window.location.href,
-                    "global news, breaking news, latest updates, world news, Ferox Times" // <-- NAYA: Keywords add kiye
+                    "global news, breaking news, latest updates, world news, Ferox Times"
                 );
             }
 
-            // === NAYA CODE: HOMEPAGE SCHEMA MARKUP ===
             if (typeof injectSchema === 'function') {
                 const homepageSchema = {
                     "@context": "https://schema.org",
@@ -360,18 +356,19 @@ async function initHomepage() {
                         {
                             "@type": "WebSite",
                             "name": "Ferox Times",
-                            "url": "https://www.feroxtimes.com/", // Apna actual domain use karein
+                            "url": window.location.origin, 
                             "potentialAction": {
                                 "@type": "SearchAction",
-                                "target": "https://www.feroxtimes.com/search?q={search_term_string}",
+                                // ✅ SEO FIX: Point SearchAction to the clean URL structure
+                                "target": `${window.location.origin}/search?q={search_term_string}`,
                                 "query-input": "required name=search_term_string"
                             }
                         },
                         {
                             "@type": "Organization",
                             "name": "Ferox Times",
-                            "url": "https://www.feroxtimes.com/",
-                            "logo": "https://www.feroxtimes.com/images/logo.png", // Apne logo ka sahi URL daalein
+                            "url": window.location.origin,
+                            "logo": `${window.location.origin}/images/logo.png`, 
                             "sameAs": [
                                 "https://www.facebook.com/feroxtimes",
                                 "https://twitter.com/feroxtimes"
@@ -381,9 +378,7 @@ async function initHomepage() {
                 };
                 injectSchema(homepageSchema);
             }
-            // ===========================================
             
-            // Custom Push Notification Prompt
             setTimeout(() => {
                 showCustomPushPrompt();
             }, 4000); 
@@ -396,16 +391,10 @@ async function initHomepage() {
 
 // ==================== Custom Push Notification Prompt ====================
 function showCustomPushPrompt() {
-    // 1. Agar browser support nahi karta, toh wapas jao
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-    
-    // 2. Agar permission pehle se Granted ya Denied hai, toh popup mat dikhao
     if (Notification.permission !== 'default') return;
-
-    // 3. Agar user ne pehle "Maybe Later" click kiya tha, toh usko pareshaan mat karo
     if (localStorage.getItem('push_prompt_dismissed') === 'true') return;
 
-    // 4. Custom HTML Popup Banayein (Jo bottom-left corner me smoothly aayega)
     const promptDiv = document.createElement('div');
     promptDiv.id = 'custom-push-prompt';
     promptDiv.innerHTML = `
@@ -438,11 +427,9 @@ function showCustomPushPrompt() {
     
     document.body.appendChild(promptDiv);
 
-    // 5. Jab user "Allow Alerts" par click kare
     document.getElementById('push-allow-btn').addEventListener('click', () => {
-        promptDiv.remove(); // Custom UI hatao
+        promptDiv.remove(); 
         
-        // Ab actual browser ka notification prompt trigger hoga jo push-notifications.js mein hai
         if (typeof subscribeToPush === 'function') {
             subscribeToPush(); 
         } else {
@@ -450,10 +437,8 @@ function showCustomPushPrompt() {
         }
     });
 
-    // 6. Jab user "Maybe Later" par click kare
     document.getElementById('push-dismiss-btn').addEventListener('click', () => {
-        promptDiv.remove(); // Custom UI hatao
-        // Local storage mein save kar lo taaki baar-baar user ko pareshaan na karein
+        promptDiv.remove(); 
         localStorage.setItem('push_prompt_dismissed', 'true'); 
     });
 }
@@ -496,9 +481,6 @@ if (newsletterForm) {
     });
 }
 
-
-
-
 // ==================== NAYA CODE: Render Recent News ====================
 function renderRecentNews(articles) {
     const section = document.getElementById('recent-news-section');
@@ -515,13 +497,13 @@ function renderRecentNews(articles) {
 
     articles.forEach(article => {
         const timeAgo = formatTimeAgo(article.published_at);
-        // NAYA CODE: Global helper function for image URL
         const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         const liveBadge = article.is_live ? `<div class="live-badge-card" style="padding: 2px 4px; font-size: 0.65rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
 
+        // ✅ SEO FIX: Use clean URL for recent news
         html += `
-            <div class="recent-news-card" onclick="window.location.href='/article.html?slug=${article.slug}'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
+            <div class="recent-news-card" onclick="window.location.href='/article/${article.slug}'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
                 ${liveBadge}
                 <img src="${imageUrl}" alt="${article.title}" class="${containClass}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);" loading="lazy">
                 <div style="padding: 12px 10px;">
@@ -534,7 +516,6 @@ function renderRecentNews(articles) {
 
     container.innerHTML = html;
     
-    // Hover effect dynamically add karne ke liye
     const cards = container.querySelectorAll('.recent-news-card');
     cards.forEach(card => {
         card.addEventListener('mouseenter', () => {
@@ -547,8 +528,6 @@ function renderRecentNews(articles) {
         });
     });
 }
-// =========================================================================
-
 
 // ==================== NAYA CODE: Render Top Stories ====================
 function renderTopStories(stories) {
@@ -565,7 +544,6 @@ function renderTopStories(stories) {
         const number = (index + 1).toString().padStart(2, '0');
         const categoryName = item.category ? item.category.name : 'News';
 
-        // Isko Trending jaisa ek sundar numbered list format diya hai
         html += `
             <div class="trending-news-item" data-slug="${item.slug}" style="cursor: pointer;">
                 <div class="trending-number" style="color: var(--primary); font-size: 1.8rem;">${number}</div>
@@ -578,16 +556,15 @@ function renderTopStories(stories) {
     });
     container.innerHTML = html;
 
-    // Click event add karne ke liye
     container.querySelectorAll('.trending-news-item').forEach(item => {
         item.addEventListener('click', () => {
             const slug = item.dataset.slug || item.dataset.id;
-            window.location.href = `/article.html?slug=${slug}`;
+            // ✅ SEO FIX: Use clean URL for top stories
+            window.location.href = `/article/${slug}`;
         });
     });
 }
 
-// Global fetch function for Top Stories
 window.loadTopStories = async function() {
     try {
         const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_top_story=true`);
@@ -598,24 +575,19 @@ window.loadTopStories = async function() {
     }
 };
 
-
-
-
 // ==================== DYNAMIC WEB STORIES (SHORTS) ====================
 
 let dynamicStories = [];
 let currentStoryIndex = 0;
 let storyTimer;
-const STORY_DURATION = 5000; // 5 seconds per story
+const STORY_DURATION = 5000; 
 
-// 1. Backend se Web Stories Fetch karna
 window.loadWebStories = async function() {
     try {
         const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_web_story=true`);
         const data = await res.json();
         dynamicStories = data.results || data;
 
-        // Agar koi story nahi hai toh section hide kar do
         const storySection = document.querySelector('.web-stories-section');
         if (dynamicStories.length === 0) {
             if (storySection) storySection.style.display = 'none';
@@ -630,14 +602,12 @@ window.loadWebStories = async function() {
     }
 };
 
-// 2. Thumbnails Render karna
 function renderStoryThumbnails() {
     const container = document.getElementById('story-thumbnails-container');
     if (!container) return;
 
     let html = '';
     dynamicStories.forEach((story, index) => {
-        // Production ready image URL
         const imageUrl = window.getFullImageUrl(story.featured_image, 'images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
@@ -655,7 +625,6 @@ function renderStoryThumbnails() {
     container.innerHTML = html;
 }
 
-// 3. Modal Open karna
 function openStoryModal(index) {
     currentStoryIndex = index;
     document.getElementById('story-modal').style.display = 'flex';
@@ -663,7 +632,6 @@ function openStoryModal(index) {
     showStory();
 }
 
-// 4. Modal Close karna
 function closeStoryModal() {
     document.getElementById('story-modal').style.display = 'none';
     document.body.classList.remove('no-scroll');
@@ -672,7 +640,6 @@ function closeStoryModal() {
     document.getElementById('story-progress-bar').style.width = '0%';
 }
 
-// 5. Story Show karna
 function showStory() {
     if (dynamicStories.length === 0) return;
     
@@ -685,17 +652,17 @@ function showStory() {
     const categoryName = story.category ? story.category.name : 'News';
     const shortDesc = story.description ? (story.description.length > 100 ? story.description.substring(0, 100) + '...' : story.description) : '';
     
+    // ✅ SEO FIX: Use clean URL for "Read More" button
     display.innerHTML = `
         <img src="${imageUrl}" alt="Story" class="${containClass}">
         <div class="story-text-container">
             <span class="story-badge">${categoryName}</span>
             <h2 class="story-modal-title">${story.title}</h2>
             <p class="story-modal-desc">${shortDesc}</p>
-            <a href="/article.html?slug=${story.slug}" class="story-read-more">Swipe up or Click to Read More</a>
+            <a href="/article/${story.slug}" class="story-read-more">Swipe up or Click to Read More</a>
         </div>
     `;
 
-    // Progress Bar Animation Reset & Start
     progressBar.style.transition = 'none';
     progressBar.style.width = '0%';
     
@@ -710,7 +677,6 @@ function showStory() {
     }, STORY_DURATION);
 }
 
-// 6. Navigation
 function nextStory() {
     if (currentStoryIndex < dynamicStories.length - 1) {
         currentStoryIndex++;
@@ -725,19 +691,16 @@ function prevStory() {
         currentStoryIndex--;
         showStory();
     } else {
-        showStory(); // Restart same story
+        showStory(); 
     }
 }
 
-// Setup Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('close-story-btn');
     if (closeBtn) {
         closeBtn.addEventListener('click', closeStoryModal);
     }
 });
-
-
 
 // ==================== GLOBAL BREAKING NEWS FUNCTION ====================
 window.loadBreakingNews = async function() {

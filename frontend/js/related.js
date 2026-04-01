@@ -64,9 +64,10 @@ async function renderRelated(containerId, categorySlug, currentArticleId) {
         const timeAgo = getRelatedTimeAgo(a.published_at);
         const liveBadge = a.is_live ? `<div class="related-live-badge"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
         
+        // ✅ SEO FIX: Use clean URL for related articles
         html += `
             <div class="related-card">
-                <a href="/article.html?slug=${a.slug}">
+                <a href="/article/${a.slug}">
                     ${liveBadge}
                     <img src="${imageUrl}" alt="${a.title}" class="${containClass}" loading="lazy">
                     <div class="related-content">

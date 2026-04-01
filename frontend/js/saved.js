@@ -31,6 +31,7 @@ function renderSavedArticles(articles) {
         const date = article.published_at ? formatSavedDate(article.published_at) : 'Unknown date';
         const articleId = article.id || '';
 
+        // ✅ SEO FIX: Use clean URL for the read-more link
         return `
             <div class="article-card">
                 <img src="${imageUrl}" alt="${title}" class="article-image ${containClass}" loading="lazy">
@@ -40,7 +41,7 @@ function renderSavedArticles(articles) {
                     <div class="article-meta">
                         <span class="article-source">${source}</span>
                         <span class="article-date">${date}</span>
-                        <a href="/article.html?slug=${article.slug}" class="read-more">Read more →</a>
+                        <a href="/article/${article.slug}" class="read-more">Read more →</a>
                         <button class="save-btn saved" data-id="${articleId}">Saved</button>
                     </div>
                 </div>
@@ -95,9 +96,19 @@ async function fetchSavedArticlesData() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // ✅ PRO SEO FIX: Add 'noindex' to private user pages so Google ignores them
+    let robotsMeta = document.querySelector('meta[name="robots"]');
+    if (!robotsMeta) {
+        robotsMeta = document.createElement('meta');
+        robotsMeta.name = "robots";
+        document.head.appendChild(robotsMeta);
+    }
+    robotsMeta.content = "noindex, nofollow";
+
     const user = getCurrentUser();
     if (!user) {
-        window.location.href="/login.html?redirect=/saved.html";
+        // ✅ ROUTING FIX: Use clean URL for redirecting unauthenticated users
+        window.location.href = "/login?redirect=/saved";
         return;
     }
     fetchSavedArticlesData();

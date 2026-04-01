@@ -101,12 +101,14 @@ function renderArticle(article) {
         seoKeywords = article.tags.map(t => t.name).join(', ');
 
         article.tags.forEach(tag => {
-            tagsHTML += `<a href="/tag.html?slug=${tag.slug}&name=${encodeURIComponent(tag.name)}" class="tag-pill">#${tag.name}</a>`;
+            // ✅ SEO FIX: Use clean URL for tags instead of /tag.html?slug=
+            tagsHTML += `<a href="/tag/${tag.slug}" class="tag-pill">#${tag.name}</a>`;
         });
         tagsHTML += '</div>';
     }
 
-    const cleanPageUrl = `${window.location.origin}${window.location.pathname}?slug=${article.slug}`;
+    // ✅ SEO FIX: Build clean canonical URL
+    const cleanPageUrl = `${window.location.origin}/article/${article.slug}`;
 
     if (typeof updateSEOMetaTags === 'function') {
         const seoDescription = description.length > 150 ? description.substring(0, 150) + '...' : description;
@@ -115,6 +117,9 @@ function renderArticle(article) {
 
     if (typeof injectSchema === 'function') {
         const authorName = article.author ? article.author.name : 'Ferox Times Staff';
+        const authorSlug = article.author?.username || article.author?.slug;
+        // ✅ SEO FIX: Use clean URL for author schema
+        const authorUrl = authorSlug ? `${window.location.origin}/author/${authorSlug}` : window.location.origin;
 
         const articleSchema = {
             "@type": "NewsArticle",
@@ -129,8 +134,7 @@ function renderArticle(article) {
             "author": {
                 "@type": "Person",
                 "name": authorName,
-                // FIX: Safely check for username or fallback to slug, and use .html
-                "url": article.author ? `${window.location.origin}/author.html?slug=${article.author?.username || article.author?.slug}` : window.location.origin
+                "url": authorUrl
             },
             "publisher": {
                 "@type": "Organization",
@@ -150,13 +154,13 @@ function renderArticle(article) {
                     "@type": "ListItem",
                     "position": 1,
                     "name": "Home",
-                    "item": `${window.location.origin}/index.html`
+                    "item": `${window.location.origin}/`
                 },
                 {
                     "@type": "ListItem",
                     "position": 2,
                     "name": categoryName,
-                    "item": `${window.location.origin}/index.html?category=${categorySlug}`
+                    "item": `${window.location.origin}/category/${categorySlug}`
                 },
                 {
                     "@type": "ListItem",
@@ -255,7 +259,7 @@ function renderArticle(article) {
             ${commentsHTML}
             
             <div class="detail-actions">
-                <a href="/index.html" class="back-link">← Back to Home</a>
+                <a href="/" class="back-link">← Back to Home</a>
                 ${saveButton}
             </div>
         </div>
@@ -348,7 +352,7 @@ function initLiveUpdates(articleId) {
 }
 
 function fallbackToPolling(articleId) {
-    if (useFallbackPolling) return; // Ek baar fallback shuru ho gaya toh dobara na karein
+    if (useFallbackPolling) return; 
     useFallbackPolling = true;
 
     const indicator = document.querySelector('.auto-refresh-indicator');
@@ -356,7 +360,6 @@ function fallbackToPolling(articleId) {
         indicator.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Connection weak. Auto-refreshing...';
     }
 
-    // Aapka original polling function yahan call hoga
     startLivePolling(articleId);
 }
 
@@ -364,7 +367,6 @@ function appendNewUpdateToTimeline(update) {
     const timelineContainer = document.getElementById('timeline-container');
     if (!timelineContainer) return;
 
-    // Remove empty message if exists
     const emptyMsg = timelineContainer.querySelector('p');
     if (emptyMsg && emptyMsg.textContent.includes('No live updates')) {
         emptyMsg.remove();
@@ -382,17 +384,14 @@ function appendNewUpdateToTimeline(update) {
         </div>
     `;
 
-    // Sabse upar naya update daalein
     timelineContainer.insertAdjacentHTML('afterbegin', newHTML);
 
-    // Smooth Animation
     const newItem = timelineContainer.firstElementChild;
     setTimeout(() => {
         newItem.style.opacity = '1';
         newItem.style.transform = 'translateY(0)';
         newItem.style.transition = 'all 0.5s ease';
 
-        // Highlight color dheere-dheere hatayein
         setTimeout(() => {
             const content = newItem.querySelector('.timeline-content');
             if (content) content.style.backgroundColor = '#f8fafc';
@@ -406,31 +405,26 @@ function appendNewUpdateToTimeline(update) {
 function startLivePolling(articleId) {
     liveRefreshInterval = setInterval(async () => {
         try {
-            // NAYA: '?_t=' + timestamp lagane se backend ka cache bypass ho jayega aur fresh data aayega
             const response = await fetch(`${ARTICLE_DETAIL_API_URL}/${articleId}/?_t=${new Date().getTime()}`);
             if (response.ok) {
                 const article = await response.json();
                 const timelineContainer = document.getElementById('timeline-container');
 
                 if (timelineContainer && article.live_updates && article.live_updates.length > 0) {
-                    // Check karein ki latest update ki ID kya hai
                     const currentLatestId = article.live_updates[0].id;
 
-                    // Agar naya update aaya hai, sirf tabhi HTML change karo
                     if (currentLatestId !== latestUpdateId) {
-                        latestUpdateId = currentLatestId; // ID update kar lo
+                        latestUpdateId = currentLatestId;
 
-                        // Pura HTML update karein
                         timelineContainer.innerHTML = generateTimelineHTML(article.live_updates);
 
-                        // Naye update par ek chota sa smooth highlight effect daalein taaki user ko pata chale
                         const firstItemContent = timelineContainer.querySelector('.timeline-content');
                         if (firstItemContent) {
                             firstItemContent.style.transition = 'background-color 1s ease';
-                            firstItemContent.style.backgroundColor = '#fecdd3'; // Soft red highlight
+                            firstItemContent.style.backgroundColor = '#fecdd3'; 
 
                             setTimeout(() => {
-                                firstItemContent.style.backgroundColor = '#f8fafc'; // Wapas normal color
+                                firstItemContent.style.backgroundColor = '#f8fafc'; 
                             }, 2000);
                         }
                     }
@@ -439,12 +433,10 @@ function startLivePolling(articleId) {
         } catch (error) {
             console.error('Auto-refresh failed:', error);
         }
-    }, 15000); // 30s se kam karke 15 seconds kar diya hai taaki live coverage tez ho
+    }, 15000); 
 }
 
-// Jab user kisi aur page par jaye, toh interval aur socket dono band kar dein
 window.addEventListener('beforeunload', () => {
-    // 1. Polling interval clear karein
     if (liveRefreshInterval) clearInterval(liveRefreshInterval);
 
     if (typeof liveSocket !== 'undefined' && liveSocket && liveSocket.readyState === WebSocket.OPEN) {
@@ -485,6 +477,15 @@ async function fetchArticle(articleId) {
 
 // ==================== Get ID from URL ====================
 function getArticleSlugFromUrl() {
+    // ✅ SEO FIX: Support clean URLs (e.g. /article/why-ai-is-growing)
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    
+    // Check if path is like /article/{slug}
+    if (pathParts.length >= 2 && pathParts[0] === 'article') {
+        return pathParts[1];
+    }
+    
+    // Fallback to old query param approach (?slug=xyz or ?id=xyz) just in case
     const params = new URLSearchParams(window.location.search);
     return params.get('slug') || params.get('id');
 }
@@ -509,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function incrementArticleView(articleId) {
     const viewedKey = `viewed_article_${articleId}`;
     if (sessionStorage.getItem(viewedKey)) {
-        return; // Agar pehle hi count ho gaya is session me, toh wapas laut jao
+        return; 
     }
 
     try {

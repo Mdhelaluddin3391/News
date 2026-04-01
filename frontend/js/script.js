@@ -3,7 +3,7 @@
 // Real Django API Endpoint
 const NEWS_API_URL = `${window.APP_CONFIG.API_BASE_URL}/news`;
 const DEFAULT_CATEGORY = 'general';
-const ARTICLES_PER_PAGE = 6;
+const ARTICLES_PER_PAGE = 12;
 
 // ==================== DOM Elements ====================
 const categoryHeading = document.getElementById('category-heading');
@@ -75,10 +75,8 @@ async function normalizeApiPayload(payload) {
 
 // ==================== Rendering ====================
 function renderArticles(articles) {
-    // FIX: Check karein ki articles sach mein ek array hai ya nahi
     if (!articles || !Array.isArray(articles) || articles.length === 0) {
         if (articlesContainer) {
-            // 'grid-column: 1 / -1' isliye takki ye message center mein aaye
             articlesContainer.innerHTML = '<p style="text-align: center; color: var(--gray); grid-column: 1 / -1; padding: 2rem;">No articles found in this category.</p>';
         }
         return;
@@ -86,7 +84,6 @@ function renderArticles(articles) {
 
     const user = getCurrentUser(); // from auth.js
     const html = articles.map(article => {
-        // NAYA CODE: Yahan global helper use kiya gaya hai production-ready image URL ke liye
         const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
@@ -95,9 +92,7 @@ function renderArticles(articles) {
         const source = article.source_name || 'Ferox Times';
         const date = article.published_at ? formatDate(article.published_at) : 'Unknown date';
         
-        // FIX: Extract slug first, fallback to id
         const articleSlug = article.slug || article.id || ''; 
-        // Note: data-id mein .id hi rakh rahe hain kyunki backend save/bookmark feature id par depend karta hai
         const articleId = article.id || '';
         
         const isSaved = user ? isArticleSaved(articleId) : false;
@@ -117,7 +112,7 @@ function renderArticles(articles) {
                     <div class="article-meta">
                         <span class="article-source">${source}</span>
                         <span class="article-date">${date}</span>
-                        <a href="/article.html?slug=${articleSlug}" class="read-more">Read more →</a>
+                        <a href="/article/${articleSlug}" class="read-more">Read more →</a>
                         ${saveButton}
                     </div>
                 </div>
@@ -127,13 +122,11 @@ function renderArticles(articles) {
 
     articlesContainer.innerHTML = html;
 
-    // Attach event listeners to save buttons if user logged in
     if (user) {
         document.querySelectorAll('.save-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 const articleId = btn.dataset.id;
-                // Find full article from rendered list
                 const article = articles.find(a => a.id == articleId);
                 if (!article) return;
 
@@ -162,7 +155,6 @@ async function fetchNews(category = DEFAULT_CATEGORY, page = 1) {
     try {
         const cleanCategory = category.toLowerCase();
         
-        // NAYA CODE: Use standard fetch with NEWS_API_URL to match homepage.js exactly
         const response = await fetch(`${NEWS_API_URL}/articles/?category__slug=${encodeURIComponent(cleanCategory)}&page=${encodeURIComponent(page)}`);
         
         if (!response.ok) {
@@ -223,19 +215,15 @@ function updatePagination(currentPage, totalItems, category) {
     prevBtn.disabled = currentPage <= 1;
     nextBtn.disabled = currentPage >= totalPages;
 
-    // Remove old listeners and add new ones
     prevBtn.replaceWith(prevBtn.cloneNode(true));
     nextBtn.replaceWith(nextBtn.cloneNode(true));
 
     document.getElementById('prev-page').addEventListener('click', () => {
         if (currentPage > 1) {
             fetchNews(category, currentPage - 1);
-            // Update URL without reload
             const url = new URL(window.location);
             url.searchParams.set('page', currentPage - 1);
             window.history.pushState({}, '', url);
-            
-            // Scroll top
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
     });
@@ -246,8 +234,6 @@ function updatePagination(currentPage, totalItems, category) {
             const url = new URL(window.location);
             url.searchParams.set('page', currentPage + 1);
             window.history.pushState({}, '', url);
-            
-            // Scroll top
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
     });
@@ -274,11 +260,9 @@ if(categoryButtons) {
             setActiveCategory(category);
             fetchNews(category, 1);
             
-            // Update URL: remove page param, set category
-            const url = new URL(window.location);
-            url.searchParams.set('category', category);
-            url.searchParams.delete('page');
-            window.history.pushState({}, '', url);
+            // ✅ SEO FIX: Use clean URL for pushState (e.g. /category/sports)
+            const newPath = category === 'general' ? '/' : `/category/${category}`;
+            window.history.pushState({}, '', newPath);
         });
     });
 }
@@ -288,46 +272,49 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if(articlesContainer) {
         const urlParams = new URLSearchParams(window.location.search);
-        const category = urlParams.get('category') || DEFAULT_CATEGORY;
+        
+        // ✅ SEO FIX: Support reading category from Clean URL path (/category/sports)
+        let category = urlParams.get('category');
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        if (!category && pathParts.length >= 2 && pathParts[0] === 'category') {
+            category = pathParts[1];
+        }
+        category = category || DEFAULT_CATEGORY;
+        
         const page = parseInt(urlParams.get('page')) || 1;
         
         setActiveCategory(category);
 
-        // --- GLOBAL SIDEBAR DATA (Har page ke liye) ---
-        // Yeh functions homepage.js mein hain, inhein yahan bahar call karein
         if (typeof loadTopStories === 'function') loadTopStories();
         if (typeof loadEditorsPicks === 'function') loadEditorsPicks();
         if (typeof loadTrendingNews === 'function') loadTrendingNews();
         if (typeof loadCategoriesSidebar === 'function') loadCategoriesSidebar();
         if (typeof loadBreakingNews === 'function') loadBreakingNews();
-        // ----------------------------------------------
 
         const paginationContainer = document.getElementById('pagination');
         const featuredSection = document.querySelector('.featured-news'); 
-        const webStoriesSection = document.querySelector('.web-stories-section'); // <-- NAYA
-        const recentNewsSection = document.getElementById('recent-news-section'); // <-- NAYA
+        const webStoriesSection = document.querySelector('.web-stories-section'); 
+        const recentNewsSection = document.getElementById('recent-news-section'); 
         
         if (category === 'general' && homeContainer) {
-            // Homepage logic
             articlesContainer.style.display = 'none';
             if(paginationContainer) paginationContainer.style.display = 'none';
             if(categoryHeading) categoryHeading.style.display = 'none';
             if(homeContainer) homeContainer.style.display = 'block';
             if(featuredSection) featuredSection.style.display = 'block'; 
-            if(webStoriesSection) webStoriesSection.style.display = 'block'; // <-- NAYA
+            if(webStoriesSection) webStoriesSection.style.display = 'block'; 
             
             if (typeof initHomepage === 'function') {
                 initHomepage();
             }
         } else { 
-            // Category Page logic
             articlesContainer.style.display = 'grid'; 
             if(paginationContainer) paginationContainer.style.display = 'flex';
             if(categoryHeading) categoryHeading.style.display = 'block';
             if(homeContainer) homeContainer.style.display = 'none';
             if(featuredSection) featuredSection.style.display = 'none'; 
-            if(webStoriesSection) webStoriesSection.style.display = 'none'; // <-- NAYA (Hide on category)
-            if(recentNewsSection) recentNewsSection.style.display = 'none'; // <-- NAYA (Hide on category)
+            if(webStoriesSection) webStoriesSection.style.display = 'none'; 
+            if(recentNewsSection) recentNewsSection.style.display = 'none'; 
             
             fetchNews(category, page);
         }
@@ -336,7 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ==================== TOAST NOTIFICATION SYSTEM ====================
 function showToast(message, type = 'success') {
-    // Check agar container pehle se hai, nahi toh banao
     let container = document.getElementById('toast-container');
     if (!container) {
         container = document.createElement('div');
@@ -344,37 +330,28 @@ function showToast(message, type = 'success') {
         document.body.appendChild(container);
     }
 
-    // Naya toast element banao
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
-    // Icon set karein type ke hisaab se
     let icon = 'fa-info-circle';
     if (type === 'success') icon = 'fa-check-circle';
     if (type === 'error') icon = 'fa-exclamation-circle';
 
-    // FIX: icon aur toast-icon ke beech space diya gaya hai
     toast.innerHTML = `<i class="fas ${icon} toast-icon" style="font-size: 1.2rem;"></i> <span>${message}</span>`;
     container.appendChild(toast);
 
-    // Slide In animation
     setTimeout(() => toast.classList.add('show'), 10);
 
-    // 3 second baad Slide Out aur remove kar do
     setTimeout(() => {
         toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 400); // Animation khatam hone ka wait
+        setTimeout(() => toast.remove(), 400);
     }, 3000);
 }
 
-
-
-/// ==================== SEO META TAGS & CANONICAL UPDATER ====================
+// ==================== SEO META TAGS & CANONICAL UPDATER ====================
 function updateSEOMetaTags(title, description, imageUrl, pageUrl, keywords = "") {
-    // 1. Page ka Title update karein
     document.title = title ? `${title} - Ferox Times` : 'Ferox Times - Premium News';
 
-    // Helper function: Agar tag pehle se hai toh update karein, nahi toh naya banayein
     function setMetaTag(attrName, attrValue, content) {
         if (!content) return; 
         let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
@@ -386,13 +363,11 @@ function updateSEOMetaTags(title, description, imageUrl, pageUrl, keywords = "")
         element.setAttribute('content', content);
     }
 
-    // 2. Standard SEO Description & Keywords
     setMetaTag('name', 'description', description);
     if (keywords) {
         setMetaTag('name', 'keywords', keywords);
     }
 
-    // 3. Open Graph Tags
     setMetaTag('property', 'og:title', title);
     setMetaTag('property', 'og:description', description);
     setMetaTag('property', 'og:image', imageUrl);
@@ -400,24 +375,20 @@ function updateSEOMetaTags(title, description, imageUrl, pageUrl, keywords = "")
     setMetaTag('property', 'og:type', 'article');
     setMetaTag('property', 'og:site_name', 'Ferox Times');
 
-    // 4. Twitter Card Tags
     setMetaTag('name', 'twitter:card', 'summary_large_image');
     setMetaTag('name', 'twitter:title', title);
     setMetaTag('name', 'twitter:description', description);
     setMetaTag('name', 'twitter:image', imageUrl);
 
-    // 5. Canonical URL Handle (Taaki duplicate content ki penalty na lage)
     let canonicalTag = document.querySelector('link[rel="canonical"]');
     if (!canonicalTag) {
         canonicalTag = document.createElement('link');
         canonicalTag.setAttribute('rel', 'canonical');
         document.head.appendChild(canonicalTag);
     }
-    // URL se extra parameters ya hash hata kar clean canonical link set karein
     const cleanUrl = pageUrl.split('#')[0]; 
     canonicalTag.setAttribute('href', cleanUrl);
 }
-
 
 // ==================== SCHEMA MARKUP (JSON-LD) INJECTOR ====================
 function injectSchema(schemaData) {
@@ -430,7 +401,6 @@ function injectSchema(schemaData) {
     script.type = 'application/ld+json';
     script.id = 'dynamic-schema';
     
-    // Agar array of schemas (jaise Article + Breadcrumb) pass kiya gaya hai, toh @graph banayenge
     if (Array.isArray(schemaData)) {
         const graphSchema = {
             "@context": "https://schema.org",

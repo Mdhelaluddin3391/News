@@ -19,7 +19,11 @@ from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
 from django_filters import rest_framework as filters
+from rest_framework.throttling import AnonRateThrottle
 
+
+class ArticleViewThrottle(AnonRateThrottle):
+    rate = '10/day'
 
 class ArticleFilter(filters.FilterSet):
     # Relational fields ke liye CharFilter define kar rahe hain
@@ -165,55 +169,48 @@ class ArticleViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user.author_profile)
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.AllowAny])
+    @action(detail=True, methods=['post'], permission_classes=[permissions.AllowAny], throttle_classes=[ArticleViewThrottle])
     def increment_view(self, request, slug=None):
         article = self.get_object()
+        # Optimize DB write by only updating the views field
         article.views += 1
         article.save(update_fields=['views'])
         return Response({'message': 'View count updated', 'views': article.views})
     
+
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
-    def share(self, request, slug=None): # Swapped pk for slug
+    def share(self, request, slug=None):
         article = self.get_object()
         
-        # Frontend ka actual URL jahan user ko redirect karna hai (Added .html)
-        frontend_url = f"{settings.FRONTEND_URL}/article.html?slug={article.slug}"
+        # ✅ SEO FIX: Use clean URL structure instead of ?slug=
+        frontend_url = f"{settings.FRONTEND_URL}/article/{article.slug}"
         
-        # Article ki Image (Agar nahi hai toh default lagayein)
-        if article.featured_image:
-            image_url = request.build_absolute_uri(article.featured_image.url)
-        else:
-            image_url = ""
-        
-        # Safe Text
+        image_url = request.build_absolute_uri(article.featured_image.url) if article.featured_image else f"{settings.FRONTEND_URL}/images/default-news.png"
         safe_title = escape(article.title)
         safe_desc = escape(article.description[:200]) if article.description else ""
 
-        # Facebook, WhatsApp aur Twitter ko jo HTML format samajh aata hai
+        # ✅ SEO FIX: Added canonical tag to the meta HTML
         html_content = f"""
         <!DOCTYPE html>
         <html lang="en">
         <head>
             <meta charset="UTF-8">
             <title>{safe_title} - Ferox Times</title>
-            
+            <link rel="canonical" href="{frontend_url}" />
             <meta property="og:type" content="article">
             <meta property="og:title" content="{safe_title}">
             <meta property="og:description" content="{safe_desc}">
             <meta property="og:image" content="{image_url}">
             <meta property="og:url" content="{frontend_url}">
             <meta property="og:site_name" content="Ferox Times">
-            
             <meta name="twitter:card" content="summary_large_image">
             <meta name="twitter:title" content="{safe_title}">
             <meta name="twitter:description" content="{safe_desc}">
             <meta name="twitter:image" content="{image_url}">
-            
             <meta http-equiv="refresh" content="0; url={frontend_url}">
-            <script>window.location.href = "{frontend_url}";</script>
         </head>
         <body>
-            <p>Redirecting to article... <a href="{frontend_url}">Click here</a> if not redirected automatically.</p>
+            <p>Redirecting to article... <a href="{frontend_url}">Click here</a>.</p>
         </body>
         </html>
         """

@@ -1,3 +1,4 @@
+// js/auth.js
 const AUTH_STORAGE_KEY = 'feroxTimes_currentUser';
 const BOOKMARKS_KEY = 'feroxTimes_bookmarks';
 const API_BASE_URL_AUTH = CONFIG.API_BASE_URL;
@@ -359,7 +360,8 @@ async function handleGoogleLogin(response) {
         await syncBookmarks();
 
         const urlParams = new URLSearchParams(window.location.search);
-        const redirect = urlParams.get('redirect') || '/index.html';
+        // ✅ SEO FIX: Redirect to clean URL root instead of index.html
+        const redirect = urlParams.get('redirect') || '/';
         window.location.href = redirect;
     } catch (error) {
         reportAuthError(error, { action: 'googleLogin' });

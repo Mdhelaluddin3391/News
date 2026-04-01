@@ -39,11 +39,13 @@ async function fetchAndRenderAuthors() {
             const twitterHtml = author.twitter_url ? `<a href="${author.twitter_url}" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>` : '';
             const linkedinHtml = author.linkedin_url ? `<a href="${author.linkedin_url}" target="_blank" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>` : '';
 
-            // Author Card HTML (Fixed explicit .html routing and trailing quote typo)
+            // ✅ SEO FIX: Added clean URL routing and an actual <a> tag so search engine bots can crawl to the author profile
             html += `
-                <div class="author-card" onclick="window.location.href='/author.html?slug=${author.slug}'">
+                <div class="author-card" onclick="window.location.href='/author/${author.slug}'" style="cursor: pointer;">
                     <img src="${avatarUrl}" alt="${author.name}" class="author-card-avatar ${avatarContainClass}" loading="lazy">
-                    <h3 class="author-card-name">${author.name}</h3>
+                    <h3 class="author-card-name">
+                        <a href="/author/${author.slug}" style="text-decoration: none; color: inherit;">${author.name}</a>
+                    </h3>
                     <div class="author-card-role">${role}</div>
                     <div class="author-card-social" onclick="event.stopPropagation();">
                         ${twitterHtml}

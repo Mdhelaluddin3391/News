@@ -15,14 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (result.success) {
             const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || '/index.html';
+            // ✅ ROUTING FIX: Default redirect to clean root path instead of /index.html
+            const redirect = urlParams.get('redirect') || '/';
             window.location.href = redirect;
         } else {
             if (result.needsVerification) {
                 errorDiv.textContent = result.message;
                 errorDiv.style.display = 'block';
                 setTimeout(() => {
-                    window.location.href="/index.html";
+                    // ✅ ROUTING FIX: Redirect to the actual verification page using clean URL
+                    window.location.href = "/verify-email";
                 }, 2000);
             } else {
                 errorDiv.textContent = result.message;

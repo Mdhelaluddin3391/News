@@ -11,6 +11,30 @@ from pywebpush import webpush, WebPushException
 from .importer import fetch_and_import_news
 from interactions.models import PushSubscription
 from .models import Article
+from datetime import timedelta
+from django.utils import timezone
+
+
+@shared_task
+def cleanup_expired_flags_task():
+    """
+    Industry Standard: Breaking news kuch ghanto baad expire ho jati hai.
+    Ye task har ghante (hourly) Celery Beat ke through chalana hai.
+    Taki Admin dashboard me bhi purane breaking news tick na dikhein.
+    """
+    now = timezone.now()
+    
+    # 1. Breaking News Cleanup (Older than 12 hours)
+    breaking_threshold = now - timedelta(hours=12)
+    expired_breaking = Article.objects.filter(is_breaking=True, published_at__lt=breaking_threshold)
+    count_breaking = expired_breaking.update(is_breaking=False)
+
+    # 2. Web Story Cleanup (Older than 24 hours)
+    story_threshold = now - timedelta(hours=24)
+    expired_stories = Article.objects.filter(is_web_story=True, web_story_created_at__lt=story_threshold)
+    count_stories = expired_stories.update(is_web_story=False, web_story_created_at=None)
+
+    return f"Cleanup Done: {count_breaking} Breaking expired, {count_stories} Web Stories expired."
 
 @shared_task
 def process_article_image(article_id):

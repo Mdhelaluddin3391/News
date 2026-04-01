@@ -15,6 +15,10 @@ from users.permissions import IsReporterAuthorOrAbove, IsOwnerOrEditorOrAdmin
 from django_filters import rest_framework as filters
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramSimilarity
 from django.db.models import Q
+from django.db.models import Q
+from django.utils import timezone
+from datetime import timedelta
+from django_filters import rest_framework as filters
 
 
 class ArticleFilter(filters.FilterSet):
@@ -23,11 +27,59 @@ class ArticleFilter(filters.FilterSet):
     # ⚡ FIX 1: 'author__user__username' ko 'author__user__name' me badal diya
     author__user__name = filters.CharFilter(field_name='author__user__name', lookup_expr='exact')
     tags__slug = filters.CharFilter(field_name='tags__slug', lookup_expr='exact')
+    is_breaking = filters.BooleanFilter(method='filter_breaking')
+    is_trending = filters.BooleanFilter(method='filter_trending')
+    is_featured = filters.BooleanFilter(method='filter_featured')
+    is_top_story = filters.BooleanFilter(method='filter_top_story')
+    is_web_story = filters.BooleanFilter(method='filter_web_story')
 
     class Meta:
         model = Article
-        # Yahan sirf model ki direct fields aayengi
-        fields = ['is_featured', 'is_trending', 'is_breaking', 'is_editors_pick', 'is_top_story', 'is_web_story']
+        # is_editors_pick purely manual hai isliye ise fields me rakha hai
+        fields = ['is_editors_pick', 'is_live']
+
+    def filter_breaking(self, queryset, name, value):
+        if value:
+            # Sirf pichle 12 ghante ki breaking news hi dikhegi
+            time_threshold = timezone.now() - timedelta(hours=12)
+            return queryset.filter(is_breaking=True, published_at__gte=time_threshold)
+        return queryset
+
+    def filter_trending(self, queryset, name, value):
+        if value:
+            # Trending = (Admin manual tick) YA (Pichle 3 din me 50+ views aaye ho)
+            time_threshold = timezone.now() - timedelta(days=3)
+            return queryset.filter(
+                Q(is_trending=True) | 
+                Q(published_at__gte=time_threshold, views__gte=50)
+            )
+        return queryset
+
+    def filter_featured(self, queryset, name, value):
+        if value:
+            # Featured = (Admin manual tick) YA (Pichle 2 din ki sabse latest news)
+            time_threshold = timezone.now() - timedelta(days=2)
+            return queryset.filter(
+                Q(is_featured=True) | 
+                Q(published_at__gte=time_threshold)
+            )
+        return queryset
+
+    def filter_top_story(self, queryset, name, value):
+        if value:
+            # Top Story = (Admin manual tick) YA (Pichle 7 din me 100+ views ho)
+            time_threshold = timezone.now() - timedelta(days=7)
+            return queryset.filter(
+                Q(is_top_story=True) |
+                Q(published_at__gte=time_threshold, views__gte=100)
+            )
+        return queryset
+
+    def filter_web_story(self, queryset, name, value):
+        if value:
+            time_threshold = timezone.now() - timedelta(hours=24)
+            return queryset.filter(is_web_story=True, web_story_created_at__gte=time_threshold)
+        return queryset
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """Frontend par categories dikhane ke liye (ReadOnly)"""
@@ -55,18 +107,21 @@ class ArticleViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Article.objects.select_related('category', 'author__user') \
             .prefetch_related('tags') \
-            .filter(status='published', published_at__isnull=False) \
-            .order_by('-published_at')
-        
-        is_web_story = self.request.query_params.get('is_web_story')
-        if is_web_story == 'true':
-            time_threshold = timezone.now() - timedelta(hours=24)
-            queryset = queryset.filter(is_web_story=True, web_story_created_at__gte=time_threshold)
+            .filter(status='published', published_at__isnull=False)
 
+        # Default Sorting (Latest pehle)
+        ordering = ['-published_at']
+
+        # Agar koi Trending ya Top Story filter kar raha hai, toh naturally usey Views ke hisab se SORT bhi karna chahiye
+        is_trending = self.request.query_params.get('is_trending') == 'true'
+        is_top_story = self.request.query_params.get('is_top_story') == 'true'
+        if is_trending or is_top_story:
+            ordering = ['-views', '-published_at']
+
+        # Search Logic (Isme koi chedd-chaad nahi ki hai)
         search_term = (self.request.query_params.get('search') or '').strip()
         
         if search_term:
-            # 1. Advanced Search Vector: A, B, C weights ke sath
             search_vector = (
                 SearchVector('title', weight='A', config='english')
                 + SearchVector('tags__name', weight='A', config='english') 
@@ -77,8 +132,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
             )
             search_query = SearchQuery(search_term, search_type='websearch', config='english')
             
-            # 2. Industry Level Query (Bina Trigram ke - No similarity function)
-            queryset = (
+            return (
                 queryset
                 .annotate(
                     search=search_vector, 
@@ -89,7 +143,8 @@ class ArticleViewSet(viewsets.ModelViewSet):
                 .distinct()
             )
             
-        return queryset
+        # Final queryset ko properly order karke bhej rahe hain
+        return queryset.order_by(*ordering)
     
     def get_permissions(self):
         # ⚡ [FIX]: Added 'share' here so public users aren't blocked by IsAuthenticated

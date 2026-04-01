@@ -5,7 +5,8 @@
     margin: 0 auto;
     background: var(--card-bg);
     border-radius: 16px;
-    box-shadow: var(--shadow);
+    box-shadow: none; /* Ye line change karein - Shadow hata di */
+    border: none; /* Agar border nahi chahiye toh ise add karein */
     overflow: hidden;
 }
 
@@ -17,7 +18,7 @@
 }
 
 .detail-content {
-    padding: 2.5rem;
+    padding: 1rem 2.5rem 2.5rem 2.5rem;
 }
 
 .detail-title {
@@ -631,13 +632,20 @@
 }
 
 @media (max-width: 768px) {
+    .article-detail {
+        border-radius: 0; /* Gol corners hata diye */
+        border: none;
+        margin-left: -12px; /* Container ki left space ko cover karega */
+        margin-right: -12px; /* Container ki right space ko cover karega */
+    }
     .detail-content {
-        padding: 1.2rem; /* Mobile par padding kam ki hai taaki image aur text fit rahe */
+        padding: 1rem 15px; /* Mobile ke liye padding aur theek kar di */
     }
     .detail-title {
-        font-size: 1.6rem; /* Title thoda mobile-friendly banaya */
+        font-size: 1.6rem; 
+        margin-top: 0; /* Title ke upar ka space hata diya */
     }
     .detail-meta {
-        gap: 1rem; /* Spacing adjust ki */
+        gap: 1rem; 
     }
 }

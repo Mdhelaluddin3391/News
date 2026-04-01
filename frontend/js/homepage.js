@@ -23,7 +23,7 @@ function renderFeatured(article) {
 
     container.innerHTML = `
         ${liveBadgeHTML}
-        <img src="${imageUrl}" alt="${article.title}" class="featured-image ${containClass}">
+        <img src="${imageUrl}" alt="${article.title}" class="featured-image ${containClass}" loading="lazy">
         <div class="featured-overlay">
             <span class="featured-category">${categoryName.toUpperCase()}</span>
             <h2 class="featured-title">${article.title}</h2>
@@ -121,7 +121,7 @@ function renderEditorsPicks(picks) {
         
         html += `
             <div class="side-post" onclick="window.location.href='/article.html?slug=${item.slug}'" style="margin-bottom: 15px; cursor: pointer;">
-                <img src="${imageUrl}" alt="${item.title}" class="${containClass}">
+                <img src="${imageUrl}" alt="${item.title}" class="${containClass}" loading="lazy">
                 <div class="side-post-content">
                     <h4 style="font-size: 0.95rem;">${item.title}</h4>
                     <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(item.published_at)}</span>
@@ -210,7 +210,8 @@ async function loadNextCategories(count = 1) {
                 return `
                 <div class="side-post" onclick="window.location.href='/article.html?slug=${a.slug}'" style="position: relative;">
                     ${sideLiveBadge}
-                    <img src="${sideImageUrl}" alt="${a.title}" class="${sideContainClass}">
+                    <img src="${sideImageUrl}" alt="${a.title}" class="${sideContainClass}" loading="lazy">
+                    
                     <div class="side-post-content">
                         <h4>${a.title}</h4>
                         <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(a.published_at)}</span>
@@ -522,7 +523,7 @@ function renderRecentNews(articles) {
         html += `
             <div class="recent-news-card" onclick="window.location.href='/article.html?slug=${article.slug}'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
                 ${liveBadge}
-                <img src="${imageUrl}" alt="${article.title}" class="${containClass}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);">
+                <img src="${imageUrl}" alt="${article.title}" class="${containClass}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);" loading="lazy">
                 <div style="padding: 12px 10px;">
                     <h4 style="font-size: 0.85rem; margin-bottom: 8px; line-height: 1.4; color: var(--dark); font-family: 'Roboto', sans-serif; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${article.title}</h4>
                     <span style="font-size: 0.75rem; color: var(--secondary); font-weight: 600;"><i class="far fa-clock"></i> ${timeAgo}</span>
@@ -643,7 +644,7 @@ function renderStoryThumbnails() {
         html += `
             <div class="story-thumb" onclick="openStoryModal(${index})">
                 <div class="story-thumb-inner">
-                    <img src="${imageUrl}" alt="${story.title}" class="${containClass}">
+                    <img src="${imageUrl}" alt="${story.title}" class="${containClass}" loading="lazy">
                     <div class="story-thumb-overlay">
                         <div class="story-thumb-title">${story.title}</div>
                     </div>

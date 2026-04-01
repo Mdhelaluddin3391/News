@@ -1,6 +1,6 @@
 // js/tag.js
 const TAG_API_URL = `${CONFIG.API_BASE_URL}/news/articles/`;
-const TAGS_PER_PAGE = 6; // Naam change kar diya taaki script.js se clash na ho
+const TAGS_PER_PAGE = 12; // Naam change kar diya taaki script.js se clash na ho
 
 function formatTagDate(isoString) {
     return new Date(isoString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });

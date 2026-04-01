@@ -1,7 +1,7 @@
 // js/search.js
 // ==================== CONFIGURATION ====================
 const SEARCH_API_BASE_URL = `${CONFIG.API_BASE_URL}/news/articles/`;
-const SEARCH_ARTICLES_PER_PAGE = 6; // Isey aap 10 ya 12 bhi kar sakte hain industry standard ke hisaab se
+const SEARCH_ARTICLES_PER_PAGE = 12; // Isey aap 10 ya 12 bhi kar sakte hain industry standard ke hisaab se
 
 // ==================== DOM Elements ====================
 const searchHeading = document.getElementById('search-query') || document.getElementById('search-heading') || document.getElementById('search-query-heading');

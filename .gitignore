@@ -27,3 +27,4 @@ build/
 *.swn
 .env
 
+backend/celerybeat-schedule

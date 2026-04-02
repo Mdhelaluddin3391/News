@@ -7,7 +7,7 @@ if (typeof API_BASE_URL === 'undefined') {
     const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || isFileProtocol;
     window.API_BASE_URL = isDevelopment 
         ? 'http://localhost:8000/api'
-        : `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}/api`;
+        : 'https://feroxtimes.com/api';
 }
 
 const CONFIG = {

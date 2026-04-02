@@ -413,3 +413,10 @@ function injectSchema(schemaData) {
     
     document.head.appendChild(script);
 }
+
+function injectSchema(schemaData) {
+    const script = document.createElement('script');
+    script.type = "application/ld+json";
+    script.text = JSON.stringify(schemaData);
+    document.head.appendChild(script);
+}

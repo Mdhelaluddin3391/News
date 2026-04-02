@@ -244,7 +244,7 @@ function renderArticle(article) {
             </div>
         </div>
         
-        <img src="${imageUrl}" alt="${title}" class="detail-image ${containClass}">
+        <img src="${imageUrl}" alt="${title} - Ferox Times" class="detail-image ${containClass}" fetchpriority="high" loading="eager" width="800" height="450">
         
         <div class="detail-content" style="padding-top: 2rem;">
             ${description ? `<p class="detail-description">${description}</p>` : ''}

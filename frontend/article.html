@@ -25,34 +25,7 @@
             const path = window.location.pathname;
             document.getElementById('canonical-url').setAttribute('href', 'https://www.feroxtimes.com' + path);
         });
-
-        // Function to inject Schema.org JSON-LD (Call this inside article.js after fetching article data)
-        function injectArticleSchema(article) {
-            const schema = {
-                "@context": "https://schema.org",
-                "@type": "NewsArticle",
-                "headline": article.title,
-                "image": [article.imageUrl],
-                "datePublished": article.publishDate,
-                "dateModified": article.updatedDate || article.publishDate,
-                "author": [{
-                    "@type": "Person",
-                    "name": article.authorName
-                }],
-                "publisher": {
-                    "@type": "Organization",
-                    "name": "Ferox Times",
-                    "logo": {
-                        "@type": "ImageObject",
-                        "url": "https://www.feroxtimes.com/images/default-news.png"
-                    }
-                }
-            };
-            const script = document.createElement('script');
-            script.type = "application/ld+json";
-            script.text = JSON.stringify(schema);
-            document.head.appendChild(script);
-        }
+        // REMOVED the injectArticleSchema function from here
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">

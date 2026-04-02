@@ -13,7 +13,8 @@ class ArticleSitemap(Sitemap):
         return obj.updated_at
 
     def location(self, obj):
-        return f"{settings.FRONTEND_URL}/article?slug={obj.slug}"
+        # FIX: Clean URL for articles
+        return f"/article/{obj.slug}"
 
 class CategorySitemap(Sitemap):
     changefreq = "daily"
@@ -23,7 +24,8 @@ class CategorySitemap(Sitemap):
         return Category.objects.all()
 
     def location(self, obj):
-        return f"{settings.FRONTEND_URL}/?category={obj.slug}"
+        # FIX: Clean URL for categories
+        return f"/category/{obj.slug}"
 
 class AuthorSitemap(Sitemap):
     changefreq = "weekly"
@@ -33,7 +35,9 @@ class AuthorSitemap(Sitemap):
         return Author.objects.all()
 
     def location(self, obj):
-        return f"{settings.FRONTEND_URL}/author?slug={obj.user.username if hasattr(obj.user, 'username') else obj.id}"
+        # FIX: Clean URL for authors
+        slug = obj.user.username if hasattr(obj.user, 'username') else obj.id
+        return f"/author/{slug}"
 
 class TagSitemap(Sitemap):
     changefreq = "daily"
@@ -43,14 +47,16 @@ class TagSitemap(Sitemap):
         return Tag.objects.all()
 
     def location(self, obj):
-        return f"{settings.FRONTEND_URL}/tag.html?slug={obj.slug}&name={obj.name}"
+        # FIX: Clean URL for tags (Removed .html and query params)
+        return f"/tag/{obj.slug}"
 
 class StaticViewSitemap(Sitemap):
     changefreq = "monthly"
     priority = 0.5
 
     def items(self):
-        return ['about.html', 'contact.html', 'careers.html', 'advertise.html', 'authors.html']
+        # FIX: Removed .html extensions for static views
+        return ['about', 'contact', 'careers', 'advertise', 'authors']
 
     def location(self, item):
-        return f"{settings.FRONTEND_URL}/{item}"
+        return f"/{item}"

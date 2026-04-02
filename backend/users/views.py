@@ -66,7 +66,7 @@ def clear_auth_cookies(response):
 
 
 def build_verification_link(user):
-    return f"{settings.FRONTEND_URL}/verify-email.html?token={user.email_verification_token}"
+    return f"{settings.FRONTEND_URL}/verify-email?token={user.email_verification_token}"
 
 
 def send_verification_email(user, regenerate_token=False):
@@ -284,7 +284,7 @@ class ForgotPasswordView(APIView):
                 "type": "reset_password",
             }
             token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
-            reset_link = f"{settings.FRONTEND_URL}/reset-password.html?token={token}"
+            reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
 
             html_content = f"""
             <!DOCTYPE html>

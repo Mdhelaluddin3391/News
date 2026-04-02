@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -6,6 +7,11 @@ from .models import Advertisement, AdvertiseOption, AdvertisePage
 
 
 class AdvertisePageAPITests(APITestCase):
+    def setUp(self):
+        cache.clear()
+        AdvertisePage.objects.all().delete()
+        AdvertiseOption.objects.all().delete()
+
     def test_returns_defaults_when_no_admin_content_exists(self):
         response = self.client.get(reverse("advertise-page"))
 
@@ -14,7 +20,7 @@ class AdvertisePageAPITests(APITestCase):
         self.assertGreaterEqual(len(response.data["options"]), 3)
 
     def test_returns_admin_managed_page_content(self):
-        page = AdvertisePage.objects.first()
+        page, _ = AdvertisePage.objects.get_or_create()
         page.hero_title = "Advertise On Our Network"
         page.hero_description = "Reach decision makers."
         page.slots_section_title = "Current Opportunities"
@@ -91,3 +97,17 @@ class ActiveAdsAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["sidebar"]["google_ad_code"], "<div>mobile</div>")
+
+
+class HealthCheckApiTests(APITestCase):
+    def test_basic_health_endpoint(self):
+        response = self.client.get(reverse("health_check"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "ok")
+
+    def test_database_health_endpoint(self):
+        response = self.client.get(reverse("health_check_db"))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["database"], "available")

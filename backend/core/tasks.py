@@ -1,9 +1,21 @@
+import logging
+
 from celery import shared_task
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 
-@shared_task
-def send_async_email(subject, message, recipient_list, html_message=None):
+logger = logging.getLogger('newshub.tasks')
+
+
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=300,
+    retry_jitter=True,
+    retry_kwargs={'max_retries': 5},
+)
+def send_async_email(self, subject, message, recipient_list, html_message=None):
     """
     Yeh Celery task Redis ki queue mein jayega aur background mein safely email bhejega.
     Sare emails BCC me jayenge taaki privacy bani rahe.
@@ -30,7 +42,9 @@ def send_async_email(subject, message, recipient_list, html_message=None):
                 
             email.send(fail_silently=False)
             total_sent += len(batch)
-            
-        return f"✅ Email sent successfully to {total_sent} recipients via BCC in batches."
-    except Exception as e:
-        return f"❌ Email sending error: {str(e)}"
+
+        logger.info("Email task delivered %s messages", total_sent)
+        return f"Email sent successfully to {total_sent} recipients via BCC in batches."
+    except Exception:
+        logger.exception("Email task failed for %s recipients", len(recipient_list))
+        raise

@@ -1,11 +1,12 @@
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_headers
+from django.conf import settings
+from django.core.cache import cache
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from .cache_keys import ACTIVE_JOBS_CACHE_KEY, ADVERTISE_PAGE_CACHE_KEY, SITE_SETTINGS_CACHE_KEY, active_ads_cache_key
 from .models import Advertisement, AdvertiseOption, AdvertisePage, ContactMessage, JobPosting, SiteSetting
 from .serializers import (
     AdvertisementSerializer,
@@ -128,21 +129,25 @@ class ContactMessageCreateView(generics.CreateAPIView):
     queryset = ContactMessage.objects.all()
     serializer_class = ContactMessageSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "contact_form"
 
 
 class ActiveAdsAPIView(APIView):
     permission_classes = [AllowAny]
 
-    @method_decorator(vary_on_headers("User-Agent"))
-    @method_decorator(cache_page(60 * 10))
     def get(self, request):
         slots = ["header", "sidebar", "in_article"]
         ads_data = {}
-        is_mobile_request = _is_mobile_request(request)
+        is_mobile = _is_mobile_request(request)
+        cache_key = active_ads_cache_key(is_mobile)
+        cached_payload = cache.get(cache_key)
+        if cached_payload is not None:
+            return Response(cached_payload)
 
         for slot in slots:
             slot_ads = Advertisement.objects.filter(slot=slot, is_active=True)
-            if is_mobile_request:
+            if is_mobile:
                 slot_ads = slot_ads.order_by("-is_mobile_only", "-priority", "-created_at")
             else:
                 slot_ads = slot_ads.filter(is_mobile_only=False).order_by("-priority", "-created_at")
@@ -151,29 +156,51 @@ class ActiveAdsAPIView(APIView):
             if ad:
                 ads_data[slot] = AdvertisementSerializer(ad, context={"request": request}).data
 
+        cache.set(cache_key, ads_data, settings.PUBLIC_API_CACHE_TTL)
         return Response(ads_data)
 
 
 class AdvertisePageAPIView(APIView):
     permission_classes = [AllowAny]
 
-    @method_decorator(cache_page(60 * 10))
     def get(self, _request):
-        return Response(_build_advertise_page_payload())
+        cached_payload = cache.get(ADVERTISE_PAGE_CACHE_KEY)
+        if cached_payload is not None:
+            return Response(cached_payload)
+
+        payload = _build_advertise_page_payload()
+        cache.set(ADVERTISE_PAGE_CACHE_KEY, payload, settings.PUBLIC_API_CACHE_TTL)
+        return Response(payload)
 
 
 class SiteSettingAPIView(APIView):
     permission_classes = [AllowAny]
 
-    @method_decorator(cache_page(60 * 60))
-    def get(self, request):
+    def get(self, _request):
+        cached_payload = cache.get(SITE_SETTINGS_CACHE_KEY)
+        if cached_payload is not None:
+            return Response(cached_payload)
+
         setting = SiteSetting.objects.first()
         if setting and setting.ga4_tracking_id:
-            return Response(SiteSettingSerializer(setting).data)
-        return Response({"ga4_tracking_id": None})
+            payload = SiteSettingSerializer(setting).data
+        else:
+            payload = {"ga4_tracking_id": None}
+
+        cache.set(SITE_SETTINGS_CACHE_KEY, payload, settings.SITE_SETTINGS_CACHE_TTL)
+        return Response(payload)
 
 
 class ActiveJobPostingsAPIView(generics.ListAPIView):
     queryset = JobPosting.objects.filter(is_active=True).order_by("-created_at")
     serializer_class = JobPostingSerializer
     permission_classes = [AllowAny]
+
+    def list(self, request, *args, **kwargs):
+        cached_payload = cache.get(ACTIVE_JOBS_CACHE_KEY)
+        if cached_payload is not None:
+            return Response(cached_payload)
+
+        response = super().list(request, *args, **kwargs)
+        cache.set(ACTIVE_JOBS_CACHE_KEY, response.data, settings.PUBLIC_API_CACHE_TTL)
+        return response

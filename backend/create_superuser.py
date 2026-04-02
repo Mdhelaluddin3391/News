@@ -9,24 +9,21 @@ from django.contrib.auth import get_user_model
 
 def create_auto_superuser():
     User = get_user_model()
-    
-    # Production mein insecure fallback credentials kabhi use na hon.
-    email = 'muhammadhelal228@gmail.com'
-    password = 'helal@123'
-    name = 'mdhelal'
+
+    email = os.getenv('DJANGO_SUPERUSER_EMAIL', '').strip()
+    password = os.getenv('DJANGO_SUPERUSER_PASSWORD', '').strip()
+    name = os.getenv('DJANGO_SUPERUSER_NAME', 'Admin User').strip() or 'Admin User'
 
     if not email or not password:
-        print("⚠️  Skipping superuser creation. Set DJANGO_SUPERUSER_EMAIL and DJANGO_SUPERUSER_PASSWORD to enable it.")
+        print("Skipping superuser creation. Set DJANGO_SUPERUSER_EMAIL and DJANGO_SUPERUSER_PASSWORD to enable it.")
         return
 
-    # Check karte hain ki is email se user pehle se hai ya nahi
     if not User.objects.filter(email=email).exists():
-        print(f"🔄 Creating superuser with email: {email}")
-        # Aapke custom model ke hisab se 'name' pass karna zaroori hai
+        print(f"Creating superuser with email: {email}")
         User.objects.create_superuser(email=email, password=password, name=name)
-        print("✅ Superuser created successfully!")
+        print("Superuser created successfully.")
     else:
-        print("⚡ Superuser already exists. Skipping creation.")
+        print("Superuser already exists. Skipping creation.")
 
 if __name__ == '__main__':
     create_auto_superuser()

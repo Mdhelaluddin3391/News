@@ -1,13 +1,11 @@
 const APP_CONFIG = window.__APP_CONFIG__ || {};
 const isFileProtocol = window.location.protocol === 'file:';
 
-// Single source-of-truth: global API base URL
-// Dynamically set based on environment
 if (typeof API_BASE_URL === 'undefined') {
-    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || isFileProtocol;
-    window.API_BASE_URL = isDevelopment 
-        ? 'http://localhost:8000/api'
-        : 'https://feroxtimes.com/api';
+    const isDevelopment = ['localhost', '127.0.0.1'].includes(window.location.hostname) || isFileProtocol;
+    window.API_BASE_URL = isDevelopment
+        ? 'http://localhost:5000/api'
+        : `${window.location.origin}/api`;
 }
 
 const CONFIG = {
@@ -30,9 +28,40 @@ window.APP_CONFIG = Object.freeze({
 });
 window.CONFIG = window.APP_CONFIG;
 
+function escapeHtml(value = '') {
+    return String(value).replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
+function getSafeHttpUrl(value) {
+    if (!value) {
+        return '';
+    }
+
+    try {
+        const parsed = new URL(value, window.location.origin);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return parsed.toString();
+        }
+    } catch (_error) {
+        return '';
+    }
+
+    return '';
+}
+
+window.escapeHtml = escapeHtml;
+window.getSafeHttpUrl = getSafeHttpUrl;
+
 function apiFetch(endpoint, options = {}) {
-    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-    const url = `${window.APP_CONFIG.API_BASE_URL}${normalizedEndpoint}`;
+    const url = /^https?:\/\//i.test(endpoint)
+        ? endpoint
+        : `${window.APP_CONFIG.API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
     const defaultOptions = {
         headers: {

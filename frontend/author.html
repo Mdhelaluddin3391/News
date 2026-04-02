@@ -7,7 +7,7 @@
     <title>Author Profile - Ferox Times</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
     
-    <link rel="preconnect" href="https://api.feroxtimes.com" crossorigin>
+    <link rel="preconnect" href="https://www.feroxtimes.com" crossorigin>
     
     <meta name="description" content="Read articles and news written by our expert journalists at Ferox Times.">
     <meta property="og:title" content="Author Profile - Ferox Times">
@@ -15,6 +15,11 @@
     <meta property="og:type" content="profile">
     
     <link rel="canonical" id="canonical-url" href="https://www.feroxtimes.com/author/">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('canonical-url').setAttribute('href', 'https://www.feroxtimes.com' + window.location.pathname);
+        });
+    </script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">

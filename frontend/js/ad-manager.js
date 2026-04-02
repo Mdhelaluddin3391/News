@@ -6,7 +6,12 @@ window.fetchActiveAds = function() {
 
     // API call ads lane ke liye
     fetch(adsApiUrl)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to load ads (${response.status})`);
+            }
+            return response.json();
+        })
         .then(data => {
             const slots = ['header', 'sidebar', 'in_article'];
             
@@ -19,8 +24,10 @@ window.fetchActiveAds = function() {
                     
                     if (adData.ad_type === 'brand') {
                         // Image Ad banayein
-                        const imageUrl = adData.image; 
-                        const linkUrl = adData.url || '#';
+                        const imageUrl = adData.image;
+                        const linkUrl = typeof window.getSafeHttpUrl === 'function'
+                            ? window.getSafeHttpUrl(adData.url)
+                            : (adData.url || '#');
                         adContent = `<a href="${linkUrl}" target="_blank" rel="noopener noreferrer">
                                         <img src="${imageUrl}" alt="Ad" style="max-width: 100%; height: auto; border-radius: 8px;">
                                      </a>`;

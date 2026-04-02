@@ -11,6 +11,9 @@ const articlesContainer = document.getElementById('articles-container');
 const loader = document.getElementById('loader');
 const errorMessageDiv = document.getElementById('error-message');
 const categoryButtons = document.querySelectorAll('.category-btn');
+const DEFAULT_SITE_NAME = 'Ferox Times';
+const DEFAULT_SITE_DESCRIPTION = 'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on Ferox Times.';
+const DEFAULT_SITE_IMAGE = `${window.location.origin}/images/default-news.png`;
 
 // ==================== GLOBAL HELPER FUNCTION (For Images) ====================
 window.getFullImageUrl = function(imagePath, fallbackImage = 'images/default-news.png') {
@@ -40,16 +43,21 @@ window.getFullImageUrl = function(imagePath, fallbackImage = 'images/default-new
 };
 
 // ==================== Helper Functions ====================
-function showLoader() { loader.style.display = 'block'; }
-function hideLoader() { loader.style.display = 'none'; }
+function showLoader() { if (loader) loader.style.display = 'block'; }
+function hideLoader() { if (loader) loader.style.display = 'none'; }
 
 function showError(message) {
+    if (!errorMessageDiv) return;
     errorMessageDiv.textContent = message;
     errorMessageDiv.style.display = 'block';
     setTimeout(() => { errorMessageDiv.style.display = 'none'; }, 5000);
 }
 
-function clearError() { errorMessageDiv.style.display = 'none'; }
+function clearError() {
+    if (errorMessageDiv) {
+        errorMessageDiv.style.display = 'none';
+    }
+}
 
 function formatDate(isoString) {
     const date = new Date(isoString);
@@ -91,6 +99,9 @@ function renderArticles(articles) {
         const description = article.description ? (article.description.length > 110 ? article.description.substring(0, 110) + '...' : article.description) : 'No description available.';
         const source = article.source_name || 'Ferox Times';
         const date = article.published_at ? formatDate(article.published_at) : 'Unknown date';
+        const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(title) : title;
+        const safeDescription = typeof window.escapeHtml === 'function' ? window.escapeHtml(description) : description;
+        const safeSource = typeof window.escapeHtml === 'function' ? window.escapeHtml(source) : source;
         
         const articleSlug = article.slug || article.id || ''; 
         const articleId = article.id || '';
@@ -105,12 +116,12 @@ function renderArticles(articles) {
         return `
             <div class="article-card" style="position: relative;">
                 ${liveBadgeHTML}
-                <img src="${imageUrl}" alt="${title}" class="article-image ${containClass}" loading="lazy">
+                <img src="${imageUrl}" alt="${safeTitle}" class="article-image ${containClass}" loading="lazy">
                 <div class="article-content">
-                    <h3 class="article-title">${title}</h3>
-                    <p class="article-description">${description}</p>
+                    <h3 class="article-title">${safeTitle}</h3>
+                    <p class="article-description">${safeDescription}</p>
                     <div class="article-meta">
-                        <span class="article-source">${source}</span>
+                        <span class="article-source">${safeSource}</span>
                         <span class="article-date">${date}</span>
                         <a href="/article/${articleSlug}" class="read-more">Read more →</a>
                         ${saveButton}
@@ -337,7 +348,11 @@ function showToast(message, type = 'success') {
     if (type === 'success') icon = 'fa-check-circle';
     if (type === 'error') icon = 'fa-exclamation-circle';
 
-    toast.innerHTML = `<i class="fas ${icon} toast-icon" style="font-size: 1.2rem;"></i> <span>${message}</span>`;
+    toast.innerHTML = `<i class="fas ${icon} toast-icon" style="font-size: 1.2rem;"></i> <span></span>`;
+    const toastMessage = toast.querySelector('span');
+    if (toastMessage) {
+        toastMessage.textContent = message;
+    }
     container.appendChild(toast);
 
     setTimeout(() => toast.classList.add('show'), 10);
@@ -349,36 +364,73 @@ function showToast(message, type = 'success') {
 }
 
 // ==================== SEO META TAGS & CANONICAL UPDATER ====================
-function updateSEOMetaTags(title, description, imageUrl, pageUrl, keywords = "") {
-    document.title = title ? `${title} - Ferox Times` : 'Ferox Times - Premium News';
+function normalizeMetaUrl(pageUrl) {
+    return new URL(pageUrl || window.location.href, window.location.origin).toString().split('#')[0];
+}
 
-    function setMetaTag(attrName, attrValue, content) {
-        if (!content) return; 
-        let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
-        if (!element) {
-            element = document.createElement('meta');
-            element.setAttribute(attrName, attrValue);
-            document.head.appendChild(element);
-        }
-        element.setAttribute('content', content);
+function normalizeImageUrl(imageUrl) {
+    return new URL(imageUrl || DEFAULT_SITE_IMAGE, window.location.origin).toString();
+}
+
+function setMetaTag(attrName, attrValue, content) {
+    if (!content) return;
+    let element = document.querySelector(`meta[${attrName}="${attrValue}"]`);
+    if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attrName, attrValue);
+        document.head.appendChild(element);
     }
+    element.setAttribute('content', content);
+}
+
+function ensureHeadMeta(name, content) {
+    if (!content) return;
+    let element = document.querySelector(`meta[name="${name}"]`);
+    if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute('name', name);
+        document.head.appendChild(element);
+    }
+    element.setAttribute('content', content);
+}
+
+function ensureHeadLink(rel, href) {
+    if (!href) return;
+    let element = document.querySelector(`link[rel="${rel}"]`);
+    if (!element) {
+        element = document.createElement('link');
+        element.setAttribute('rel', rel);
+        document.head.appendChild(element);
+    }
+    element.setAttribute('href', href);
+}
+
+function updateSEOMetaTags(title, description, imageUrl, pageUrl, keywords = "", pageType = 'website', robots = 'index, follow') {
+    const normalizedTitle = title || DEFAULT_SITE_NAME;
+    document.title = normalizedTitle.includes(DEFAULT_SITE_NAME)
+        ? normalizedTitle
+        : `${normalizedTitle} | ${DEFAULT_SITE_NAME}`;
+
+    const canonicalUrl = normalizeMetaUrl(pageUrl);
+    const resolvedImageUrl = normalizeImageUrl(imageUrl);
 
     setMetaTag('name', 'description', description);
     if (keywords) {
         setMetaTag('name', 'keywords', keywords);
     }
+    setMetaTag('name', 'robots', robots);
 
-    setMetaTag('property', 'og:title', title);
+    setMetaTag('property', 'og:title', normalizedTitle);
     setMetaTag('property', 'og:description', description);
-    setMetaTag('property', 'og:image', imageUrl);
-    setMetaTag('property', 'og:url', pageUrl);
-    setMetaTag('property', 'og:type', 'article');
-    setMetaTag('property', 'og:site_name', 'Ferox Times');
+    setMetaTag('property', 'og:image', resolvedImageUrl);
+    setMetaTag('property', 'og:url', canonicalUrl);
+    setMetaTag('property', 'og:type', pageType);
+    setMetaTag('property', 'og:site_name', DEFAULT_SITE_NAME);
 
     setMetaTag('name', 'twitter:card', 'summary_large_image');
-    setMetaTag('name', 'twitter:title', title);
+    setMetaTag('name', 'twitter:title', normalizedTitle);
     setMetaTag('name', 'twitter:description', description);
-    setMetaTag('name', 'twitter:image', imageUrl);
+    setMetaTag('name', 'twitter:image', resolvedImageUrl);
 
     let canonicalTag = document.querySelector('link[rel="canonical"]');
     if (!canonicalTag) {
@@ -386,8 +438,7 @@ function updateSEOMetaTags(title, description, imageUrl, pageUrl, keywords = "")
         canonicalTag.setAttribute('rel', 'canonical');
         document.head.appendChild(canonicalTag);
     }
-    const cleanUrl = pageUrl.split('#')[0]; 
-    canonicalTag.setAttribute('href', cleanUrl);
+    canonicalTag.setAttribute('href', canonicalUrl);
 }
 
 // ==================== SCHEMA MARKUP (JSON-LD) INJECTOR ====================
@@ -414,9 +465,140 @@ function injectSchema(schemaData) {
     document.head.appendChild(script);
 }
 
-function injectSchema(schemaData) {
-    const script = document.createElement('script');
-    script.type = "application/ld+json";
-    script.text = JSON.stringify(schemaData);
-    document.head.appendChild(script);
+function getDefaultPageMetadata() {
+    const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+    const metadataByRoute = {
+        '/': {
+            title: 'Ferox Times - Premium Global News',
+            description: DEFAULT_SITE_DESCRIPTION,
+            keywords: 'global news, breaking news, latest updates, world news, Ferox Times',
+            type: 'website'
+        },
+        '/404': {
+            title: 'Page Not Found',
+            description: 'The page you requested could not be found on Ferox Times.',
+            type: 'website',
+            robots: 'noindex, follow'
+        },
+        '/about': {
+            title: 'About Ferox Times',
+            description: 'Learn more about Ferox Times, our mission, vision, and editorial standards.',
+            type: 'website'
+        },
+        '/advertise': {
+            title: 'Advertise With Us',
+            description: 'Explore advertising opportunities, sponsorships, and brand partnerships with Ferox Times.',
+            type: 'website'
+        },
+        '/authors': {
+            title: 'Our Authors',
+            description: 'Meet the journalists, editors, and contributors behind Ferox Times.',
+            type: 'website'
+        },
+        '/careers': {
+            title: 'Careers',
+            description: 'Join the Ferox Times team across editorial, product, and engineering roles.',
+            type: 'website'
+        },
+        '/contact': {
+            title: 'Contact Us',
+            description: 'Get in touch with the Ferox Times editorial and support teams.',
+            type: 'website'
+        },
+        '/cookie-policy': {
+            title: 'Cookie Policy',
+            description: 'Read the Ferox Times cookie policy and learn how cookies are used on the site.',
+            type: 'website'
+        },
+        '/faq': {
+            title: 'Frequently Asked Questions',
+            description: 'Answers to common questions about Ferox Times subscriptions, accounts, and editorial coverage.',
+            type: 'website'
+        },
+        '/forgot-password': {
+            title: 'Forgot Password',
+            description: 'Request a password reset for your Ferox Times account.',
+            type: 'website',
+            robots: 'noindex, follow'
+        },
+        '/login': {
+            title: 'Login',
+            description: 'Access your Ferox Times account securely.',
+            type: 'website',
+            robots: 'noindex, follow'
+        },
+        '/privacy': {
+            title: 'Privacy Policy',
+            description: 'Review how Ferox Times collects, uses, and protects your personal data.',
+            type: 'website'
+        },
+        '/profile': {
+            title: 'My Profile',
+            description: 'Manage your Ferox Times account details and profile settings.',
+            type: 'profile',
+            robots: 'noindex, nofollow'
+        },
+        '/register': {
+            title: 'Create an Account',
+            description: 'Register for a Ferox Times account to comment, save articles, and manage alerts.',
+            type: 'website',
+            robots: 'noindex, follow'
+        },
+        '/reset-password': {
+            title: 'Set New Password',
+            description: 'Choose a new password for your Ferox Times account.',
+            type: 'website',
+            robots: 'noindex, follow'
+        },
+        '/saved': {
+            title: 'Saved Articles',
+            description: 'Review the articles you saved to read later on Ferox Times.',
+            type: 'website',
+            robots: 'noindex, nofollow'
+        },
+        '/terms': {
+            title: 'Terms of Service',
+            description: 'Read the terms and conditions governing use of Ferox Times.',
+            type: 'website'
+        },
+        '/unsubscribe': {
+            title: 'Unsubscribe',
+            description: 'Manage or confirm your Ferox Times newsletter unsubscribe request.',
+            type: 'website',
+            robots: 'noindex, follow'
+        },
+        '/verify-email': {
+            title: 'Verify Email',
+            description: 'Verify your email address to activate your Ferox Times account.',
+            type: 'website',
+            robots: 'noindex, follow'
+        }
+    };
+
+    return metadataByRoute[pathname] || {
+        title: document.title || DEFAULT_SITE_NAME,
+        description: document.querySelector('meta[name="description"]')?.content || DEFAULT_SITE_DESCRIPTION,
+        type: 'website'
+    };
 }
+
+function ensureDefaultSeoMeta() {
+    const metadata = getDefaultPageMetadata();
+    ensureHeadMeta('theme-color', '#1a365d');
+    ensureHeadMeta('color-scheme', 'light');
+    ensureHeadLink('manifest', '/manifest.json');
+    updateSEOMetaTags(
+        metadata.title,
+        metadata.description,
+        DEFAULT_SITE_IMAGE,
+        window.location.href,
+        metadata.keywords || '',
+        metadata.type || 'website',
+        metadata.robots || 'index, follow'
+    );
+}
+
+window.updateSEOMetaTags = updateSEOMetaTags;
+window.injectSchema = injectSchema;
+
+document.addEventListener('DOMContentLoaded', ensureDefaultSeoMeta);

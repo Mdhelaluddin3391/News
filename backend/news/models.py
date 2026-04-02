@@ -1,12 +1,4 @@
 import uuid
-from django.contrib.postgres.indexes import GinIndex
-from django.contrib.postgres.search import SearchVector
-from django.db import models
-from django.utils.text import slugify
-from tinymce.models import HTMLField
-from core.models import BaseModel
-from users.models import User
-from django.utils import timezone
 from django.db import models
 from django.utils.text import slugify
 from tinymce.models import HTMLField
@@ -19,13 +11,13 @@ class Category(BaseModel):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=120, unique=True, blank=True)
 
+    class Meta:
+        verbose_name_plural = "Categories"
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
-    class Meta:
-        verbose_name_plural = "Categories"
 
     def __str__(self):
         return self.name
@@ -35,9 +27,19 @@ class Author(BaseModel):
     Agar koi user author hai toh uski extra details. (author.js ke mutabiq)
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='author_profile')
+    slug = models.SlugField(max_length=160, unique=True, blank=True)
     role = models.CharField(max_length=100, help_text="e.g. Senior Tech Reporter")
     twitter_url = models.URLField(blank=True, null=True)
     linkedin_url = models.URLField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.user.name) or f'author-{self.user_id}'
+            slug_candidate = base_slug
+            while Author.objects.filter(slug=slug_candidate).exclude(pk=self.pk).exists():
+                slug_candidate = f"{base_slug}-{uuid.uuid4().hex[:6]}"
+            self.slug = slug_candidate
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.user.name
@@ -97,7 +99,16 @@ class Article(BaseModel):
     newsletter_sent = models.BooleanField(default=False, help_text="Tick ho jayega jab subscribers ko email bhej diya jayega")
     push_sent = models.BooleanField(default=False, help_text="Tick ho jayega jab push notification bhej diya jayega")
 
-
+    class Meta:
+        indexes = [
+            models.Index(fields=['status', '-published_at'], name='news_article_status_pub_idx'),
+            models.Index(fields=['status', 'is_breaking', '-published_at'], name='news_article_breaking_idx'),
+            models.Index(fields=['status', 'is_trending', '-views', '-published_at'], name='news_article_trending_idx'),
+            models.Index(fields=['status', 'is_top_story', '-views', '-published_at'], name='news_article_top_story_idx'),
+            models.Index(fields=['status', 'is_web_story', '-web_story_created_at'], name='news_article_story_idx'),
+            models.Index(fields=['category', 'status', '-published_at'], name='news_article_category_idx'),
+            models.Index(fields=['author', 'status', '-published_at'], name='news_article_author_idx'),
+        ]
 
     def save(self, *args, **kwargs):
         # 1. Slug banayein
@@ -123,20 +134,13 @@ class Article(BaseModel):
             # Agar admin ne tick hata diya, toh time clear kar do
             self.web_story_created_at = None
 
+        if self.status == 'published' and not self.published_at:
+            self.published_at = timezone.now()
+
         super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
-
-    class Meta:
-        indexes = [
-            GinIndex(
-                SearchVector('title', weight='A', config='english')
-                + SearchVector('description', weight='B', config='english')
-                + SearchVector('content', weight='C', config='english'),
-                name='article_fts_gin_idx',
-            ),
-        ]
 
 class LiveUpdate(BaseModel):
     """
@@ -149,6 +153,9 @@ class LiveUpdate(BaseModel):
     
     class Meta:
         ordering = ['-timestamp'] # Sabse naya update sabse upar dikhega
+        indexes = [
+            models.Index(fields=['article', '-timestamp'], name='news_live_article_time_idx'),
+        ]
 
     def __str__(self):
         return f"Update for {self.article.title} at {self.timestamp}"

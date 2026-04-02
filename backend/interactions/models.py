@@ -24,6 +24,11 @@ class Comment(BaseModel):
     # Moderation ke liye flag (kisi ne gali likhi ho toh admin hide kar sake)
     is_active = models.BooleanField(default=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['article', 'is_active', '-created_at'], name='inter_comment_article_idx'),
+        ]
+
     def __str__(self):
         return f"Comment by {self.user.name} on {self.article.title}"
 
@@ -85,6 +90,11 @@ class NewsletterSubscriber(BaseModel):
         help_text="When the unsubscribe token was used (one-time use)"
     )
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['is_active', 'created_at'], name='inter_newsletter_active_idx'),
+        ]
+
     def __str__(self):
         return self.email
     
@@ -93,6 +103,11 @@ class Poll(BaseModel):
     question = models.CharField(max_length=255, help_text="Poll ka sawal likhein")
     description = models.TextField(blank=True, null=True, help_text="Thoda context ya description poll ke liye (Optional)")
     is_active = models.BooleanField(default=False, help_text="Keval ek poll ko active rakhein jo frontend par dikhega")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['is_active', '-created_at'], name='inter_poll_active_idx'),
+        ]
 
     def __str__(self):
         return self.question

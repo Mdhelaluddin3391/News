@@ -3,6 +3,9 @@ async function loadComponents() {
         const headerPlaceholder = document.getElementById('header-placeholder');
         if (headerPlaceholder) {
             const headerRes = await fetch('/components/header');
+            if (!headerRes.ok) {
+                throw new Error(`Failed to load header (${headerRes.status})`);
+            }
             headerPlaceholder.innerHTML = await headerRes.text();
             initHeaderScripts();
         }
@@ -10,6 +13,9 @@ async function loadComponents() {
         const footerPlaceholder = document.getElementById('footer-placeholder');
         if (footerPlaceholder) {
             const footerRes = await fetch('/components/footer');
+            if (!footerRes.ok) {
+                throw new Error(`Failed to load footer (${footerRes.status})`);
+            }
             footerPlaceholder.innerHTML = await footerRes.text();
         }
 
@@ -22,7 +28,6 @@ async function loadComponents() {
         if (typeof window.reportFrontendError === 'function') {
             window.reportFrontendError(error, { scope: 'layout', action: 'loadComponents' });
         }
-        console.error(error);
     }
 }
 
@@ -109,7 +114,9 @@ async function fetchAndRenderNavCategories() {
 
         // Check karte hain user kis category page par hai (taaki usko highlight kar sakein)
         const urlParams = new URLSearchParams(window.location.search);
-        const currentCategory = urlParams.get('category') || 'general';
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const currentCategory = urlParams.get('category')
+            || (pathParts[0] === 'category' ? pathParts[1] : 'general');
 
         // ✅ SEO FIX: Clean URLs for navigation
         let desktopHtml = `<li><a href="/" class="category-link ${currentCategory === 'general' ? 'active' : ''}">Home</a></li>`;
@@ -118,10 +125,11 @@ async function fetchAndRenderNavCategories() {
 
         categories.forEach(cat => {
             const isActive = currentCategory === cat.slug ? 'active' : '';
+            const safeName = typeof window.escapeHtml === 'function' ? window.escapeHtml(cat.name || 'Category') : (cat.name || 'Category');
             // ✅ SEO FIX: Clean URLs for category links
-            desktopHtml += `<li><a href="/category/${cat.slug}" class="category-link ${isActive}">${cat.name}</a></li>`;
-            mobileHtml += `<a href="/category/${cat.slug}" class="${isActive}">${cat.name}</a>`;
-            footerHtml += `<li><a href="/category/${cat.slug}">${cat.name}</a></li>`;
+            desktopHtml += `<li><a href="/category/${cat.slug}" class="category-link ${isActive}">${safeName}</a></li>`;
+            mobileHtml += `<a href="/category/${cat.slug}" class="${isActive}">${safeName}</a>`;
+            footerHtml += `<li><a href="/category/${cat.slug}">${safeName}</a></li>`;
         });
 
         if (desktopNav) desktopNav.innerHTML = desktopHtml;
@@ -187,9 +195,15 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
                 topMatches.forEach(article => {
                     // Title mein query ko highlight karna (Case Insensitive)
                     const regex = new RegExp(`(${query})`, 'gi');
-                    const highlightedTitle = article.title.replace(regex, '<span class="suggestion-highlight">$1</span>');
+                    const safeTitle = typeof window.escapeHtml === 'function'
+                        ? window.escapeHtml(article.title || 'Untitled')
+                        : (article.title || 'Untitled');
+                    const highlightedTitle = safeTitle.replace(regex, '<span class="suggestion-highlight">$1</span>');
                     const imgUrl = article.featured_image || 'images/default-news.png';
                     const containClass = imgUrl.includes('default-news.png') ? 'img-contain' : '';
+                    const safeCategoryName = typeof window.escapeHtml === 'function'
+                        ? window.escapeHtml(article.category ? article.category.name : 'News')
+                        : (article.category ? article.category.name : 'News');
                     
                     // ✅ SEO FIX: Clean URL for autocomplete article click
                     html += `
@@ -197,7 +211,7 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
                             <img src="${imgUrl}" class="${containClass}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
                             <div style="flex: 1; min-width: 0;">
                                 <div class="suggestion-title">${highlightedTitle}</div>
-                                <div style="font-size: 0.75rem; color: var(--gray);">${article.category ? article.category.name : 'News'}</div>
+                                <div style="font-size: 0.75rem; color: var(--gray);">${safeCategoryName}</div>
                             </div>
                         </a>
                     `;
@@ -240,6 +254,10 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
 // ==================== GOOGLE ANALYTICS (GA4) INJECTOR ====================
 async function injectGoogleAnalytics() {
     try {
+        if (window.__gaInjected) {
+            return;
+        }
+
         const response = await fetch(`${CONFIG.API_BASE_URL}/settings/`);
         if (!response.ok) return;
         
@@ -247,27 +265,29 @@ async function injectGoogleAnalytics() {
         const trackingId = data.ga4_tracking_id;
 
         if (trackingId) {
-            // 1. GTAG external script add karein
-            const script1 = document.createElement('script');
-            script1.async = true;
-            script1.src = `https://www.googletagmanager.com/gtag/js?slug="`;
-            document.head.appendChild(script1);
+            const existingScript = document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${trackingId}"]`);
+            if (!existingScript) {
+                const script1 = document.createElement('script');
+                script1.async = true;
+                script1.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(trackingId)}`;
+                document.head.appendChild(script1);
+            }
 
-            // 2. GTAG inline configuration add karein
-            const script2 = document.createElement('script');
-            script2.innerHTML = `
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${trackingId}');
-            `;
-            document.head.appendChild(script2);
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = window.gtag || function gtag() {
+                window.dataLayer.push(arguments);
+            };
+            window.gtag('js', new Date());
+            window.gtag('config', trackingId, {
+                anonymize_ip: true,
+                transport_type: 'beacon'
+            });
+            window.__gaInjected = true;
         }
     } catch (error) {
         if (typeof window.reportFrontendError === 'function') {
             window.reportFrontendError(error, { scope: 'analytics', action: 'injectGoogleAnalytics' });
         }
-        console.error('Failed to load Google Analytics:', error);
     }
 }
 

@@ -1,18 +1,23 @@
-from django.utils.decorators import method_decorator
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.utils import timezone
-from django.views.decorators.cache import cache_page
 import datetime
 import jwt
 
+from django.core.cache import cache
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+from django.db.models import F
 
 from core.tasks import send_async_email
 from .models import Bookmark, Comment, CommentReport, NewsletterSubscriber, Poll, PollOption, PushSubscription
 from .serializers import BookmarkSerializer, CommentSerializer, CommentReportSerializer, PollSerializer, PushSubscriptionSerializer
+
+User = get_user_model()
 
 
 class IsCommentOwnerOrAdmin(permissions.BasePermission):
@@ -54,7 +59,12 @@ class BookmarkViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Bookmark.objects.filter(user=self.request.user).order_by('-created_at')
+        return (
+            Bookmark.objects
+            .filter(user=self.request.user)
+            .select_related('article', 'article__category', 'article__author__user')
+            .order_by('-created_at')
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -80,12 +90,20 @@ class CommentReportViewSet(viewsets.ModelViewSet):
 
 class SubscribeNewsletterView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'newsletter'
 
     def post(self, request):
-        email = request.data.get('email')
-        if not email:
+        raw_email = (request.data.get('email') or '').strip()
+        if not raw_email:
             return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        email = User.objects.normalize_email(raw_email)
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response({"error": "Enter a valid email address."}, status=status.HTTP_400_BAD_REQUEST)
+
         subscriber, created = NewsletterSubscriber.objects.get_or_create(email=email)
         
         if not created and subscriber.is_active:
@@ -142,10 +160,12 @@ class SubscribeNewsletterView(APIView):
 
 class UnsubscribeNewsletterView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'newsletter'
 
     def post(self, request):
         token = request.data.get('token')
-        email = request.data.get('email')
+        raw_email = (request.data.get('email') or '').strip()
 
         # === 1. CONFIRM UNSUBSCRIBE LOGIC (Agar request mein token aaya hai) ===
         if token:
@@ -186,7 +206,13 @@ class UnsubscribeNewsletterView(APIView):
                 return Response({"error": "Invalid token or subscriber not found."}, status=status.HTTP_400_BAD_REQUEST)
 
         # === 2. REQUEST UNSUBSCRIBE LOGIC (Agar request mein email aaya hai) ===
-        if email:
+        if raw_email:
+            email = User.objects.normalize_email(raw_email)
+            try:
+                validate_email(email)
+            except ValidationError:
+                return Response({"error": "Enter a valid email address."}, status=status.HTTP_400_BAD_REQUEST)
+
             try:
                 subscriber = NewsletterSubscriber.objects.get(email=email)
                 
@@ -236,21 +262,30 @@ class UnsubscribeNewsletterView(APIView):
 class ActivePollView(APIView):
     permission_classes = [permissions.AllowAny]
 
-    @method_decorator(cache_page(60))
     def get(self, request):
+        cache_key = 'interactions:active-poll'
+        cached_payload = cache.get(cache_key)
+        if cached_payload is not None:
+            return Response(cached_payload)
+
         poll = Poll.objects.filter(is_active=True).first()
         if poll:
-            return Response(PollSerializer(poll).data)
+            payload = PollSerializer(poll).data
+            cache.set(cache_key, payload, 60)
+            return Response(payload)
         return Response({"error": "No active poll found", "active_poll_exists": False}, status=status.HTTP_200_OK)
 
 class VotePollView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'poll_vote'
 
     def post(self, request, option_id):
         try:
             option = PollOption.objects.get(id=option_id)
-            option.votes += 1
-            option.save()
+            PollOption.objects.filter(id=option.id).update(votes=F('votes') + 1)
+            option.refresh_from_db(fields=['votes'])
+            cache.delete('interactions:active-poll')
             return Response({"message": "Vote successfully counted!", "votes": option.votes})
         except PollOption.DoesNotExist:
             return Response({"error": "Option not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -260,6 +295,8 @@ class VotePollView(APIView):
 
 class SavePushSubscriptionView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'push_subscribe'
 
     def post(self, request):
         serializer = PushSubscriptionSerializer(data=request.data)

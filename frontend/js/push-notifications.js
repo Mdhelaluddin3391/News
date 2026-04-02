@@ -56,6 +56,13 @@ async function subscribeToPush() {
         return;
     }
 
+    if (!PUBLIC_VAPID_KEY) {
+        if (typeof showToast === 'function') {
+            showToast('Push notifications are not configured right now.', 'info');
+        }
+        return;
+    }
+
     try {
         const registration = await registerSiteServiceWorker();
         if (!registration) {

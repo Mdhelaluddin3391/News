@@ -1,3 +1,4 @@
+import bleach
 from rest_framework import serializers
 
 from users.serializers import UserSerializer
@@ -13,6 +14,12 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'article', 'user_detail', 'text', 'is_active', 'created_at')
         read_only_fields = ('id', 'is_active', 'created_at')
+
+    def validate_text(self, value):
+        cleaned_value = bleach.clean(value, tags=[], strip=True).strip()
+        if len(cleaned_value) < 2:
+            raise serializers.ValidationError('Comment must contain at least 2 characters.')
+        return cleaned_value
 
 class CommentReportSerializer(serializers.ModelSerializer):
     reported_by_detail = UserSerializer(source='reported_by', read_only=True)
@@ -45,6 +52,13 @@ class CommentReportSerializer(serializers.ModelSerializer):
         return attrs
 
 class BookmarkSerializer(serializers.ModelSerializer):
+    def validate_article(self, value):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            if Bookmark.objects.filter(user=request.user, article=value).exists():
+                raise serializers.ValidationError('This article is already saved.')
+        return value
+
     class Meta:
         model = Bookmark
         fields = ('id', 'article', 'created_at')
@@ -70,6 +84,11 @@ class PollSerializer(serializers.ModelSerializer):
 
 
 class PushSubscriptionSerializer(serializers.ModelSerializer):
+    def validate_endpoint(self, value):
+        if not value.startswith(('https://', 'http://localhost')):
+            raise serializers.ValidationError('Push endpoint must be an HTTP(S) URL.')
+        return value
+
     class Meta:
         model = PushSubscription
         fields = ['endpoint', 'auth', 'p256dh']

@@ -352,7 +352,9 @@ async function handleGoogleLogin(response) {
         const data = await res.json();
 
         if (!res.ok) {
-            alert(data.error || 'Google login failed.');
+            if (typeof showToast === 'function') {
+                showToast(data.error || 'Google login failed.', 'error');
+            }
             return;
         }
 
@@ -365,6 +367,8 @@ async function handleGoogleLogin(response) {
         window.location.href = redirect;
     } catch (error) {
         reportAuthError(error, { action: 'googleLogin' });
-        alert('Network error during Google Login. Please try again.');
+        if (typeof showToast === 'function') {
+            showToast('Network error during Google Login. Please try again.', 'error');
+        }
     }
 }

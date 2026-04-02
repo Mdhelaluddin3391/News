@@ -7,7 +7,7 @@
     <title>Tag Results - Ferox Times</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
     
-    <link rel="preconnect" href="https://api.feroxtimes.com" crossorigin>
+    <link rel="preconnect" href="https://www.feroxtimes.com" crossorigin>
     
     <meta name="description" content="Browse news articles by specific topics and tags on Ferox Times.">
     
@@ -20,6 +20,11 @@
     <meta name="twitter:title" content="Tag Results - Ferox Times">
     
     <link rel="canonical" id="canonical-url" href="https://www.feroxtimes.com/tag/">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('canonical-url').setAttribute('href', 'https://www.feroxtimes.com' + window.location.pathname);
+        });
+    </script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">

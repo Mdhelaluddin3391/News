@@ -17,6 +17,7 @@ function renderTagArticles(articles) {
     const html = articles.map(article => {
         const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
+        const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(article.title || 'Untitled') : (article.title || 'Untitled');
         
         const isSaved = user ? isArticleSaved(article.id) : false;
         const saveBtn = user ? `<button class="save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save'}</button>` : '';
@@ -25,16 +26,20 @@ function renderTagArticles(articles) {
         const description = rawDescription.length > 110 
             ? rawDescription.substring(0, 110) + '...' 
             : rawDescription;
+        const safeDescription = typeof window.escapeHtml === 'function' ? window.escapeHtml(description) : description;
+        const safeSource = typeof window.escapeHtml === 'function'
+            ? window.escapeHtml(article.source_name || 'Ferox Times')
+            : (article.source_name || 'Ferox Times');
 
         // ✅ SEO FIX: Use clean URL for article links
         return `
             <div class="article-card">
-                <img src="${imageUrl}" alt="${article.title}" class="article-image ${containClass}">
+                <img src="${imageUrl}" alt="${safeTitle}" class="article-image ${containClass}">
                 <div class="article-content">
-                    <h3 class="article-title">${article.title}</h3>
-                    <p class="article-description">${description}</p>
+                    <h3 class="article-title">${safeTitle}</h3>
+                    <p class="article-description">${safeDescription}</p>
                     <div class="article-meta">
-                        <span class="article-source">${article.source_name || 'Ferox Times'}</span>
+                        <span class="article-source">${safeSource}</span>
                         <span class="article-date">${formatTagDate(article.published_at)}</span>
                         <a href="/article/${article.slug}" class="read-more">Read more →</a>
                         ${saveBtn}
@@ -139,11 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const displayTagName = tagName || tagSlug;
+    const safeDisplayTagName = typeof window.escapeHtml === 'function' ? window.escapeHtml(displayTagName) : displayTagName;
 
     tagHeading.innerHTML = `
     <i class="fas fa-tags tag-icon"></i> 
     Articles tagged with 
-    <span class="highlight-tag">#${displayTagName}</span>
+    <span class="highlight-tag">#${safeDisplayTagName}</span>
     `;
 
     // ✅ SEO FIX: Use clean URL for tag specific canonical and meta tags

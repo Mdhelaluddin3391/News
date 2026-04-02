@@ -5,7 +5,7 @@ const SEARCH_ARTICLES_PER_PAGE = 12;
 
 // ==================== DOM Elements ====================
 const searchHeading = document.getElementById('search-query') || document.getElementById('search-heading') || document.getElementById('search-query-heading');
-const searchSubtitle = document.querySelector('.search-subtitle') || document.getElementById('search-subtitle');
+const searchSubtitle = document.querySelector('.search-subtitle') || document.getElementById('search-subtitle') || document.getElementById('results-count');
 const searchArticlesContainer = document.getElementById('articles-container');
 const searchLoader = document.getElementById('loader');
 const searchErrorDiv = document.getElementById('error-message');
@@ -28,12 +28,13 @@ function formatSearchDate(isoString) {
 
 function renderSearchArticles(articles, query) {
     if (!searchArticlesContainer) return;
+    const safeQuery = typeof window.escapeHtml === 'function' ? window.escapeHtml(query) : query;
 
     if (!articles || articles.length === 0) {
         searchArticlesContainer.innerHTML = `
             <div style="text-align: center; padding: 60px 20px; grid-column: 1 / -1; width: 100%;">
                 <i class="fas fa-search-minus" style="font-size: 4rem; color: #ccc; margin-bottom: 20px;"></i>
-                <h2 style="color: var(--dark); font-size: 1.8rem; margin-bottom: 10px;">No Results Found for "${query}"</h2>
+                <h2 style="color: var(--dark); font-size: 1.8rem; margin-bottom: 10px;">No Results Found for "${safeQuery}"</h2>
                 <p style="color: var(--gray); font-size: 1.1rem;">We couldn't find anything matching your search. Try checking your spelling or use more general terms (Tags, Categories, or Authors).</p>
             </div>
         `;
@@ -41,10 +42,11 @@ function renderSearchArticles(articles, query) {
     }
 
     const highlightText = (text, searchWord) => {
-        if (!searchWord || !text) return text;
+        const safeText = typeof window.escapeHtml === 'function' ? window.escapeHtml(text) : String(text);
+        if (!searchWord || !text) return safeText;
         const escapedWord = searchWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = new RegExp(`(${escapedWord})`, 'gi');
-        return text.replace(regex, '<mark class="highlight-text" style="background-color: #ffeeba; color: #000; padding: 0 2px; border-radius: 3px;">$1</mark>');
+        return safeText.replace(regex, '<mark class="highlight-text" style="background-color: #ffeeba; color: #000; padding: 0 2px; border-radius: 3px;">$1</mark>');
     };
 
     const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
@@ -54,6 +56,7 @@ function renderSearchArticles(articles, query) {
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         const rawTitle = article.title || 'Untitled';
+        const safeTitleAttr = typeof window.escapeHtml === 'function' ? window.escapeHtml(rawTitle) : rawTitle;
         
         let rawDescription = article.description || '';
         if(!rawDescription && article.content) {
@@ -79,7 +82,7 @@ function renderSearchArticles(articles, query) {
         let tagsHtml = '';
         if (article.tags && article.tags.length > 0) {
             const tagLinks = article.tags.slice(0, 3).map(tag => 
-                `<a href="/tag/${tag.slug}" style="text-decoration: none; background: #f1f1f1; padding: 2px 8px; border-radius: 12px; margin-right: 5px; color: #555; display: inline-block;">#${highlightText(tag.name, query)}</a>`
+                `<a href="/tag/${encodeURIComponent(tag.slug)}" style="text-decoration: none; background: #f1f1f1; padding: 2px 8px; border-radius: 12px; margin-right: 5px; color: #555; display: inline-block;">#${highlightText(tag.name, query)}</a>`
             ).join('');
             
             tagsHtml = `<div class="search-tags" style="margin-top: 10px; font-size: 0.8rem;">${tagLinks}</div>`;
@@ -89,7 +92,7 @@ function renderSearchArticles(articles, query) {
         return `
             <div class="article-card" style="display: flex; flex-direction: column; height: 100%;">
                 <a href="/article/${article.slug}" style="text-decoration: none; color: inherit;">
-                    <img src="${imageUrl}" alt="${rawTitle}" class="article-image ${containClass}" loading="lazy" style="height: 200px; object-fit: cover;">
+                    <img src="${imageUrl}" alt="${safeTitleAttr}" class="article-image ${containClass}" loading="lazy" style="height: 200px; object-fit: cover;">
                 </a>
                 <div class="article-content" style="flex: 1; display: flex; flex-direction: column;">
                     <span class="article-source" style="font-size: 0.8rem; color: var(--primary); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">${highlightText(source, query)}</span>
@@ -156,10 +159,11 @@ async function fetchSearchResults(query, page = 1) {
         updateSearchPagination(page, totalResults, query);
         
         if (searchHeading) {
+            const safeHeadingQuery = typeof window.escapeHtml === 'function' ? window.escapeHtml(query) : query;
             searchHeading.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <i class="fas fa-search" style="color: var(--primary);"></i> 
-                    <span>Found <strong>${totalResults}</strong> results for <span class="highlight-search" style="color: var(--primary);">"${query}"</span></span>
+                    <span>Found <strong>${totalResults}</strong> results for <span class="highlight-search" style="color: var(--primary);">"${safeHeadingQuery}"</span></span>
                 </div>
             `;
         }
@@ -174,7 +178,9 @@ async function fetchSearchResults(query, page = 1) {
                 `Explore news articles, authors, tags and stories related to "${query}" on Ferox Times.`, 
                 'images/default-news.png', 
                 cleanSearchUrl,
-                `${query} news, search ${query}, Ferox Times results, trending ${query}`
+                `${query} news, search ${query}, Ferox Times results, trending ${query}`,
+                'website',
+                'noindex, follow'
             );
         }
         

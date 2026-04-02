@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.textContent = 'Sending...';
 
         try {
-            const response = await fetch(FORGOT_PASSWORD_API, {
+            const response = await apiFetch(FORGOT_PASSWORD_API, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -30,10 +30,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ email })
             });
 
-            // Security Best Practice: Success message show karein taaki email enumeration na ho sake
-            successDiv.textContent = 'If that email is registered, we have sent a password reset link. Please check your inbox.';
-            successDiv.style.display = 'block';
-            form.reset();
+            if (response.ok) {
+                // Security Best Practice: Success message show karein taaki email enumeration na ho sake
+                successDiv.textContent = 'If that email is registered, we have sent a password reset link. Please check your inbox.';
+                successDiv.style.display = 'block';
+                form.reset();
+            } else {
+                errorDiv.textContent = 'We could not process your request right now. Please try again later.';
+                errorDiv.style.display = 'block';
+            }
             
         } catch (error) {
             console.error('Forgot password network error:', error);

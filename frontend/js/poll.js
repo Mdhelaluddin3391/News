@@ -81,7 +81,7 @@ function renderPollForm(poll, container) {
         btn.disabled = true;
 
         try {
-            const res = await fetch(`${POLL_API_URL}/vote/${selectedOption.value}/`, { method: 'POST' });
+            const res = await apiFetch(`${POLL_API_URL}/vote/${selectedOption.value}/`, { method: 'POST' });
             if (res.ok) {
                 localStorage.setItem(`poll_voted_${poll.id}`, 'true');
                 if(typeof showToast === 'function') showToast("Vote submitted successfully!", "success");

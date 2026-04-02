@@ -178,7 +178,7 @@ function setupAdvertiseForm() {
         submitBtn.textContent = "Submitting...";
 
         try {
-            const response = await fetch(AD_INQUIRY_API_URL, {
+            const response = await apiFetch(AD_INQUIRY_API_URL, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -199,7 +199,7 @@ function setupAdvertiseForm() {
                 statusDiv.style.display = "block";
                 this.reset();
             } else {
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
                 throw new Error(data.detail || "Failed to submit inquiry.");
             }
         } catch (error) {

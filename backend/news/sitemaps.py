@@ -1,5 +1,4 @@
 from django.contrib.sitemaps import Sitemap
-from django.conf import settings
 from .models import Article, Category, Author, Tag
 
 class ArticleSitemap(Sitemap):
@@ -35,9 +34,7 @@ class AuthorSitemap(Sitemap):
         return Author.objects.all()
 
     def location(self, obj):
-        # FIX: Clean URL for authors
-        slug = obj.user.username if hasattr(obj.user, 'username') else obj.id
-        return f"/author/{slug}"
+        return f"/author/{obj.slug}"
 
 class TagSitemap(Sitemap):
     changefreq = "daily"

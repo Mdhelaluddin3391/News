@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(UNSUBSCRIBE_API, {
+            const response = await apiFetch(UNSUBSCRIBE_API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)

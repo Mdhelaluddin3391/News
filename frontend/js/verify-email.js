@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resendBtn.textContent = 'Sending...';
 
         try {
-            const response = await fetch(`${API_BASE_URL}/users/resend-verification-email/`, {
+            const response = await apiFetch(`${API_BASE_URL}/users/resend-verification-email/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email })
@@ -85,7 +85,7 @@ async function verifyEmailWithToken(token) {
     const submitBtn = document.querySelector('.auth-btn');
 
     try {
-        const response = await fetch(`${API_BASE_URL}/users/verify-email/`, {
+        const response = await apiFetch(`${API_BASE_URL}/users/verify-email/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token })

@@ -43,6 +43,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ("name", "email", "password")
 
+    def validate_name(self, value):
+        cleaned_value = value.strip()
+        if len(cleaned_value) < 2:
+            raise serializers.ValidationError("Name must contain at least 2 characters.")
+        return cleaned_value
+
     def validate_email(self, value):
         email = User.objects.normalize_email(value.strip())
         if User.objects.filter(email__iexact=email).exists():
@@ -59,3 +65,23 @@ class RegisterSerializer(serializers.ModelSerializer):
             is_email_verified=False,
         )
         return user
+
+
+class TokenOnlySerializer(serializers.Serializer):
+    token = serializers.CharField(max_length=2048)
+
+
+class EmailOnlySerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        return User.objects.normalize_email(value.strip())
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField(max_length=2048)
+    password = serializers.CharField(write_only=True, validators=[validate_password])
+
+
+class GoogleLoginSerializer(serializers.Serializer):
+    token = serializers.CharField(max_length=4096)

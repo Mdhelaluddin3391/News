@@ -19,17 +19,20 @@ function renderFeatured(article) {
     const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
     const categoryName = article.category ? article.category.name : 'World';
     const authorName = article.author ? article.author.name : 'Staff';
+    const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(article.title || 'Untitled') : (article.title || 'Untitled');
+    const safeCategoryName = typeof window.escapeHtml === 'function' ? window.escapeHtml(categoryName) : categoryName;
+    const safeAuthorName = typeof window.escapeHtml === 'function' ? window.escapeHtml(authorName) : authorName;
     const liveBadgeHTML = article.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
 
     container.innerHTML = `
         ${liveBadgeHTML}
-        <img src="${imageUrl}" alt="${article.title}" class="featured-image ${containClass}" loading="lazy">
+        <img src="${imageUrl}" alt="${safeTitle}" class="featured-image ${containClass}" loading="lazy">
         <div class="featured-overlay">
-            <span class="featured-category">${categoryName.toUpperCase()}</span>
-            <h2 class="featured-title">${article.title}</h2>
+            <span class="featured-category">${safeCategoryName.toUpperCase()}</span>
+            <h2 class="featured-title">${safeTitle}</h2>
             <div class="featured-meta">
                 <span><i class="far fa-clock"></i> ${timeAgo}</span>
-                <span><i class="far fa-user"></i> By ${authorName}</span>
+                <span><i class="far fa-user"></i> By ${safeAuthorName}</span>
                 <span><i class="far fa-eye"></i> ${article.views || 0} views</span>
             </div>
         </div>
@@ -54,13 +57,15 @@ function renderTrending(trending) {
     trending.forEach((item, index) => {
         const number = (index + 1).toString().padStart(2, '0');
         const categoryName = item.category ? item.category.name : 'News';
+        const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(item.title || 'Untitled') : (item.title || 'Untitled');
+        const safeCategoryName = typeof window.escapeHtml === 'function' ? window.escapeHtml(categoryName) : categoryName;
 
         html += `
             <div class="trending-news-item" data-slug="${item.slug}">
                 <div class="trending-number">${number}</div>
                 <div class="trending-content">
-                    <h4>${item.title}</h4>
-                    <div class="trending-category">${categoryName.toUpperCase()}</div>
+                    <h4>${safeTitle}</h4>
+                    <div class="trending-category">${safeCategoryName.toUpperCase()}</div>
                 </div>
             </div>
         `;
@@ -82,9 +87,10 @@ function renderCategories(categories) {
 
     let html = '';
     categories.forEach(cat => {
+        const safeName = typeof window.escapeHtml === 'function' ? window.escapeHtml(cat.name || 'Category') : (cat.name || 'Category');
         // ✅ SEO FIX: Use clean URL path for categories
         html += `
-            <li><a href="/category/${cat.slug}">${cat.name}</a></li>
+            <li><a href="/category/${cat.slug}">${safeName}</a></li>
         `;
     });
     container.innerHTML = html;
@@ -97,7 +103,7 @@ function renderBreakingTicker(articles) {
     if (articles && articles.length > 0) {
         // ✅ SEO FIX: Use clean URL path for breaking news
         const html = articles.map(article => 
-            `<a href="/article/${article.slug}" class="breaking-link">${article.title}</a>`
+            `<a href="/article/${article.slug}" class="breaking-link">${typeof window.escapeHtml === 'function' ? window.escapeHtml(article.title || 'Untitled') : (article.title || 'Untitled')}</a>`
         ).join(' &nbsp;&bull;&nbsp; '); 
         
         container.innerHTML = html;
@@ -120,13 +126,14 @@ function renderEditorsPicks(picks) {
     picks.forEach(item => {
         const imageUrl = window.getFullImageUrl(item.featured_image, 'images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
+        const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(item.title || 'Untitled') : (item.title || 'Untitled');
         
         // ✅ SEO FIX: Use clean URL path for onclick
         html += `
             <div class="side-post" onclick="window.location.href='/article/${item.slug}'" style="margin-bottom: 15px; cursor: pointer;">
-                <img src="${imageUrl}" alt="${item.title}" class="${containClass}" loading="lazy">
+                <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}" loading="lazy">
                 <div class="side-post-content">
-                    <h4 style="font-size: 0.95rem;">${item.title}</h4>
+                    <h4 style="font-size: 0.95rem;">${safeTitle}</h4>
                     <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(item.published_at)}</span>
                 </div>
             </div>
@@ -207,15 +214,16 @@ async function loadNextCategories(count = 1) {
                 const sideLiveBadge = a.is_live ? `<div class="live-badge-card" style="padding: 2px 5px; font-size: 0.6rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
                 const sideImageUrl = window.getFullImageUrl(a.featured_image, 'images/default-news.png');
                 const sideContainClass = sideImageUrl.includes('default-news.png') ? 'img-contain' : '';
+                const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(a.title || 'Untitled') : (a.title || 'Untitled');
                 
                 // ✅ SEO FIX: Clean URL for side-post
                 return `
                 <div class="side-post" onclick="window.location.href='/article/${a.slug}'" style="position: relative;">
                     ${sideLiveBadge}
-                    <img src="${sideImageUrl}" alt="${a.title}" class="${sideContainClass}" loading="lazy">
+                    <img src="${sideImageUrl}" alt="${safeTitle}" class="${sideContainClass}" loading="lazy">
                     
                     <div class="side-post-content">
-                        <h4>${a.title}</h4>
+                        <h4>${safeTitle}</h4>
                         <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(a.published_at)}</span>
                     </div>
                 </div>
@@ -226,23 +234,28 @@ async function loadNextCategories(count = 1) {
             const mainLiveBadge = mainArticle.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
             const mainImageUrl = window.getFullImageUrl(mainArticle.featured_image, 'images/default-news.png');
             const containClass = mainImageUrl.includes('default-news.png') ? 'img-contain' : '';
+            const safeCategoryName = typeof window.escapeHtml === 'function' ? window.escapeHtml(cat.name || 'Category') : (cat.name || 'Category');
+            const safeMainTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(mainArticle.title || 'Untitled') : (mainArticle.title || 'Untitled');
+            const safeMainDescription = typeof window.escapeHtml === 'function'
+                ? window.escapeHtml(mainArticle.description ? (mainArticle.description.length > 110 ? mainArticle.description.substring(0, 110) + '...' : mainArticle.description) : '')
+                : (mainArticle.description ? (mainArticle.description.length > 110 ? mainArticle.description.substring(0, 110) + '...' : mainArticle.description) : '');
 
             // ✅ SEO FIX: Clean URL for category link and main post
             html += `
                 <div class="category-block">
                     <h2 class="category-heading" style="margin-top: 1rem; margin-bottom: 1.5rem; font-size: 1.8rem;">
                         <a href="/category/${cat.slug}" style="text-decoration:none; color:inherit; display:flex; justify-content:space-between; align-items:center;">
-                            ${cat.name} 
+                            ${safeCategoryName} 
                             <span style="font-size:0.9rem; color:var(--primary); font-family:'Roboto', sans-serif;">View All →</span>
                         </a>
                     </h2>
                     <div class="category-grid">
                         <div class="main-post" onclick="window.location.href='/article/${mainArticle.slug}'">
                             ${mainLiveBadge}
-                            <img src="${mainImageUrl}" alt="${mainArticle.title}" class="${containClass}">
+                            <img src="${mainImageUrl}" alt="${safeMainTitle}" class="${containClass}">
                             <div class="main-post-content">
-                                <h3>${mainArticle.title}</h3>
-                                <p>${mainArticle.description ? (mainArticle.description.length > 110 ? mainArticle.description.substring(0, 110) + '...' : mainArticle.description) : ''}</p>
+                                <h3>${safeMainTitle}</h3>
+                                <p>${safeMainDescription}</p>
                                 <span class="main-meta"><i class="far fa-clock"></i> ${formatTimeAgo(mainArticle.published_at)}</span>
                             </div>
                         </div>
@@ -368,7 +381,7 @@ async function initHomepage() {
                             "@type": "Organization",
                             "name": "Ferox Times",
                             "url": window.location.origin,
-                            "logo": `${window.location.origin}/images/logo.png`, 
+                            "logo": `${window.location.origin}/images/default-news.png`, 
                             "sameAs": [
                                 "https://www.facebook.com/feroxtimes",
                                 "https://twitter.com/feroxtimes"
@@ -455,25 +468,23 @@ if (newsletterForm) {
         btn.textContent = 'Subscribing...';
 
         try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/newsletter/subscribe/`, {
+            const response = await apiFetch(`${CONFIG.API_BASE_URL}/newsletter/subscribe/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
             });
 
-            const data = await response.json();
+            const data = await response.json().catch(() => ({}));
 
             if (response.ok) {
                 if(typeof showToast === 'function') showToast(data.message || 'Thank you for subscribing!', 'success');
-                else alert(data.message || 'Thank you for subscribing!');
                 newsletterForm.reset();
             } else {
                 if(typeof showToast === 'function') showToast(data.error || 'Subscription failed.', 'error');
-                else alert(data.error || 'Subscription failed.');
             }
         } catch (err) {
             console.error(err);
-            alert('Network Error. Please try again later.');
+            if(typeof showToast === 'function') showToast('Network Error. Please try again later.', 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = 'Subscribe Now';
@@ -500,14 +511,15 @@ function renderRecentNews(articles) {
         const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         const liveBadge = article.is_live ? `<div class="live-badge-card" style="padding: 2px 4px; font-size: 0.65rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
+        const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(article.title || 'Untitled') : (article.title || 'Untitled');
 
         // ✅ SEO FIX: Use clean URL for recent news
         html += `
             <div class="recent-news-card" onclick="window.location.href='/article/${article.slug}'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
                 ${liveBadge}
-                <img src="${imageUrl}" alt="${article.title}" class="${containClass}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);" loading="lazy">
+                <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);" loading="lazy">
                 <div style="padding: 12px 10px;">
-                    <h4 style="font-size: 0.85rem; margin-bottom: 8px; line-height: 1.4; color: var(--dark); font-family: 'Roboto', sans-serif; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${article.title}</h4>
+                    <h4 style="font-size: 0.85rem; margin-bottom: 8px; line-height: 1.4; color: var(--dark); font-family: 'Roboto', sans-serif; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${safeTitle}</h4>
                     <span style="font-size: 0.75rem; color: var(--secondary); font-weight: 600;"><i class="far fa-clock"></i> ${timeAgo}</span>
                 </div>
             </div>
@@ -543,13 +555,15 @@ function renderTopStories(stories) {
     stories.forEach((item, index) => {
         const number = (index + 1).toString().padStart(2, '0');
         const categoryName = item.category ? item.category.name : 'News';
+        const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(item.title || 'Untitled') : (item.title || 'Untitled');
+        const safeCategoryName = typeof window.escapeHtml === 'function' ? window.escapeHtml(categoryName) : categoryName;
 
         html += `
             <div class="trending-news-item" data-slug="${item.slug}" style="cursor: pointer;">
                 <div class="trending-number" style="color: var(--primary); font-size: 1.8rem;">${number}</div>
                 <div class="trending-content">
-                    <h4 style="font-size: 0.95rem; margin-bottom: 5px;">${item.title}</h4>
-                    <div class="trending-category" style="font-size: 0.75rem;">${categoryName.toUpperCase()}</div>
+                    <h4 style="font-size: 0.95rem; margin-bottom: 5px;">${safeTitle}</h4>
+                    <div class="trending-category" style="font-size: 0.75rem;">${safeCategoryName.toUpperCase()}</div>
                 </div>
             </div>
         `;
@@ -610,13 +624,14 @@ function renderStoryThumbnails() {
     dynamicStories.forEach((story, index) => {
         const imageUrl = window.getFullImageUrl(story.featured_image, 'images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
+        const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(story.title || 'Untitled') : (story.title || 'Untitled');
         
         html += `
             <div class="story-thumb" onclick="openStoryModal(${index})">
                 <div class="story-thumb-inner">
-                    <img src="${imageUrl}" alt="${story.title}" class="${containClass}" loading="lazy">
+                    <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}" loading="lazy">
                     <div class="story-thumb-overlay">
-                        <div class="story-thumb-title">${story.title}</div>
+                        <div class="story-thumb-title">${safeTitle}</div>
                     </div>
                 </div>
             </div>
@@ -651,14 +666,17 @@ function showStory() {
     const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
     const categoryName = story.category ? story.category.name : 'News';
     const shortDesc = story.description ? (story.description.length > 100 ? story.description.substring(0, 100) + '...' : story.description) : '';
+    const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(story.title || 'Untitled') : (story.title || 'Untitled');
+    const safeCategoryName = typeof window.escapeHtml === 'function' ? window.escapeHtml(categoryName) : categoryName;
+    const safeShortDesc = typeof window.escapeHtml === 'function' ? window.escapeHtml(shortDesc) : shortDesc;
     
     // ✅ SEO FIX: Use clean URL for "Read More" button
     display.innerHTML = `
-        <img src="${imageUrl}" alt="Story" class="${containClass}">
+        <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}">
         <div class="story-text-container">
-            <span class="story-badge">${categoryName}</span>
-            <h2 class="story-modal-title">${story.title}</h2>
-            <p class="story-modal-desc">${shortDesc}</p>
+            <span class="story-badge">${safeCategoryName}</span>
+            <h2 class="story-modal-title">${safeTitle}</h2>
+            <p class="story-modal-desc">${safeShortDesc}</p>
             <a href="/article/${story.slug}" class="story-read-more">Swipe up or Click to Read More</a>
         </div>
     `;

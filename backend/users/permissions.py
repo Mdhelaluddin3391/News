@@ -25,7 +25,9 @@ class IsOwnerOrEditorOrAdmin(permissions.BasePermission):
         # Admins and Editors can edit anything
         if request.user.role in ['admin', 'editor']:
             return True
-        
-        # Reporters and Authors can only edit if they are the author of the article
-        # Assuming your Article model has an `author` field that maps to the User
-        return obj.author.user == request.user
+
+        if obj.author is None or obj.author.user_id is None:
+            return False
+
+        # Reporters and Authors can only edit if they are the author of the article.
+        return obj.author.user_id == request.user.id

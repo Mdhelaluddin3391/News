@@ -1,3 +1,4 @@
+import bleach
 from rest_framework import serializers
 
 from .models import (
@@ -10,6 +11,24 @@ from .models import (
 
 
 class ContactMessageSerializer(serializers.ModelSerializer):
+    def validate_name(self, value):
+        cleaned_value = bleach.clean(value, tags=[], strip=True).strip()
+        if len(cleaned_value) < 2:
+            raise serializers.ValidationError("Name must contain at least 2 characters.")
+        return cleaned_value
+
+    def validate_subject(self, value):
+        cleaned_value = bleach.clean(value, tags=[], strip=True).strip()
+        if len(cleaned_value) < 3:
+            raise serializers.ValidationError("Subject must contain at least 3 characters.")
+        return cleaned_value
+
+    def validate_message(self, value):
+        cleaned_value = bleach.clean(value, tags=[], strip=True).strip()
+        if len(cleaned_value) < 10:
+            raise serializers.ValidationError("Message must contain at least 10 characters.")
+        return cleaned_value
+
     class Meta:
         model = ContactMessage
         fields = ["id", "name", "email", "subject", "message", "created_at"]

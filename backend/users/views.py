@@ -4,7 +4,7 @@ import logging
 import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.mail import EmailMultiAlternatives
+from django.db import transaction
 from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -17,7 +17,16 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import ProfileSerializer, RegisterSerializer, UserSerializer
+from core.tasks import send_async_email
+from .serializers import (
+    EmailOnlySerializer,
+    GoogleLoginSerializer,
+    ProfileSerializer,
+    RegisterSerializer,
+    ResetPasswordSerializer,
+    TokenOnlySerializer,
+    UserSerializer,
+)
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -121,14 +130,7 @@ def send_verification_email(user, regenerate_token=False):
     </html>
     """
 
-    email_message = EmailMultiAlternatives(
-        subject=subject,
-        body=text_content,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[user.email],
-    )
-    email_message.attach_alternative(html_content, "text/html")
-    email_message.send(fail_silently=False)
+    send_async_email.delay(subject, text_content, [user.email], html_content)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -145,7 +147,7 @@ class RegisterView(generics.CreateAPIView):
 
         email_sent = True
         try:
-            send_verification_email(user)
+            transaction.on_commit(lambda: send_verification_email(user))
         except Exception:
             email_sent = False
             logger.exception("Failed to send verification email for %s", user.email)
@@ -169,9 +171,9 @@ class VerifyEmailView(APIView):
     throttle_scope = "auth"
 
     def post(self, request):
-        token = (request.data.get("token") or "").strip()
-        if not token:
-            return Response({"error": "Verification token is required."}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = TokenOnlySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        token = serializer.validated_data["token"].strip()
 
         user = User.objects.filter(email_verification_token=token).first()
         if not user:
@@ -202,16 +204,14 @@ class ResendVerificationEmailView(APIView):
     throttle_scope = "email_alert"
 
     def post(self, request):
-        raw_email = (request.data.get("email") or "").strip()
-        if not raw_email:
-            return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
-
-        email = User.objects.normalize_email(raw_email)
+        serializer = EmailOnlySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
         user = User.objects.filter(email__iexact=email).first()
 
         if user and not user.is_email_verified:
             try:
-                send_verification_email(user, regenerate_token=True)
+                transaction.on_commit(lambda: send_verification_email(user, regenerate_token=True))
             except Exception:
                 logger.exception("Failed to resend verification email for %s", email)
                 return Response(
@@ -272,9 +272,9 @@ class ForgotPasswordView(APIView):
     throttle_scope = "email_alert"
 
     def post(self, request):
-        email = request.data.get("email")
-        if not email:
-            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = EmailOnlySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
 
         try:
             user = User.objects.get(email=email)
@@ -321,14 +321,12 @@ class ForgotPasswordView(APIView):
             </html>
             """
 
-            email_message = EmailMultiAlternatives(
-                subject="Password Reset Request - Ferox Times",
-                body=f"Hello {user.name},\n\nClick the link below to reset your password:\n{reset_link}",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[user.email],
+            send_async_email.delay(
+                "Password Reset Request - Ferox Times",
+                f"Hello {user.name},\n\nClick the link below to reset your password:\n{reset_link}",
+                [user.email],
+                html_content,
             )
-            email_message.attach_alternative(html_content, "text/html")
-            email_message.send(fail_silently=False)
         except User.DoesNotExist:
             pass
 
@@ -341,11 +339,10 @@ class ResetPasswordView(APIView):
     throttle_scope = "auth"
 
     def post(self, request):
-        token = request.data.get("token")
-        password = request.data.get("password")
-
-        if not token or not password:
-            return Response({"error": "Token and password are required"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        token = serializer.validated_data["token"]
+        password = serializer.validated_data["password"]
 
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
@@ -371,9 +368,9 @@ class GoogleLoginView(APIView):
     throttle_scope = "auth"
 
     def post(self, request):
-        token = request.data.get("token")
-        if not token:
-            return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = GoogleLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        token = serializer.validated_data["token"]
 
         try:
             idinfo = id_token.verify_oauth2_token(

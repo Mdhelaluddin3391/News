@@ -1,5 +1,5 @@
 [Unit]
-Description=Newshub Daphne ASGI Server
+Description=Newshub Celery Beat
 After=network.target
 
 [Service]
@@ -8,7 +8,7 @@ User=ubuntu
 Group=www-data
 WorkingDirectory=/home/ubuntu/Myproject/news-backend
 EnvironmentFile=/home/ubuntu/Myproject/news-backend/.env
-ExecStart=/bin/sh -c '/home/ubuntu/venvs/newshub/bin/daphne -b 0.0.0.0 -p ${PORT:-5000} newshub_core.asgi:application'
+ExecStart=/home/ubuntu/venvs/newshub/bin/celery -A newshub_core beat --loglevel=info
 Restart=always
 RestartSec=5
 

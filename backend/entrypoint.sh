@@ -18,6 +18,11 @@ if [ "$SKIP_COLLECTSTATIC" != "true" ]; then
     python manage.py collectstatic --noinput
 fi
 
+if [ "$RUN_DEPLOY_CHECKS" = "true" ]; then
+    echo "Running Django deployment checks..."
+    python manage.py check --deploy --fail-level WARNING
+fi
+
 echo "Starting server..."
 # "$@" ka matlab hai ki jo command Dockerfile ya docker-compose mein di gayi hai, wo execute hogi
 exec "$@"

@@ -1,9 +1,11 @@
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const SHELL_CACHE = `ferox-times-shell-${CACHE_VERSION}`;
 const PAGE_CACHE = `ferox-times-pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `ferox-times-assets-${CACHE_VERSION}`;
 const API_CACHE = `ferox-times-api-${CACHE_VERSION}`;
 const OFFLINE_FALLBACK_URL = '/';
+const PRIVATE_PAGE_PREFIXES = ['/profile', '/saved', '/edit-profile'];
+const PRIVATE_API_PREFIXES = ['/api/auth/', '/api/users/profile/', '/api/interactions/bookmarks/'];
 const PRECACHE_URLS = [
     '/',
     '/404',
@@ -14,15 +16,12 @@ const PRECACHE_URLS = [
     '/authors',
     '/careers',
     '/contact',
-    '/edit-profile',
     '/faq',
     '/forgot-password',
     '/login',
     '/privacy',
-    '/profile',
     '/register',
     '/reset-password',
-    '/saved',
     '/search',
     '/tag',
     '/terms',
@@ -104,6 +103,14 @@ self.addEventListener('activate', (event) => {
 
 function isApiRequest(url) {
     return url.origin === self.location.origin && url.pathname.startsWith('/api/');
+}
+
+function shouldBypassPageCache(url) {
+    return PRIVATE_PAGE_PREFIXES.some((prefix) => url.pathname.startsWith(prefix));
+}
+
+function shouldBypassApiCache(url) {
+    return PRIVATE_API_PREFIXES.some((prefix) => url.pathname.startsWith(prefix));
 }
 
 function isPageRequest(request) {
@@ -189,6 +196,11 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (isPageRequest(request)) {
+        if (shouldBypassPageCache(url)) {
+            event.respondWith(fetch(request));
+            return;
+        }
+
         event.respondWith(networkFirst(
             request,
             PAGE_CACHE,
@@ -199,6 +211,11 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (isApiRequest(url)) {
+        if (shouldBypassApiCache(url)) {
+            event.respondWith(fetch(request));
+            return;
+        }
+
         event.respondWith(networkFirst(request, API_CACHE));
         return;
     }

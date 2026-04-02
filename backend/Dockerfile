@@ -28,4 +28,4 @@ RUN if [ "$SKIP_COLLECTSTATIC" = "false" ]; then python manage.py collectstatic 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Gunicorn ke through server run karein (Default command)
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "newshub_core.asgi:application"]
+CMD ["sh", "-c", "daphne -b 0.0.0.0 -p ${PORT:-5000} newshub_core.asgi:application"]

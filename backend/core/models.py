@@ -20,6 +20,11 @@ class ContactMessage(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_resolved = models.BooleanField(default=False, help_text="Mark if this query has been handled.")
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['is_resolved', '-created_at'], name='core_contact_resolved_idx'),
+        ]
+
     def __str__(self):
         return f"Message from {self.name} - {self.subject}"
     
@@ -51,6 +56,11 @@ class Advertisement(models.Model):
     
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['slot', 'is_active', '-priority', '-created_at'], name='core_ad_slot_active_idx'),
+        ]
 
     def __str__(self):
         return f"{self.title} - {self.get_slot_display()} ({self.ad_type})"
@@ -160,6 +170,11 @@ class JobPosting(BaseModel):
     employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPES)
     description = models.TextField(help_text="Short description of the role")
     is_active = models.BooleanField(default=True, help_text="Uncheck karein agar ye job ab available nahi hai")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['is_active', '-created_at'], name='core_job_active_idx'),
+        ]
 
     def __str__(self):
         return self.title

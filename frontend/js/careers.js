@@ -99,7 +99,7 @@ ${coverLetter}
 
         try {
             // Existing Contact API par bhejna
-            const response = await fetch(`${CONFIG.API_BASE_URL}/contact/`, {
+            const response = await apiFetch(`${CONFIG.API_BASE_URL}/contact/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ ${coverLetter}
                 statusDiv.style.display = 'block';
                 this.reset(); 
             } else {
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
                 throw new Error(data.detail || 'Failed to submit application.');
             }
         } catch (error) {

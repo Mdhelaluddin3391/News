@@ -14,7 +14,6 @@ async function fetchComments(articleId) {
         if (typeof window.reportFrontendError === 'function') {
             window.reportFrontendError(error, { scope: 'comments', action: 'fetchComments', articleId });
         }
-        console.error('Error fetching comments:', error);
         return [];
     }
 }
@@ -92,6 +91,21 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function formatCommentDate(isoString) {
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) {
+        return 'Just now';
+    }
+
+    return date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    });
 }
 
 function getCommentFeedbackElement() {
@@ -210,55 +224,6 @@ function renderCommentForm(articleId, containerId, user, articleSlug) {
         button.textContent = 'Posting...';
 
         try {
-            await postComment(articleId, text); // Keep articleId here for DB relation rules
-            textarea.value = '';
-            showCommentFeedback('Comment posted successfully.');
-            await renderComments(articleId, containerId, articleSlug);
-        } catch (error) {
-            showCommentFeedback(error.message, 'error');
-            button.disabled = false;
-            button.textContent = 'Post Comment';
-        }
-    });
-}
-
-function renderCommentForm(articleId, containerId, user, articleSlug) {
-    const formContainer = document.getElementById('comment-form-container');
-    if (!formContainer) {
-        return;
-    }
-
-    if (!user) {
-        formContainer.innerHTML = `
-            <p class="login-prompt">
-                <a href="/login?redirect=/article/${articleSlug}">Log in</a> to post a comment or flag one for review.
-            </p>
-        `;
-        return;
-    }
-
-    formContainer.innerHTML = `
-        <div class="comment-form">
-            <h4>Add a Comment</h4>
-            <textarea id="new-comment-text" rows="3" placeholder="Write your comment..."></textarea>
-            <button id="submit-comment" type="button">Post Comment</button>
-        </div>
-    `;
-
-    document.getElementById('submit-comment').addEventListener('click', async () => {
-        const textarea = document.getElementById('new-comment-text');
-        const button = document.getElementById('submit-comment');
-        const text = textarea.value.trim();
-
-        if (!text) {
-            showCommentFeedback('Please write a comment before posting.', 'error');
-            return;
-        }
-
-        button.disabled = true;
-        button.textContent = 'Posting...';
-
-        try {
             await postComment(articleId, text);
             textarea.value = '';
             showCommentFeedback('Comment posted successfully.');
@@ -322,3 +287,75 @@ function showReportModal(commentId) {
 
     setTimeout(() => overlay.classList.add('active'), 10);
 }
+
+async function renderComments(articleId, containerId, articleSlug) {
+    const container = document.getElementById(containerId);
+    if (!container) {
+        return;
+    }
+
+    const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const comments = await fetchComments(articleId);
+
+    if (!comments.length) {
+        container.innerHTML = '<p class="comments-empty">No comments yet. Start the conversation.</p>';
+        renderCommentForm(articleId, containerId, currentUser, articleSlug);
+        return;
+    }
+
+    container.innerHTML = comments.map((comment) => {
+        const commentUser = comment.user_detail || {};
+        const isOwner = currentUser && commentUser.id === currentUser.id;
+        const authorName = escapeHtml(commentUser.name || 'Anonymous');
+        const authorRole = escapeHtml(commentUser.role || 'Reader');
+        const commentText = escapeHtml(comment.text);
+        const createdAt = formatCommentDate(comment.created_at);
+        const deleteButton = isOwner
+            ? `<button type="button" class="comment-action-btn" data-delete-comment="${comment.id}">Delete</button>`
+            : '';
+        const reportButton = currentUser && !isOwner
+            ? `<button type="button" class="comment-action-btn" data-report-comment="${comment.id}">Report Flag</button>`
+            : '';
+
+        return `
+            <article class="comment-card">
+                <div class="comment-card-header">
+                    <div>
+                        <strong class="comment-author">${authorName}</strong>
+                        <span class="comment-author-role">${authorRole}</span>
+                    </div>
+                    <time class="comment-date" datetime="${escapeHtml(comment.created_at)}">${createdAt}</time>
+                </div>
+                <p class="comment-text">${commentText}</p>
+                <div class="comment-actions">
+                    ${deleteButton}
+                    ${reportButton}
+                </div>
+            </article>
+        `;
+    }).join('');
+
+    container.querySelectorAll('[data-delete-comment]').forEach((button) => {
+        button.addEventListener('click', () => {
+            showCustomConfirm('Delete this comment permanently?', async () => {
+                try {
+                    await deleteComment(button.dataset.deleteComment);
+                    showCommentFeedback('Comment deleted successfully.');
+                    await renderComments(articleId, containerId, articleSlug);
+                } catch (error) {
+                    showCommentFeedback(error.message, 'error');
+                }
+            });
+        });
+    });
+
+    container.querySelectorAll('[data-report-comment]').forEach((button) => {
+        button.addEventListener('click', () => {
+            showReportModal(button.dataset.reportComment);
+        });
+    });
+
+    renderCommentForm(articleId, containerId, currentUser, articleSlug);
+}
+
+window.renderComments = renderComments;

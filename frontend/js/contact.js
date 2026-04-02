@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Send data to backend API
-            const response = await fetch(CONTACT_API_URL, {
+            const response = await apiFetch(CONTACT_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.reset(); // Clear the form
             } else {
                 // Handle API validation errors
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
                 throw new Error(data.detail || 'Failed to send message.');
             }
         } catch (error) {

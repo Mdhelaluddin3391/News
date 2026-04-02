@@ -2,14 +2,16 @@ from pathlib import Path
 import os
 import ssl
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 from corsheaders.defaults import default_headers
 
-# Load environment variables from .env file
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+ENV_FILE = BASE_DIR.parent / '.env'
+
+# Load environment variables from the repository root .env file when present.
+load_dotenv(ENV_FILE)
 
 def _get_bool_env(name, default=False):
     return os.getenv(name, str(default)).strip().lower() == 'true'
@@ -20,30 +22,53 @@ def _get_list_env(name, default=''):
     return [item.strip() for item in value.split(',') if item.strip()]
 
 
+def _is_placeholder_secret(value):
+    if value is None:
+        return True
+
+    normalized = value.strip().lower()
+    placeholder_markers = (
+        'replace-with',
+        'change-me',
+        'dummy-key-for-build-only',
+        'example.com',
+    )
+    return not normalized or any(marker in normalized for marker in placeholder_markers)
+
+
+def _derive_redis_url(url, database_number):
+    parsed = urlparse(url)
+    return parsed._replace(path=f'/{database_number}').geturl()
+
+
 # Security and Core Settings
-SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = _get_bool_env('DEBUG', False)
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-development-only-key'
+    else:
+        raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is false.')
+elif not DEBUG and _is_placeholder_secret(SECRET_KEY):
+    raise ImproperlyConfigured('SECRET_KEY must be replaced with a real production secret.')
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = _get_bool_env('USE_X_FORWARDED_HOST', not DEBUG)
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 if not DEBUG:
-    # HTTP requests ne automatically HTTPS par redirect karse
     SECURE_SSL_REDIRECT = True
-    
-    # Cookies ne sirf HTTPS par j send karva de
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    
-    # HSTS (HTTP Strict Transport Security) enable karva (optional but recommended)
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
-    
-ALLOWED_HOSTS = _get_list_env('ALLOWED_HOSTS', '127.0.0.1,localhost,0.0.0.0', "13.51.64.180",
-    "feroxtimes.com",
-    "www.feroxtimes.com")
+ALLOWED_HOSTS = _get_list_env('ALLOWED_HOSTS', '127.0.0.1,localhost,0.0.0.0')
+if not DEBUG and not ALLOWED_HOSTS:
+    raise ImproperlyConfigured('ALLOWED_HOSTS must contain at least one hostname in production.')
 
 WHITENOISE_MANIFEST_STRICT = False
 
@@ -78,6 +103,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.gzip.GZipMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -119,6 +145,10 @@ ASGI_APPLICATION = 'newshub_core.asgi.application'
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 DATABASE_CONN_MAX_AGE = int(os.getenv('DATABASE_CONN_MAX_AGE', '60'))
+DATABASE_CONN_HEALTH_CHECKS = _get_bool_env('DATABASE_CONN_HEALTH_CHECKS', True)
+DATABASE_CONNECT_TIMEOUT = int(os.getenv('DATABASE_CONNECT_TIMEOUT', '5'))
+DATABASE_STATEMENT_TIMEOUT_MS = int(os.getenv('DATABASE_STATEMENT_TIMEOUT_MS', '15000'))
+DATABASE_APPLICATION_NAME = os.getenv('DATABASE_APPLICATION_NAME', 'newshub-backend')
 DATABASE_SSL_MODE = os.getenv('DATABASE_SSL_MODE', '')
 DATABASE_SSL_ROOT_CERT = os.getenv('DATABASE_SSL_ROOT_CERT', '')
 
@@ -169,17 +199,35 @@ else:
         }
     }
 
+if not DEBUG and DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    postgres_password = DATABASES['default'].get('PASSWORD')
+    if _is_placeholder_secret(postgres_password):
+        raise ImproperlyConfigured('POSTGRES_PASSWORD must be replaced with a real production password.')
+
 DATABASES['default']['CONN_MAX_AGE'] = DATABASE_CONN_MAX_AGE
-if DATABASE_SSL_MODE:
-    DATABASES['default'].setdefault('OPTIONS', {})['sslmode'] = DATABASE_SSL_MODE
-if DATABASE_SSL_ROOT_CERT:
-    DATABASES['default'].setdefault('OPTIONS', {})['sslrootcert'] = DATABASE_SSL_ROOT_CERT
+DATABASES['default']['CONN_HEALTH_CHECKS'] = DATABASE_CONN_HEALTH_CHECKS
+if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
+    DATABASES['default'].setdefault('OPTIONS', {})
+    DATABASES['default']['OPTIONS'].setdefault('connect_timeout', DATABASE_CONNECT_TIMEOUT)
+    DATABASES['default']['OPTIONS'].setdefault('application_name', DATABASE_APPLICATION_NAME)
+    if DATABASE_STATEMENT_TIMEOUT_MS > 0:
+        DATABASES['default']['OPTIONS'].setdefault(
+            'options',
+            f'-c statement_timeout={DATABASE_STATEMENT_TIMEOUT_MS}',
+        )
+    if DATABASE_SSL_MODE:
+        DATABASES['default']['OPTIONS']['sslmode'] = DATABASE_SSL_MODE
+    if DATABASE_SSL_ROOT_CERT:
+        DATABASES['default']['OPTIONS']['sslrootcert'] = DATABASE_SSL_ROOT_CERT
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'users.authentication.CookieJWTAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
     'PAGE_SIZE': 12,
     
     'DEFAULT_THROTTLE_CLASSES': [
@@ -193,7 +241,10 @@ REST_FRAMEWORK = {
         'auth': '5/minute',         
         'email_alert': '3/hour',    
         'comment_report': '10/hour', 
-    
+        'contact_form': '5/hour',
+        'newsletter': '10/hour',
+        'poll_vote': '30/hour',
+        'push_subscribe': '20/hour',
     },
 }
 
@@ -214,7 +265,11 @@ STORAGES = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage' if not DEBUG else 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage',
+        'BACKEND': (
+            'django.contrib.staticfiles.storage.StaticFilesStorage'
+            if DEBUG
+            else 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+        ),
     },
 }
 
@@ -256,13 +311,17 @@ else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # Static & Media Files
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Core CORS / redirect behavior control (fixes CORS + 301 for API clients)
 APPEND_SLASH = False
+PORT = int(os.getenv('PORT', '5000'))
+APP_ENV = os.getenv('APP_ENV', 'development' if DEBUG else 'production')
+PUBLIC_API_CACHE_TTL = int(os.getenv('PUBLIC_API_CACHE_TTL', '300'))
+SITE_SETTINGS_CACHE_TTL = int(os.getenv('SITE_SETTINGS_CACHE_TTL', '3600'))
 
 # CORS config
 CORS_ALLOW_ALL_ORIGINS = _get_bool_env('CORS_ALLOW_ALL_ORIGINS', DEBUG)
@@ -271,7 +330,7 @@ if CORS_ALLOW_ALL_ORIGINS:
 else:
     CORS_ALLOWED_ORIGINS = _get_list_env(
         'CORS_ALLOWED_ORIGINS',
-        'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000,http://0.0.0.0:8000'
+        'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000,http://0.0.0.0:5000'
     )
 
 CORS_ALLOW_CREDENTIALS = _get_bool_env('CORS_ALLOW_CREDENTIALS', True)
@@ -284,11 +343,9 @@ CORS_EXPOSE_HEADERS = [
     'Authorization',
 ]
 
-# Allow frontend dev host for CSRF
-domain_name = os.getenv('DOMAIN_NAME', 'localhost')
 CSRF_TRUSTED_ORIGINS = _get_list_env(
     'CSRF_TRUSTED_ORIGINS',
-    'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000'
+    'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000'
 )
 
 # CSRF_TRUSTED_ORIGINS = [
@@ -307,9 +364,10 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '15'))
 
 # URLs and IDs
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost').rstrip('/')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
 SITE_ID = 1
 
@@ -374,7 +432,11 @@ TINYMCE_DEFAULT_CONFIG = {
     """,
 }
 
-REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/0')
+REDIS_CACHE_URL = os.getenv('REDIS_CACHE_URL', _derive_redis_url(REDIS_URL, 1))
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', _derive_redis_url(REDIS_URL, 2))
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', _derive_redis_url(REDIS_URL, 3))
+CHANNEL_REDIS_URL = os.getenv('CHANNEL_REDIS_URL', _derive_redis_url(REDIS_URL, 4))
 
 if SENTRY_DSN:
     import sentry_sdk
@@ -394,19 +456,21 @@ if SENTRY_DSN:
         send_default_pii=SENTRY_SEND_DEFAULT_PII,
     )
 REDIS_SSL_NO_VERIFY = _get_bool_env('REDIS_SSL_NO_VERIFY', True)
-REDIS_CHANNEL_HOSTS = [REDIS_URL]
+REDIS_CHANNEL_HOSTS = [CHANNEL_REDIS_URL]
 
 # Redis Caching Setup
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
+        "LOCATION": REDIS_CACHE_URL,
+        "KEY_PREFIX": os.getenv('CACHE_KEY_PREFIX', 'newshub'),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "IGNORE_EXCEPTIONS": True,
-            # Removed the CONNECTION_POOL_KWARGS from here. We will add it conditionally.
+            "SOCKET_CONNECT_TIMEOUT": 5,
+            "SOCKET_TIMEOUT": 5,
         }
-    }
+    },
 }
 
 
@@ -420,25 +484,56 @@ CHANNEL_LAYERS = {
 }
 
 # Celery Setup
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_DEFAULT_QUEUE = os.getenv('CELERY_TASK_DEFAULT_QUEUE', 'default')
+CELERY_TASK_ACKS_LATE = _get_bool_env('CELERY_TASK_ACKS_LATE', True)
+CELERY_TASK_REJECT_ON_WORKER_LOST = _get_bool_env('CELERY_TASK_REJECT_ON_WORKER_LOST', True)
+CELERY_TASK_TRACK_STARTED = _get_bool_env('CELERY_TASK_TRACK_STARTED', True)
+CELERY_WORKER_PREFETCH_MULTIPLIER = int(os.getenv('CELERY_WORKER_PREFETCH_MULTIPLIER', '1'))
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_TASK_SOFT_TIME_LIMIT = int(os.getenv('CELERY_TASK_SOFT_TIME_LIMIT', '180'))
+CELERY_TASK_TIME_LIMIT = int(os.getenv('CELERY_TASK_TIME_LIMIT', '240'))
+CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.getenv('CELERY_WORKER_MAX_TASKS_PER_CHILD', '100'))
+CELERY_TASK_ROUTES = {
+    'core.tasks.send_async_email': {'queue': 'mail'},
+    'news.tasks.process_article_image': {'queue': 'media'},
+    'news.tasks.send_push_notifications_task': {'queue': 'notifications'},
+    'news.tasks.auto_post_article_task': {'queue': 'notifications'},
+    'news.tasks.auto_import_news_task': {'queue': 'default'},
+    'news.tasks.cleanup_expired_flags_task': {'queue': 'default'},
+}
+CELERY_BEAT_SCHEDULE = {
+    'auto-import-news-every-30-mins': {
+        'task': 'news.tasks.auto_import_news_task',
+        'schedule': 60 * 30,
+    },
+    'cleanup-expired-flags-every-hour': {
+        'task': 'news.tasks.cleanup_expired_flags_task',
+        'schedule': 60 * 60,
+    },
+}
 
-if REDIS_URL.startswith('rediss://'):
+if REDIS_CACHE_URL.startswith('rediss://'):
     if REDIS_SSL_NO_VERIFY:
         # redis-py library requires the string "none" instead of Python's None type
         CACHES['default']['OPTIONS']['CONNECTION_POOL_KWARGS'] = {
             "ssl_cert_reqs": "none"
         }
-        REDIS_CHANNEL_HOSTS[:] = [{
-            "address": REDIS_URL,
-            "ssl_cert_reqs": None,
-        }]
-        CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
-        CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+
+if CHANNEL_REDIS_URL.startswith('rediss://') and REDIS_SSL_NO_VERIFY:
+    REDIS_CHANNEL_HOSTS[:] = [{
+        "address": CHANNEL_REDIS_URL,
+        "ssl_cert_reqs": None,
+    }]
+
+if CELERY_BROKER_URL.startswith('rediss://') and REDIS_SSL_NO_VERIFY:
+    CELERY_BROKER_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
+
+if CELERY_RESULT_BACKEND.startswith('rediss://') and REDIS_SSL_NO_VERIFY:
+    CELERY_REDIS_BACKEND_USE_SSL = {'ssl_cert_reqs': ssl.CERT_NONE}
 
 # Web Push Settings
 WEBPUSH_SETTINGS = {
@@ -459,7 +554,45 @@ TWITTER_ACCESS_TOKEN_SECRET = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
 
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_HOST = _get_bool_env('USE_X_FORWARDED_HOST', not DEBUG)
+
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'DEBUG' if DEBUG else 'INFO').upper()
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s %(levelname)s %(name)s %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': LOG_LEVEL,
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+        'celery': {
+            'handlers': ['console'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+        'newshub': {
+            'handlers': ['console'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+    },
+}
 
 
 # Jazzmin Admin Settings

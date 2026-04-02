@@ -1,95 +1,30 @@
-import requests
-import tweepy
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
-from django.core.cache import cache
 from django.conf import settings
-from .models import Article, Category, Author
-import json
 from django.db import transaction
-from pywebpush import webpush, WebPushException
-from interactions.models import PushSubscription
-import threading
-from django.core.mail import send_mail
-from interactions.models import NewsletterSubscriber
-from core.tasks import send_async_email
-from .tasks import process_article_image
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from .models import LiveUpdate
-from .tasks import send_push_notifications_task
 
-
-# 1. Article Save (Create/Update) hone par
-@receiver(post_save, sender=Article)
-def clear_cache_on_article_save(sender, instance, **kwargs):
-    print(f"Article '{instance.title}' saved. Clearing cache...")
-    cache.clear()
-
-# 2. Article Delete hone par
-@receiver(post_delete, sender=Article)
-def clear_cache_on_article_delete(sender, instance, **kwargs):
-    print(f"Article '{instance.title}' deleted. Clearing cache...")
-    cache.clear()
-
-# 3. Category Save ya Delete hone par (Kyunki Categories bhi cache hoti hain)
-@receiver(post_save, sender=Category)
-@receiver(post_delete, sender=Category)
-def clear_cache_on_category_change(sender, instance, **kwargs):
-    print(f"Category '{instance.name}' updated. Clearing cache...")
-    cache.clear()
-
-# 4. Author Save ya Delete hone par
-@receiver(post_save, sender=Author)
-@receiver(post_delete, sender=Author)
-def clear_cache_on_author_change(sender, instance, **kwargs):
-    print("Author updated. Clearing cache...")
-    cache.clear()
+from core.tasks import send_async_email
+from interactions.models import NewsletterSubscriber
+from news.models import Article, LiveUpdate
+from news.tasks import auto_post_article_task, process_article_image, send_push_notifications_task
 
 
 @receiver(post_save, sender=Article)
-def handle_article_publish(sender, instance, created, **kwargs):
-    cache.clear()
-    
+def handle_article_publish(sender, instance, **_kwargs):
     if instance.status == 'published' and not instance.push_sent:
-        # Pura lamba loop ab yahan nahi chalega!
-        # Humne transaction.on_commit isliye use kiya taaki pehle article DB me
-        # theek se save ho jaye, fir task chale.
         transaction.on_commit(lambda: send_push_notifications_task.delay(instance.id))
 
-def send_bulk_emails_in_background(subject, message, recipient_list, html_message=None):
-    """Ye function background mein chalega taaki website slow na ho"""
-    try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=recipient_list,
-            fail_silently=False,
-            html_message=html_message # <--- NAYA
+    if instance.status == 'published' and instance.is_breaking and not instance.newsletter_sent:
+        subscribers = list(
+            NewsletterSubscriber.objects.filter(is_active=True).values_list('email', flat=True)
         )
-        print(f"✅ Automatically sent emails to {len(recipient_list)} subscribers!")
-    except Exception as e:
-        print(f"❌ Email sending error: {e}")
-
-
-        
-@receiver(post_save, sender=Article)
-def auto_send_newsletter_on_publish(sender, instance, created, **kwargs):
-    # SIRF tab email bhejenge jab article PUBLISHED ho, pehle na bheja gaya ho, aur BREAKING NEWS ho!
-    if instance.status == 'published' and not instance.newsletter_sent and instance.is_breaking:
-        
-        # Sirf 'Active' subscribers ki email list nikalein
-        subscribers = NewsletterSubscriber.objects.filter(is_active=True).values_list('email', flat=True)
-        recipient_list = list(subscribers)
-        
-        if recipient_list:
+        if subscribers:
             article_url = f"{settings.FRONTEND_URL}/article/{instance.slug}"
             subject = f"🚨 BREAKING NEWS: {instance.title}"
-            
-            # Email ka body (Message)
-            message = f"🚨 BREAKING NEWS\n\n{instance.title}\n\nPadhne ke liye yahan click karein: {article_url}"
-
+            message = f"🚨 BREAKING NEWS\n\n{instance.title}\n\nRead now: {article_url}"
             html_content = f"""
             <!DOCTYPE html>
             <html>
@@ -123,108 +58,38 @@ def auto_send_newsletter_on_publish(sender, instance, created, **kwargs):
             </body>
             </html>
             """
-            
-            send_async_email.delay(subject, message, recipient_list, html_content)
+            transaction.on_commit(lambda: send_async_email.delay(subject, message, subscribers, html_content))
+            Article.objects.filter(pk=instance.pk).update(newsletter_sent=True)
 
-        # Update database so we don't send it again
-        Article.objects.filter(pk=instance.pk).update(newsletter_sent=True)
+    if instance.status == 'published' and any(
+        [instance.post_to_facebook, instance.post_to_twitter, instance.post_to_telegram]
+    ):
+        transaction.on_commit(lambda: auto_post_article_task.delay(instance.id))
 
-
-@receiver(post_save, sender=Article)
-def handle_social_media_autopost(sender, instance, created, **kwargs):
-    # Check karein ki article published hai ya nahi
-    if instance.status == 'published':
-        article_url = f"{settings.FRONTEND_URL}/article/{instance.slug}"
-        short_desc = instance.description[:100] + "..." if instance.description else ""
-        message = f"🚨 {instance.title}\n\n📝 {short_desc}\n\n🔗 Pura padhne ke liye click karein:\n{article_url}\n\n#FeroxTimes #LatestNews"
-
-        # 1. FACEBOOK AUTO POST
-        if instance.post_to_facebook:
-            print("🚀 Posting to Facebook...")
-            try:
-                fb_url = f"https://graph.facebook.com/v18.0/{settings.FACEBOOK_PAGE_ID}/feed"
-                payload = {
-                    "message": message,
-                    "access_token": settings.FACEBOOK_ACCESS_TOKEN
-                }
-                # Agar image bhi bhejni hai (Optional, uske liye endpoint /photos hota hai)
-                response = requests.post(fb_url, data=payload)
-                if response.status_code == 200:
-                    print("✅ Facebook par post successfully ho gaya!")
-                else:
-                    print(f"❌ Facebook post failed: {response.json()}")
-            except Exception as e:
-                print(f"❌ Facebook error: {e}")
-            finally:
-                Article.objects.filter(pk=instance.pk).update(post_to_facebook=False)
-
-        # 2. TWITTER (X) AUTO POST
-        if instance.post_to_twitter:
-            print("🚀 Posting to Twitter...")
-            try:
-                client = tweepy.Client(
-                    consumer_key=settings.TWITTER_API_KEY,
-                    consumer_secret=settings.TWITTER_API_SECRET,
-                    access_token=settings.TWITTER_ACCESS_TOKEN,
-                    access_token_secret=settings.TWITTER_ACCESS_TOKEN_SECRET
-                )
-                response = client.create_tweet(text=message)
-                print(f"✅ Twitter par post successfully ho gaya! Tweet ID: {response.data['id']}")
-            except Exception as e:
-                print(f"❌ Twitter error: {e}")
-            finally:
-                Article.objects.filter(pk=instance.pk).update(post_to_twitter=False)
-
-        # 3. TELEGRAM AUTO POST
-        if instance.post_to_telegram:
-            print("🚀 Posting to Telegram...")
-            try:
-                tg_url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
-                payload = {
-                    "chat_id": settings.TELEGRAM_CHANNEL_ID,
-                    "text": message,
-                    "parse_mode": "HTML" # Optional: Agar aap bold/italic formatting chahte hain
-                }
-                response = requests.post(tg_url, data=payload)
-                if response.status_code == 200:
-                    print("✅ Telegram par post successfully ho gaya!")
-                else:
-                    print(f"❌ Telegram post failed: {response.json()}")
-            except Exception as e:
-                print(f"❌ Telegram error: {e}")
-            finally:
-                Article.objects.filter(pk=instance.pk).update(post_to_telegram=False)
 
 @receiver(post_save, sender=Article)
-def trigger_image_processing(sender, instance, created, **kwargs):
-    """
-    Article save hone ke baad check karta hai ki kya image compress karni hai.
-    Agar haan, toh background mein Celery task trigger karta hai.
-    """
+def trigger_image_processing(sender, instance, **_kwargs):
     if instance.featured_image and not instance.featured_image.name.lower().endswith('.webp'):
-        # transaction.on_commit ensure karega ki task tabhi chale jab article DB me fully save ho chuka ho
         transaction.on_commit(lambda: process_article_image.delay(instance.id))
 
 
 @receiver(post_save, sender=LiveUpdate)
-def broadcast_live_update(sender, instance, created, **kwargs):
-    if created:
-        channel_layer = get_channel_layer()
-        group_name = f'live_article_{instance.article.id}'
-        
-        # Data jo frontend ko jayega
-        update_data = {
-            'id': instance.id,
-            'title': instance.title,
-            'content': instance.content,
-            'timestamp': instance.timestamp.isoformat(),
-        }
+def broadcast_live_update(sender, instance, created, **_kwargs):
+    if not created:
+        return
 
-        # WebSocket group mein message push karein
-        async_to_sync(channel_layer.group_send)(
-            group_name,
-            {
-                'type': 'send_new_update',
-                'update_data': update_data
-            }
-        )
+    channel_layer = get_channel_layer()
+    group_name = f'live_article_{instance.article.id}'
+    update_data = {
+        'id': instance.id,
+        'title': instance.title,
+        'content': instance.content,
+        'timestamp': instance.timestamp.isoformat(),
+    }
+    async_to_sync(channel_layer.group_send)(
+        group_name,
+        {
+            'type': 'send_new_update',
+            'update_data': update_data,
+        },
+    )

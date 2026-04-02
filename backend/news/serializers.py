@@ -20,8 +20,8 @@ class TagSerializer(serializers.ModelSerializer):
 
 class AuthorSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='user.name', read_only=True)
-    username = serializers.CharField(source='user.username', read_only=True)
-    slug = serializers.CharField(source='user.username', read_only=True) # NAYA: Dynamically created slug field
+    username = serializers.CharField(source='slug', read_only=True)
+    slug = serializers.CharField(read_only=True)
     profile_picture = serializers.ImageField(source='user.profile_picture', read_only=True)
     bio = serializers.CharField(source='user.bio', read_only=True)
     
@@ -32,8 +32,22 @@ class AuthorSerializer(serializers.ModelSerializer):
 
 class ArticleSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        source='category',
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
     author = AuthorSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True,
+        write_only=True,
+        required=False,
+        source='tags',
+    )
     live_updates = LiveUpdateSerializer(many=True, read_only=True)
 
     class Meta:
@@ -42,5 +56,22 @@ class ArticleSerializer(serializers.ModelSerializer):
             'id', 'title', 'slug', 'category', 'author', 'source_name', 
             'description', 'content', 'featured_image', 'published_at', 
             'views', 'is_featured', 'is_trending', 'is_breaking',
-            'is_editors_pick', 'tags', 'is_top_story', 'is_live', 'live_updates'
+            'is_editors_pick', 'tags', 'is_top_story', 'is_live', 'live_updates',
+            'updated_at', 'category_id', 'tag_ids', 'status', 'source_url',
+            'is_imported', 'is_web_story', 'post_to_facebook', 'post_to_twitter',
+            'post_to_telegram'
         )
+
+        read_only_fields = ('views', 'published_at', 'updated_at', 'is_imported')
+
+    def validate_title(self, value):
+        cleaned_value = value.strip()
+        if len(cleaned_value) < 5:
+            raise serializers.ValidationError('Title must contain at least 5 characters.')
+        return cleaned_value
+
+    def validate_description(self, value):
+        cleaned_value = value.strip()
+        if len(cleaned_value) < 20:
+            raise serializers.ValidationError('Description must contain at least 20 characters.')
+        return cleaned_value

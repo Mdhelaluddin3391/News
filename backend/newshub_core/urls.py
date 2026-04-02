@@ -19,7 +19,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.sitemaps.views import sitemap
 from django.conf import settings
 from django.conf.urls.static import static
-from django.http import JsonResponse
 from django.urls import include, path
 from rest_framework import status
 from rest_framework.response import Response
@@ -27,6 +26,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from core.health_views import DatabaseHealthCheckView, HealthCheckView, RedisHealthCheckView
 from core.views import ContactMessageCreateView, SiteSettingAPIView
 from interactions.views import SubscribeNewsletterView, UnsubscribeNewsletterView
 from news.feeds import LatestArticlesFeed
@@ -34,9 +34,6 @@ from news.sitemaps import ArticleSitemap, AuthorSitemap, CategorySitemap, Static
 from users.views import CookieTokenRefreshView, CsrfCookieView, LogoutView, set_auth_cookies
 
 User = get_user_model()
-
-def health_check(_request):
-    return JsonResponse({"status": "ok"})
 
 
 sitemaps = {
@@ -78,7 +75,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return response
 
 urlpatterns = [
-    path('health/', health_check, name='health_check'),
+    path('health/', HealthCheckView.as_view(), name='health_check'),
+    path('health/db/', DatabaseHealthCheckView.as_view(), name='health_check_db'),
+    path('health/redis/', RedisHealthCheckView.as_view(), name='health_check_redis'),
     path('admin/', admin.site.urls),
     path('tinymce/', include('tinymce.urls')),
     path('api/', include('core.urls')),

@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Actual API call to backend
-            const response = await fetch(RESET_PASSWORD_API, {
+            const response = await apiFetch(RESET_PASSWORD_API, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

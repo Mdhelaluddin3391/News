@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
 
+from core.tasks import send_async_email
 from news.models import Article
 from .models import Bookmark, Comment, CommentReport, NewsletterSubscriber, Poll, PollOption, PushSubscription
 
@@ -144,18 +144,8 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
         recipient_list = list(active_subscribers.values_list('email', flat=True))
 
         try:
-            # NAYA: BCC ka use privacy ke liye
-            email_msg = EmailMultiAlternatives(
-                subject=subject,
-                body=message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[settings.DEFAULT_FROM_EMAIL], # Apna hi no-reply daalein
-                bcc=recipient_list                # Saare users yahan aayenge
-            )
-            email_msg.attach_alternative(html_content, "text/html")
-            email_msg.send(fail_silently=False)
-            
-            self.message_user(request, f"✅ Newsletter securely sent to {len(recipient_list)} subscribers!")
+            send_async_email.delay(subject, message, recipient_list, html_content)
+            self.message_user(request, f"Queued newsletter delivery for {len(recipient_list)} subscribers.")
         except Exception as e:
             self.message_user(request, f"❌ Error sending email: {str(e)}", level='error')
 

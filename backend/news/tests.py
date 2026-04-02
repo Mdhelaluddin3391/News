@@ -57,8 +57,7 @@ class ArticleSearchApiTests(APITestCase):
             slug=existing_slug,
             category=self.category,
             author=self.author,
-            description='First.
-',
+            description='First article description.',
             content='First content.',
             status='published',
         )
@@ -80,3 +79,11 @@ class ArticleSearchApiTests(APITestCase):
         response = self.client.get(reverse('article-detail', kwargs={'slug': self.primary_article.slug}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['slug'], self.primary_article.slug)
+
+    def test_author_slug_is_generated_and_detail_route_uses_it(self):
+        self.assertTrue(self.author.slug)
+
+        response = self.client.get(reverse('author-detail', kwargs={'slug': self.author.slug}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['slug'], self.author.slug)

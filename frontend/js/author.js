@@ -47,17 +47,22 @@ async function fetchAuthorAndArticles() {
         const avatarContainClass = avatar.includes('default-avatar.png') ? 'img-contain' : '';
         const role = author.role || 'Contributor';
         const bio = author.bio || 'This author has not added a bio yet.';
+        const safeName = typeof window.escapeHtml === 'function' ? window.escapeHtml(author.name || 'Author') : (author.name || 'Author');
+        const safeRole = typeof window.escapeHtml === 'function' ? window.escapeHtml(role) : role;
+        const safeBio = typeof window.escapeHtml === 'function' ? window.escapeHtml(bio) : bio;
+        const safeTwitterUrl = typeof window.getSafeHttpUrl === 'function' ? window.getSafeHttpUrl(author.twitter_url) : '';
+        const safeLinkedinUrl = typeof window.getSafeHttpUrl === 'function' ? window.getSafeHttpUrl(author.linkedin_url) : '';
         
-        const twitterHtml = author.twitter_url ? `<a href="${author.twitter_url}" target="_blank"><i class="fab fa-twitter"></i></a>` : '';
-        const linkedinHtml = author.linkedin_url ? `<a href="${author.linkedin_url}" target="_blank"><i class="fab fa-linkedin"></i></a>` : '';
+        const twitterHtml = safeTwitterUrl ? `<a href="${safeTwitterUrl}" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitter"></i></a>` : '';
+        const linkedinHtml = safeLinkedinUrl ? `<a href="${safeLinkedinUrl}" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin"></i></a>` : '';
 
         // Render Author Profile
         authorCard.innerHTML = `
-            <img src="${avatar}" alt="${author.name}" class="author-avatar ${avatarContainClass}">
+            <img src="${avatar}" alt="${safeName}" class="author-avatar ${avatarContainClass}">
             <div class="author-info">
-                <h1>${author.name}</h1>
-                <div class="author-role">${role}</div>
-                <p class="author-bio">${bio}</p>
+                <h1>${safeName}</h1>
+                <div class="author-role">${safeRole}</div>
+                <p class="author-bio">${safeBio}</p>
                 <div class="author-social">
                     ${twitterHtml}
                     ${linkedinHtml}
@@ -73,7 +78,8 @@ async function fetchAuthorAndArticles() {
                 seoBio, 
                 avatar, 
                 cleanAuthorUrl, // ✅ SEO FIX: Use clean URL
-                `${author.name}, journalist, author, Ferox Times reporter`
+                `${author.name}, journalist, author, Ferox Times reporter`,
+                'profile'
             );
         }
 
@@ -101,9 +107,7 @@ async function fetchAuthorAndArticles() {
         }
         // =======================================
 
-        // 2. Ab is author ke likhe hue Articles fetch karenge (Filtering with slug)
-        // ✅ API FIX: Changed 'author__user__username' to 'author__user__name' to match your Django views.py
-        const articlesResponse = await fetch(`${AUTHOR_API_URL}/articles/?author__user__name=${authorSlug}`);
+        const articlesResponse = await fetch(`${AUTHOR_API_URL}/articles/?author__slug=${authorSlug}`);
         const articleData = await articlesResponse.json();
         const articles = articleData.results || articleData;
 
@@ -119,14 +123,18 @@ async function fetchAuthorAndArticles() {
             const date = article.published_at ? formatDate(article.published_at) : 'Unknown Date';
             const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
             const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
+            const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(article.title || 'Untitled') : (article.title || 'Untitled');
+            const safeDescription = typeof window.escapeHtml === 'function'
+                ? window.escapeHtml(article.description || '')
+                : (article.description || '');
             
             // ✅ SEO FIX: Use clean URL path for articles
             articlesHtml += `
                 <div class="article-card">
-                    <img src="${imageUrl}" alt="${article.title}" class="article-image ${containClass}">
+                    <img src="${imageUrl}" alt="${safeTitle}" class="article-image ${containClass}">
                     <div class="article-content">
-                        <h3 class="article-title">${article.title}</h3>
-                        <p class="article-description">${article.description}</p>
+                        <h3 class="article-title">${safeTitle}</h3>
+                        <p class="article-description">${safeDescription}</p>
                         <div class="article-meta">
                             <span class="article-date">${date}</span>
                             <a href="/article/${article.slug}" class="read-more">Read more →</a>
@@ -139,7 +147,9 @@ async function fetchAuthorAndArticles() {
         articlesContainer.innerHTML = articlesHtml;
 
     } catch (error) {
-        console.error('Error fetching author data:', error);
+        if (typeof window.reportFrontendError === 'function') {
+            window.reportFrontendError(error, { scope: 'author', action: 'fetchAuthorAndArticles', authorSlug });
+        }
         authorCard.innerHTML = '<p>Error loading author profile. Please try again later.</p>';
     }
 }

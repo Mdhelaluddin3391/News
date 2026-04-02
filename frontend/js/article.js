@@ -77,6 +77,9 @@ function renderArticle(article) {
     let content = article.content || article.description || '';
     const categorySlug = article.category ? article.category.slug : 'general';
     const categoryName = article.category ? article.category.name : 'News';
+    const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(title) : title;
+    const safeSource = typeof window.escapeHtml === 'function' ? window.escapeHtml(source) : source;
+    const safeDescription = typeof window.escapeHtml === 'function' ? window.escapeHtml(description) : description;
 
     // ======== IN-ARTICLE AD INJECTION LOGIC ========
     const inArticleAdHTML = `<div id="ad-in_article" class="ad-container" style="display: none; margin: 25px 0; text-align: center;"></div>`;
@@ -102,7 +105,8 @@ function renderArticle(article) {
 
         article.tags.forEach(tag => {
             // ✅ SEO FIX: Use clean URL for tags
-            tagsHTML += `<a href="/tag/${tag.slug}" class="tag-pill">#${tag.name}</a>`;
+            const safeTagName = typeof window.escapeHtml === 'function' ? window.escapeHtml(tag.name || 'Tag') : (tag.name || 'Tag');
+            tagsHTML += `<a href="/tag/${tag.slug}" class="tag-pill">#${safeTagName}</a>`;
         });
         tagsHTML += '</div>';
     }
@@ -112,7 +116,7 @@ function renderArticle(article) {
 
     if (typeof updateSEOMetaTags === 'function') {
         const seoDescription = description.length > 150 ? description.substring(0, 150) + '...' : description;
-        updateSEOMetaTags(title, seoDescription, imageUrl, cleanPageUrl, seoKeywords);
+        updateSEOMetaTags(title, seoDescription, imageUrl, cleanPageUrl, seoKeywords, 'article');
     }
 
     if (typeof injectSchema === 'function') {
@@ -141,7 +145,7 @@ function renderArticle(article) {
                 "name": "Ferox Times",
                 "logo": {
                     "@type": "ImageObject",
-                    "url": `${window.location.origin}/images/logo.png`
+                    "url": `${window.location.origin}/images/default-news.png`
                 }
             },
             "description": description.substring(0, 150)
@@ -178,7 +182,7 @@ function renderArticle(article) {
         `<button class="save-btn detail-save-btn ${isSaved ? 'saved' : ''}" data-id="${article.id}">${isSaved ? 'Saved' : 'Save for Later'}</button>`
         : '';
 
-    const backendShareUrl = `${CONFIG.API_BASE_URL}/news/articles/${article.id}/share/`;
+    const backendShareUrl = `${CONFIG.API_BASE_URL}/news/articles/${article.slug}/share/`;
     const shareUrl = encodeURIComponent(backendShareUrl);
     const shareTitle = encodeURIComponent(title);
     const shareHTML = `
@@ -235,19 +239,19 @@ function renderArticle(article) {
 
     const html = `
         <div class="detail-content" style="padding-bottom: 1rem;">
-            ${liveBadgeHTML}
-            <h1 class="detail-title">${title}</h1>
+                ${liveBadgeHTML}
+            <h1 class="detail-title">${safeTitle}</h1>
             <div class="detail-meta" style="margin-bottom: 1rem; border-bottom: none;">
-                <span class="detail-source">${source}</span>
+                <span class="detail-source">${safeSource}</span>
                 <span class="detail-date">${date}</span>
                 <span><i class="far fa-eye"></i> ${article.views || 0} views</span>
             </div>
         </div>
         
-        <img src="${imageUrl}" alt="${title} - Ferox Times" class="detail-image ${containClass}" fetchpriority="high" loading="eager" width="800" height="450">
+        <img src="${imageUrl}" alt="${safeTitle} - Ferox Times" class="detail-image ${containClass}" fetchpriority="high" loading="eager" width="800" height="450">
         
         <div class="detail-content" style="padding-top: 2rem;">
-            ${description ? `<p class="detail-description">${description}</p>` : ''}
+            ${description ? `<p class="detail-description">${safeDescription}</p>` : ''}
             <div class="detail-body">
                 ${content}
             </div>
@@ -514,7 +518,7 @@ async function incrementArticleView(articleId) {
     }
 
     try {
-        await fetch(`${ARTICLE_DETAIL_API_URL}/${articleId}/increment_view/`, {
+        await apiFetch(`${ARTICLE_DETAIL_API_URL}/${articleId}/increment_view/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

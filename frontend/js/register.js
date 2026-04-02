@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resendLink.style.pointerEvents = 'none';
 
         try {
-            const response = await fetch(`${CONFIG.API_BASE_URL}/users/resend-verification-email/`, {
+            const response = await apiFetch(`${CONFIG.API_BASE_URL}/users/resend-verification-email/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email })

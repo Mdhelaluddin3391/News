@@ -101,7 +101,7 @@ function renderArticle(article) {
         seoKeywords = article.tags.map(t => t.name).join(', ');
 
         article.tags.forEach(tag => {
-            // ✅ SEO FIX: Use clean URL for tags instead of /tag.html?slug=
+            // ✅ SEO FIX: Use clean URL for tags
             tagsHTML += `<a href="/tag/${tag.slug}" class="tag-pill">#${tag.name}</a>`;
         });
         tagsHTML += '</div>';

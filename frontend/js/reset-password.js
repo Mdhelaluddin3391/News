@@ -3,7 +3,7 @@
 // Aapke Django backend ka reset-password endpoint
 const RESET_PASSWORD_API = `${CONFIG.API_BASE_URL}/users/reset-password/`; 
 
-// Get token from URL (e.g., reset-password.html?token=abcdef123456)
+// Get token from URL (e.g., /reset-password?token=abcdef123456)
 const urlParams = new URLSearchParams(window.location.search);
 const token = urlParams.get('token');
 
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Redirect to login after 3 seconds
                 setTimeout(() => {
-                    window.location.href="/login.html";
+                    window.location.href = "/login";
                 }, 3000);
             } else {
                 // Handle API error (e.g., invalid or expired token)

@@ -84,7 +84,7 @@ def auto_send_newsletter_on_publish(sender, instance, created, **kwargs):
         recipient_list = list(subscribers)
         
         if recipient_list:
-            article_url = f"{settings.FRONTEND_URL}/article?slug={instance.slug}"
+            article_url = f"{settings.FRONTEND_URL}/article/{instance.slug}"
             subject = f"🚨 BREAKING NEWS: {instance.title}"
             
             # Email ka body (Message)
@@ -117,7 +117,7 @@ def auto_send_newsletter_on_publish(sender, instance, created, **kwargs):
                     </div>
                     <div class="footer">
                         You received this because you are subscribed to Ferox Times Breaking Alerts.<br>
-                        <a href="{settings.FRONTEND_URL}/unsubscribe.html" style="color: #d32f2f;">Unsubscribe</a>
+                        <a href="{settings.FRONTEND_URL}/unsubscribe" style="color: #d32f2f;">Unsubscribe</a>
                     </div>
                 </div>
             </body>
@@ -134,7 +134,7 @@ def auto_send_newsletter_on_publish(sender, instance, created, **kwargs):
 def handle_social_media_autopost(sender, instance, created, **kwargs):
     # Check karein ki article published hai ya nahi
     if instance.status == 'published':
-        article_url = f"{settings.FRONTEND_URL}/article?slug={instance.slug}"
+        article_url = f"{settings.FRONTEND_URL}/article/{instance.slug}"
         short_desc = instance.description[:100] + "..." if instance.description else ""
         message = f"🚨 {instance.title}\n\n📝 {short_desc}\n\n🔗 Pura padhne ke liye click karein:\n{article_url}\n\n#FeroxTimes #LatestNews"
 

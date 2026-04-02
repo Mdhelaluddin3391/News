@@ -135,11 +135,11 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
         html_content = f"<html><body><h2>📰 Ferox Times Top Stories</h2><p>Hello!</p>"
         
         for article in latest_articles:
-            article_url = f"{settings.FRONTEND_URL}/article?slug={article.slug}"
+            article_url = f"{settings.FRONTEND_URL}/article/{article.slug}"
             message += f"📌 {article.title}\n{article_url}\n\n"
             html_content += f"<h3>{article.title}</h3><a href='{article_url}'>Read More</a><br><br>"
             
-        html_content += f"<hr><p><a href='{settings.FRONTEND_URL}/unsubscribe.html'>Unsubscribe</a></p></body></html>"
+        html_content += f"<hr><p><a href='{settings.FRONTEND_URL}/unsubscribe'>Unsubscribe</a></p></body></html>"
 
         recipient_list = list(active_subscribers.values_list('email', flat=True))
 

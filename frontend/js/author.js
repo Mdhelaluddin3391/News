@@ -3,7 +3,7 @@
 // NAYA: Variable ka naam change kar diya gaya hai taaki clash na ho
 const AUTHOR_API_URL = `${CONFIG.API_BASE_URL}/news`;
 
-// Get Author ID from URL (e.g., /author/john-doe or author.html?slug=john-doe)
+// Get Author ID from URL (e.g., /author/john-doe)
 function getAuthorSlugFromUrl() {
     // ✅ SEO FIX: Support reading author from Clean URL path
     const pathParts = window.location.pathname.split('/').filter(Boolean);

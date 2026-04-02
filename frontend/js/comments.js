@@ -180,10 +180,9 @@ function renderCommentForm(articleId, containerId, user, articleSlug) {
     }
 
     if (!user) {
-        // Appended .html to login and article paths
         formContainer.innerHTML = `
             <p class="login-prompt">
-                <a href="/login.html?redirect=/article.html?slug=${articleSlug}">Log in</a> to post a comment or flag one for review.
+                <a href="/login?redirect=/article/${articleSlug}">Log in</a> to post a comment or flag one for review.
             </p>
         `;
         return;
@@ -232,7 +231,7 @@ function renderCommentForm(articleId, containerId, user, articleSlug) {
     if (!user) {
         formContainer.innerHTML = `
             <p class="login-prompt">
-                <a href="/login?redirect=/article?slug=${articleSlug}">Log in</a> to post a comment or flag one for review.
+                <a href="/login?redirect=/article/${articleSlug}">Log in</a> to post a comment or flag one for review.
             </p>
         `;
         return;

@@ -1,37 +1,37 @@
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const SHELL_CACHE = `ferox-times-shell-${CACHE_VERSION}`;
 const PAGE_CACHE = `ferox-times-pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `ferox-times-assets-${CACHE_VERSION}`;
 const API_CACHE = `ferox-times-api-${CACHE_VERSION}`;
 const OFFLINE_FALLBACK_URL = '/';
 const PRECACHE_URLS = [
-    '/index.html',
-    '/404.html',
-    '/about.html',
-    '/advertise.html',
-    '/article.html',
-    '/author.html',
-    '/authors.html',
-    '/careers.html',
-    '/contact.html',
-    '/edit-profile.html',
-    '/faq.html',
-    '/forgot-password.html',
-    '/login.html',
-    '/privacy.html',
-    '/profile.html',
-    '/register.html',
-    '/reset-password.html',
-    '/saved.html',
-    '/search.html',
-    '/tag.html',
-    '/terms.html',
-    '/unsubscribe.html',
-    '/verify-email.html',
+    '/',
+    '/404',
+    '/about',
+    '/advertise',
+    '/article',
+    '/author',
+    '/authors',
+    '/careers',
+    '/contact',
+    '/edit-profile',
+    '/faq',
+    '/forgot-password',
+    '/login',
+    '/privacy',
+    '/profile',
+    '/register',
+    '/reset-password',
+    '/saved',
+    '/search',
+    '/tag',
+    '/terms',
+    '/unsubscribe',
+    '/verify-email',
     '/manifest.json',
     '/robots.txt',
-    '/components/header.html',
-    '/components/footer.html',
+    '/components/header',
+    '/components/footer',
     '/css/article.css',
     '/css/auth.css',
     '/css/author.css',
@@ -239,7 +239,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const urlToOpen = new URL(event.notification.data?.url || '/index.html', self.location.origin).href;
+    const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
 
     event.waitUntil((async () => {
         const windowClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });

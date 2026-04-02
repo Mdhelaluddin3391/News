@@ -47,7 +47,7 @@ class TagSitemap(Sitemap):
         return Tag.objects.all()
 
     def location(self, obj):
-        # FIX: Clean URL for tags (Removed .html and query params)
+        # FIX: Clean URL for tags
         return f"/tag/{obj.slug}"
 
 class StaticViewSitemap(Sitemap):
@@ -55,7 +55,7 @@ class StaticViewSitemap(Sitemap):
     priority = 0.5
 
     def items(self):
-        # FIX: Removed .html extensions for static views
+        # FIX: Use clean URLs for static views
         return ['about', 'contact', 'careers', 'advertise', 'authors']
 
     def location(self, item):

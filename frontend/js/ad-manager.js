@@ -47,7 +47,7 @@ window.fetchActiveAds = function() {
 };
 
 document.addEventListener("DOMContentLoaded", function() {
-    if (!window.location.pathname.includes('/article.html')) {
+    if (!window.location.pathname.startsWith('/article')) {
         window.fetchActiveAds();
     }
 });

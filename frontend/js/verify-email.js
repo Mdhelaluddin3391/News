@@ -104,7 +104,7 @@ async function verifyEmailWithToken(token) {
 
             // Redirect to login after 3 seconds
             setTimeout(() => {
-                window.location.href="/login.html";
+                window.location.href = "/login";
             }, 3000);
         } else {
             errorDiv.textContent = data.error || 'Verification failed. Please try again.';

@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (result.success) {
             const urlParams = new URLSearchParams(window.location.search);
-            // ✅ ROUTING FIX: Default redirect to clean root path instead of /index.html
             const redirect = urlParams.get('redirect') || '/';
             window.location.href = redirect;
         } else {

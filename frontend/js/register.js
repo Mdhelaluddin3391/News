@@ -11,8 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginLink = document.getElementById('register-login-link');
 
     openVerificationPageBtn.addEventListener('click', () => {
-        // ✅ ROUTING FIX: Use clean URL instead of /index.html
-        window.location.href = "/";
+        window.location.href = "/verify-email";
     });
 
     resendLink.addEventListener('click', async (event) => {

@@ -123,10 +123,10 @@ class SubscribeNewsletterView(APIView):
                         <li>🌙 Daily Night Digest (Top stories of the day)</li>
                         <li>⭐ Weekend Editor's Special</li>
                     </ul>
-                    <a href="{settings.FRONTEND_URL}/index.html" class="btn" style="color: white;">Read Latest News Now</a>
+                    <a href="{settings.FRONTEND_URL}/" class="btn" style="color: white;">Read Latest News Now</a>
                     
                     <div class="footer">
-                        If you ever wish to stop receiving emails, you can <a href="{settings.FRONTEND_URL}/unsubscribe.html?email={email}">unsubscribe here</a>.
+                        If you ever wish to stop receiving emails, you can <a href="{settings.FRONTEND_URL}/unsubscribe?email={email}">unsubscribe here</a>.
                     </div>
                 </div>
             </body>
@@ -207,7 +207,7 @@ class UnsubscribeNewsletterView(APIView):
                 subscriber.save()
                 
                 # Unsubscribe Link banayein
-                unsub_link = f"{settings.FRONTEND_URL}/unsubscribe.html?token={unsub_token}"
+                unsub_link = f"{settings.FRONTEND_URL}/unsubscribe?token={unsub_token}"
                 
                 # Email Bhejein
                 subject = "Confirm Unsubscribe - Ferox Times"

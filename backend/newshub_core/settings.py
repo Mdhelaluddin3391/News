@@ -473,7 +473,7 @@ JAZZMIN_SETTINGS = {
     "custom_css": "css/admin_custom.css",
     "topmenu_links": [
         {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"name": "View Frontend Site", "url": FRONTEND_URL + "/index.html", "new_window": True},
+        {"name": "View Frontend Site", "url": FRONTEND_URL + "/", "new_window": True},
     ],
     "icons": {
         "auth": "fas fa-users-cog",

@@ -2,14 +2,14 @@ async function loadComponents() {
     try {
         const headerPlaceholder = document.getElementById('header-placeholder');
         if (headerPlaceholder) {
-            const headerRes = await fetch('components/header.html');
+            const headerRes = await fetch('/components/header');
             headerPlaceholder.innerHTML = await headerRes.text();
             initHeaderScripts();
         }
 
         const footerPlaceholder = document.getElementById('footer-placeholder');
         if (footerPlaceholder) {
-            const footerRes = await fetch('components/footer.html');
+            const footerRes = await fetch('/components/footer');
             footerPlaceholder.innerHTML = await footerRes.text();
         }
 

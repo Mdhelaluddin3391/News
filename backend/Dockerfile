@@ -1,31 +1,37 @@
 FROM python:3.12-slim
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Requirements copy aur install karein
-COPY requirements.txt /app/
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# Install system dependencies required for psycopg2, Pillow, etc.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Pura backend ka code copy karein
+# Copy and install requirements first to leverage Docker layer caching
+COPY requirements.txt /app/
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application
 COPY . /app/
 
-# NAYA: Entrypoint script ko executable banayein
+# Make entrypoint executable
 RUN chmod +x /app/entrypoint.sh
 
-# Build argument to skip collectstatic during development
+# Build arguments for collecting static files
 ARG SKIP_COLLECTSTATIC=true
 ARG SECRET_KEY="dummy-key-for-build-only"
 ENV SECRET_KEY=${SECRET_KEY}
 ENV SKIP_COLLECTSTATIC=${SKIP_COLLECTSTATIC}
 
-# Static files collect karein (skip during development)
-RUN if [ "$SKIP_COLLECTSTATIC" = "false" ]; then python manage.py collectstatic --noinput; fi
+RUN if [ "$SKIP_COLLECTSTATIC" = "false" ]; \
+    then python manage.py collectstatic --noinput; fi
 
-# NAYA: Entrypoint set karein
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Gunicorn ke through server run karein (Default command)
-CMD ["sh", "-c", "daphne -b 0.0.0.0 -p ${PORT:-5000} newshub_core.asgi:application"]
+# Better syntax without wrapping inside "sh -c"
+CMD ["daphne", "-b", "0.0.0.0", "-p", "5000", "newshub_core.asgi:application"]

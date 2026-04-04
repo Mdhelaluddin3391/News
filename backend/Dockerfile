@@ -23,6 +23,10 @@ RUN useradd -m appuser
 # Copy project with correct ownership 🔥
 COPY --chown=appuser:appuser . /app/
 
+RUN mkdir -p /app/staticfiles /app/media && \
+    chown -R appuser:appuser /app/staticfiles /app/media
+    
+
 # Ensure entrypoint is executable
 RUN chmod +x /app/entrypoint.sh
 

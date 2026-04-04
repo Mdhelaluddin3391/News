@@ -2,36 +2,36 @@ FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
-# Install system dependencies required for psycopg2, Pillow, etc.
+# System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install requirements first to leverage Docker layer caching
+# Install python deps
 COPY requirements.txt /app/
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
-# Copy the rest of the application
+# Copy project
 COPY . /app/
+RUN useradd -m appuser
+USER appuser
 
-# Make entrypoint executable
+# Entry
 RUN chmod +x /app/entrypoint.sh
 
-# Build arguments for collecting static files
 ARG SKIP_COLLECTSTATIC=true
-ARG SECRET_KEY="dummy-key-for-build-only"
-ENV SECRET_KEY=${SECRET_KEY}
 ENV SKIP_COLLECTSTATIC=${SKIP_COLLECTSTATIC}
 
-RUN if [ "$SKIP_COLLECTSTATIC" = "false" ]; \
-    then python manage.py collectstatic --noinput; fi
+RUN if [ "$SKIP_COLLECTSTATIC" = "false" ]; then \
+    python manage.py collectstatic --noinput; \
+    fi
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Better syntax without wrapping inside "sh -c"
 CMD ["daphne", "-b", "0.0.0.0", "-p", "5000", "newshub_core.asgi:application"]

@@ -2,10 +2,7 @@ const APP_CONFIG = window.__APP_CONFIG__ || {};
 const isFileProtocol = window.location.protocol === 'file:';
 
 if (typeof API_BASE_URL === 'undefined') {
-    const isDevelopment = ['localhost', '127.0.0.1'].includes(window.location.hostname) || isFileProtocol;
-    window.API_BASE_URL = isDevelopment
-        ? 'http://localhost:5000/api'
-        : `${window.location.origin}/api`;
+    window.API_BASE_URL = '/api'; 
 }
 
 const CONFIG = {

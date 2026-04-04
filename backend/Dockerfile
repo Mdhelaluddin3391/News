@@ -19,11 +19,13 @@ RUN pip install --upgrade pip && \
 
 # Copy project
 COPY . /app/
+
+# 🔥 FIX: पहले chmod करो
+RUN chmod +x /app/entrypoint.sh
+
+# 🔥 FIX: फिर user बनाओ
 RUN useradd -m appuser
 USER appuser
-
-# Entry
-RUN chmod +x /app/entrypoint.sh
 
 ARG SKIP_COLLECTSTATIC=true
 ENV SKIP_COLLECTSTATIC=${SKIP_COLLECTSTATIC}

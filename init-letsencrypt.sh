@@ -2,7 +2,7 @@
 domains=(feroxtimes.com www.feroxtimes.com)
 rsa_key_size=4096
 data_path="./certbot"
-email="feroxtimes@gmailcom" # ⚠️ CHANGE THIS TO YOUR EMAIL
+email="feroxtimes@gmail.com" # <-- Fixed: Added the missing dot
 staging=0 # Set to 1 if you're testing your setup to avoid hitting request limits
 
 if [ -d "$data_path" ]; then

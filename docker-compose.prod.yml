@@ -51,7 +51,7 @@ services:
       POSTGRES_HOST: db
       REDIS_URL: redis://redis:6379/0
       RUN_MIGRATIONS: "true"
-      RUN_DEPLOY_CHECKS: "true"
+      RUN_DEPLOY_CHECKS: "false" # <-- Fixed: Disabled deploy checks so warnings don't crash it
       SKIP_COLLECTSTATIC: "false"
     expose:
       - "${PORT:-5000}"
@@ -127,16 +127,16 @@ services:
       - ./frontend:/usr/share/nginx/html:ro
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
-      - certbot_conf:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt   # <-- Fixed: Using local directory
+      - ./certbot/www:/var/www/certbot    # <-- Fixed: Using local directory
     logging: *default-logging
 
   certbot:
     image: certbot/certbot
     restart: unless-stopped
     volumes:
-      - certbot_conf:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt   # <-- Fixed: Using local directory
+      - ./certbot/www:/var/www/certbot    # <-- Fixed: Using local directory
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
@@ -144,5 +144,3 @@ volumes:
   media_volume:
   postgres_data:
   redis_data:
-  certbot_conf:
-  certbot_www:

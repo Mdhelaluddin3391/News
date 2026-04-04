@@ -6,30 +6,34 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /app
 
-# System deps
+# System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python deps
+# Install Python dependencies
 COPY requirements.txt /app/
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
 
-# Copy project
-COPY . /app/
+# Create non-root user
+RUN useradd -m appuser
 
-# 🔥 FIX: पहले chmod करो
+# Copy project with correct ownership 🔥
+COPY --chown=appuser:appuser . /app/
+
+# Ensure entrypoint is executable
 RUN chmod +x /app/entrypoint.sh
 
-# 🔥 FIX: फिर user बनाओ
-RUN useradd -m appuser
+# Switch to non-root user
 USER appuser
 
+# Static files control
 ARG SKIP_COLLECTSTATIC=true
 ENV SKIP_COLLECTSTATIC=${SKIP_COLLECTSTATIC}
 
+# Optional collectstatic during build
 RUN if [ "$SKIP_COLLECTSTATIC" = "false" ]; then \
     python manage.py collectstatic --noinput; \
     fi

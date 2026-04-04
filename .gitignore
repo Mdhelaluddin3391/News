@@ -27,5 +27,5 @@ build/
 *.swn
 .env
 .env.prd
-
+backend/celerybeat-schedule
 backend/celerybeat-schedule

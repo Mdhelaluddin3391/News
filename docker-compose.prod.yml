@@ -1,5 +1,3 @@
-version: '3.9'
-
 x-logging: &default-logging
   driver: "json-file"
   options:
@@ -9,15 +7,15 @@ x-logging: &default-logging
 services:
   db:
     image: postgres:15-alpine
-    restart: unless-stopped
+    restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-newshub_db}
-      POSTGRES_USER: ${POSTGRES_USER:-newshub_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required for production}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-newshub_user} -d ${POSTGRES_DB:-newshub_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,7 +23,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    restart: unless-stopped
+    restart: always
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
@@ -40,19 +38,15 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: sh -c "daphne -b 0.0.0.0 -p ${PORT:-5000} newshub_core.asgi:application"
-    restart: unless-stopped
+    command: >
+      gunicorn newshub_core.asgi:application 
+      -k uvicorn.workers.UvicornWorker 
+      --workers 4 
+      --bind 0.0.0.0:${PORT:-5000}
+    restart: always
     init: true
     env_file:
       - .env
-    environment:
-      PORT: ${PORT:-5000}
-      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required for production}
-      POSTGRES_HOST: db
-      REDIS_URL: redis://redis:6379/0
-      RUN_MIGRATIONS: "true"
-      RUN_DEPLOY_CHECKS: "false" # <-- Fixed: Disabled deploy checks so warnings don't crash it
-      SKIP_COLLECTSTATIC: "false"
     expose:
       - "${PORT:-5000}"
     volumes:
@@ -70,16 +64,10 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     command: celery -A newshub_core worker --loglevel=info
-    restart: unless-stopped
+    restart: always
     init: true
     env_file:
       - .env
-    environment:
-      PORT: ${PORT:-5000}
-      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required for production}
-      POSTGRES_HOST: db
-      REDIS_URL: redis://redis:6379/0
-      SKIP_COLLECTSTATIC: "true"
     volumes:
       - media_volume:/app/media
     depends_on:
@@ -94,16 +82,10 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     command: celery -A newshub_core beat --loglevel=info
-    restart: unless-stopped
+    restart: always
     init: true
     env_file:
       - .env
-    environment:
-      PORT: ${PORT:-5000}
-      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required for production}
-      POSTGRES_HOST: db
-      REDIS_URL: redis://redis:6379/0
-      SKIP_COLLECTSTATIC: "true"
     depends_on:
       db:
         condition: service_healthy
@@ -115,7 +97,7 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    restart: unless-stopped
+    restart: always
     init: true
     depends_on:
       - backend
@@ -127,16 +109,16 @@ services:
       - ./frontend:/usr/share/nginx/html:ro
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
-      - ./certbot/conf:/etc/letsencrypt   # <-- Fixed: Using local directory
-      - ./certbot/www:/var/www/certbot    # <-- Fixed: Using local directory
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     logging: *default-logging
 
   certbot:
     image: certbot/certbot
-    restart: unless-stopped
+    restart: always
     volumes:
-      - ./certbot/conf:/etc/letsencrypt   # <-- Fixed: Using local directory
-      - ./certbot/www:/var/www/certbot    # <-- Fixed: Using local directory
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:

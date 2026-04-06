@@ -1,5 +1,5 @@
 #!/bin/bash
-domains=(feroxtimes.com www.feroxtimes.com)
+domains=(feroxtimes.com www.feroxtimes.com admin.feroxtimes.com)
 rsa_key_size=4096
 data_path="./certbot"
 email="feroxtimes@gmail.com"

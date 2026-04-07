@@ -12,8 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Display user info using Django backend fields
     const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Unknown Date';
     
-    // NAYA CODE: Global helper function for profile picture URL
-    const profilePic = window.getFullImageUrl(user.profile_picture, 'images/default-avatar.png');
+    // NAYA CODE: Global helper function for profile picture URL - NAYA UPDATE: added slash /
+    const profilePic = window.getFullImageUrl(user.profile_picture, '/images/default-avatar.png');
     const containClass = profilePic.includes('default-avatar.png') ? 'img-contain' : '';
 
     // ✅ SEO FIX: Use clean URLs for edit-profile and home buttons

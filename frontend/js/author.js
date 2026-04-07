@@ -43,7 +43,7 @@ async function fetchAuthorAndArticles() {
         const author = await authorResponse.json();
 
         // Extract author details
-        const avatar = window.getFullImageUrl(author.profile_picture, 'images/default-avatar.png');
+        const avatar = window.getFullImageUrl(author.profile_picture, '/images/default-avatar.png');
         const avatarContainClass = avatar.includes('default-avatar.png') ? 'img-contain' : '';
         const role = author.role || 'Contributor';
         const bio = author.bio || 'This author has not added a bio yet.';
@@ -121,7 +121,7 @@ async function fetchAuthorAndArticles() {
         let articlesHtml = '';
         articles.forEach(article => {
             const date = article.published_at ? formatDate(article.published_at) : 'Unknown Date';
-            const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+            const imageUrl = window.getFullImageUrl(article.featured_image, '/images/default-news.png');
             const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
             const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(article.title || 'Untitled') : (article.title || 'Untitled');
             const safeDescription = typeof window.escapeHtml === 'function'

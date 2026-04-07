@@ -52,7 +52,7 @@ function renderSearchArticles(articles, query) {
     const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
 
     const html = articles.map(article => {
-        const imageUrl = window.getFullImageUrl ? window.getFullImageUrl(article.featured_image, 'images/default-news.png') : 'images/default-news.png';
+        const imageUrl = window.getFullImageUrl ? window.getFullImageUrl(article.featured_image, '/images/default-news.png') : '/images/default-news.png';
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         const rawTitle = article.title || 'Untitled';
@@ -176,7 +176,7 @@ async function fetchSearchResults(query, page = 1) {
             updateSEOMetaTags(
                 `"${query}" - Search Results | Ferox Times`, 
                 `Explore news articles, authors, tags and stories related to "${query}" on Ferox Times.`, 
-                'images/default-news.png', 
+                '/images/default-news.png', 
                 cleanSearchUrl,
                 `${query} news, search ${query}, Ferox Times results, trending ${query}`,
                 'website',

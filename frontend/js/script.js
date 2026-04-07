@@ -13,10 +13,10 @@ const errorMessageDiv = document.getElementById('error-message');
 const categoryButtons = document.querySelectorAll('.category-btn');
 const DEFAULT_SITE_NAME = 'Ferox Times';
 const DEFAULT_SITE_DESCRIPTION = 'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on Ferox Times.';
-const DEFAULT_SITE_IMAGE = `${window.location.origin}/images/default-news.png`;
+const DEFAULT_SITE_IMAGE = window.location.origin + '/images/default-news.png';
 
 // ==================== GLOBAL HELPER FUNCTION (For Images) ====================
-window.getFullImageUrl = function(imagePath, fallbackImage = 'images/default-news.png') {
+window.getFullImageUrl = function(imagePath, fallbackImage = '/images/default-news.png') {
     if (!imagePath) return fallbackImage;
 
     // Handle absolute URLs (from backend)
@@ -92,7 +92,7 @@ function renderArticles(articles) {
 
     const user = getCurrentUser(); // from auth.js
     const html = articles.map(article => {
-        const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+        const imageUrl = window.getFullImageUrl(article.featured_image, '/images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         const title = article.title || 'Untitled';
@@ -196,7 +196,7 @@ async function fetchNews(category = DEFAULT_CATEGORY, page = 1) {
                 updateSEOMetaTags(
                     `${formattedCategoryName} News`, 
                     `Read the latest breaking news about ${formattedCategoryName} on Ferox Times.`, 
-                    'images/default-news.png',
+                    '/images/default-news.png',
                     window.location.href
                 );
             }

@@ -22,7 +22,7 @@ function renderSavedArticles(articles) {
 
     const html = articles.map(article => {
         // NAYA CODE: Global helper function for image URL (Production ready)
-        const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+        const imageUrl = window.getFullImageUrl(article.featured_image, '/images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         
         const title = article.title || 'Untitled';

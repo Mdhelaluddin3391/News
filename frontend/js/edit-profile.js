@@ -16,10 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
         bioElement.value = user.bio || '';
     }
 
-    // === NAYA CODE: Profile Picture Preview Set Karna ===
+    // === NAYA CODE: Profile Picture Preview Set Karna - NAYA UPDATE: added slash / ===
     const previewImg = document.getElementById('profile-pic-preview');
     if (previewImg) {
-        const previewSrc = window.getFullImageUrl(user.profile_picture, 'images/default-avatar.png');
+        const previewSrc = window.getFullImageUrl(user.profile_picture, '/images/default-avatar.png');
         previewImg.src = previewSrc;
         if (previewSrc.includes('default-avatar.png')) {
             previewImg.classList.add('img-contain');

@@ -67,7 +67,7 @@ function renderArticle(article) {
     const user = getCurrentUser();
     const isSaved = user ? isArticleSaved(article.id) : false;
 
-    const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+    const imageUrl = window.getFullImageUrl(article.featured_image, '/images/default-news.png');
     const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
 
     const title = article.title || 'Untitled';

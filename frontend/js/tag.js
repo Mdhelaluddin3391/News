@@ -15,7 +15,7 @@ function renderTagArticles(articles) {
 
     const user = getCurrentUser(); 
     const html = articles.map(article => {
-        const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+        const imageUrl = window.getFullImageUrl(article.featured_image, '/images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(article.title || 'Untitled') : (article.title || 'Untitled');
         
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateSEOMetaTags(
                 `Tags - Ferox Times`, 
                 `Browse our collection of news articles by topics and tags on Ferox Times.`, 
-                'images/default-news.png', 
+                '/images/default-news.png', 
                 window.location.origin + '/tag/'
             );
         }

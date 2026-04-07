@@ -15,7 +15,7 @@ function renderFeatured(article) {
     const container = document.getElementById('featured-news-container');
     if (!container || !article) return;
     const timeAgo = formatTimeAgo(article.published_at);
-    const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+    const imageUrl = window.getFullImageUrl(article.featured_image, '/images/default-news.png');
     const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
     const categoryName = article.category ? article.category.name : 'World';
     const authorName = article.author ? article.author.name : 'Staff';
@@ -124,7 +124,7 @@ function renderEditorsPicks(picks) {
 
     let html = '';
     picks.forEach(item => {
-        const imageUrl = window.getFullImageUrl(item.featured_image, 'images/default-news.png');
+        const imageUrl = window.getFullImageUrl(item.featured_image, '/images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(item.title || 'Untitled') : (item.title || 'Untitled');
         
@@ -212,7 +212,7 @@ async function loadNextCategories(count = 1) {
 
             let sideHtml = sideArticles.map(a => {
                 const sideLiveBadge = a.is_live ? `<div class="live-badge-card" style="padding: 2px 5px; font-size: 0.6rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
-                const sideImageUrl = window.getFullImageUrl(a.featured_image, 'images/default-news.png');
+                const sideImageUrl = window.getFullImageUrl(a.featured_image, '/images/default-news.png');
                 const sideContainClass = sideImageUrl.includes('default-news.png') ? 'img-contain' : '';
                 const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(a.title || 'Untitled') : (a.title || 'Untitled');
                 
@@ -232,7 +232,7 @@ async function loadNextCategories(count = 1) {
 
 
             const mainLiveBadge = mainArticle.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
-            const mainImageUrl = window.getFullImageUrl(mainArticle.featured_image, 'images/default-news.png');
+            const mainImageUrl = window.getFullImageUrl(mainArticle.featured_image, '/images/default-news.png');
             const containClass = mainImageUrl.includes('default-news.png') ? 'img-contain' : '';
             const safeCategoryName = typeof window.escapeHtml === 'function' ? window.escapeHtml(cat.name || 'Category') : (cat.name || 'Category');
             const safeMainTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(mainArticle.title || 'Untitled') : (mainArticle.title || 'Untitled');
@@ -356,7 +356,7 @@ async function initHomepage() {
                 updateSEOMetaTags(
                     'Ferox Times - Premium Global News', 
                     'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on Ferox Times.', 
-                    'images/default-news.png', 
+                    '/images/default-news.png', 
                     window.location.href,
                     "global news, breaking news, latest updates, world news, Ferox Times"
                 );
@@ -508,7 +508,7 @@ function renderRecentNews(articles) {
 
     articles.forEach(article => {
         const timeAgo = formatTimeAgo(article.published_at);
-        const imageUrl = window.getFullImageUrl(article.featured_image, 'images/default-news.png');
+        const imageUrl = window.getFullImageUrl(article.featured_image, '/images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         const liveBadge = article.is_live ? `<div class="live-badge-card" style="padding: 2px 4px; font-size: 0.65rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
         const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(article.title || 'Untitled') : (article.title || 'Untitled');
@@ -622,7 +622,7 @@ function renderStoryThumbnails() {
 
     let html = '';
     dynamicStories.forEach((story, index) => {
-        const imageUrl = window.getFullImageUrl(story.featured_image, 'images/default-news.png');
+        const imageUrl = window.getFullImageUrl(story.featured_image, '/images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(story.title || 'Untitled') : (story.title || 'Untitled');
         
@@ -662,7 +662,7 @@ function showStory() {
     const display = document.getElementById('story-display');
     const progressBar = document.getElementById('story-progress-bar');
     
-    const imageUrl = window.getFullImageUrl(story.featured_image, 'images/default-news.png');
+    const imageUrl = window.getFullImageUrl(story.featured_image, '/images/default-news.png');
     const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
     const categoryName = story.category ? story.category.name : 'News';
     const shortDesc = story.description ? (story.description.length > 100 ? story.description.substring(0, 100) + '...' : story.description) : '';

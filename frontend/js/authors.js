@@ -30,8 +30,8 @@ async function fetchAndRenderAuthors() {
 
         let html = '';
         authors.forEach(author => {
-            // Global helper function se profile picture URL nikalna
-            const avatarUrl = window.getFullImageUrl(author.profile_picture, 'images/default-avatar.png');
+            // Global helper function se profile picture URL nikalna - NAYA UPDATE: added slash /
+            const avatarUrl = window.getFullImageUrl(author.profile_picture, '/images/default-avatar.png');
             const avatarContainClass = avatarUrl.includes('default-avatar.png') ? 'img-contain' : '';
             const role = author.role || 'Contributor';
             const safeName = typeof window.escapeHtml === 'function' ? window.escapeHtml(author.name || 'Author') : (author.name || 'Author');

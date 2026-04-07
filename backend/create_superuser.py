@@ -12,12 +12,13 @@ DJANGO_SU_NAME = os.environ.get('DJANGO_SU_NAME', 'mdhelaluddin')
 DJANGO_SU_EMAIL = os.environ.get('DJANGO_SU_EMAIL', 'muhammadhelal228@gmail.com')
 DJANGO_SU_PASSWORD = os.environ.get('DJANGO_SU_PASSWORD', 'helal@123')
 
-if not User.objects.filter(username=DJANGO_SU_NAME).exists():
+# Username ki jagah email se filter karein
+if not User.objects.filter(email=DJANGO_SU_EMAIL).exists():
     User.objects.create_superuser(
-        username=DJANGO_SU_NAME,
         email=DJANGO_SU_EMAIL,
-        password=DJANGO_SU_PASSWORD
+        password=DJANGO_SU_PASSWORD,
+        name=DJANGO_SU_NAME  # Name REQUIRED_FIELDS me hai isliye pass karna zaroori hai
     )
-    print(f"Superuser '{DJANGO_SU_NAME}' created successfully.")
+    print(f"Superuser '{DJANGO_SU_EMAIL}' created successfully.")
 else:
-    print(f"Superuser '{DJANGO_SU_NAME}' already exists.")
+    print(f"Superuser '{DJANGO_SU_EMAIL}' already exists.")

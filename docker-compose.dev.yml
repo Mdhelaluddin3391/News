@@ -45,7 +45,7 @@ services:
       PORT: 5000
       POSTGRES_HOST: db
       REDIS_URL: redis://redis:6379/0 
-      SKIP_COLLECTSTATIC: "true"
+      SKIP_COLLECTSTATIC: "false"
       RUN_MIGRATIONS: "true"
     volumes:
       - ./backend:/app

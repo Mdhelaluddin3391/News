@@ -312,20 +312,24 @@ nav {
 }
 
 /* ==================== Mobile Navigation Panel ==================== */
+.nav-container-mobile {
+    display: flex;
+    align-items: center;
+}
+
 .mobile-btn {
     display: none;
     background: none;
     border: none;
     color: white;
-    font-size: 22px;
+    font-size: 26px;
     cursor: pointer;
-    padding-left: 20px;
 }
 
 .mobile-menu {
     position: fixed;
     top: 0;
-    right: -100%;
+    left: -100%; /* Pura menu left se aane ke liye */
     width: 75%;
     max-width: 300px;
     height: 100vh;
@@ -336,12 +340,12 @@ nav {
     padding-bottom: 20px;
     transition: 0.4s;
     z-index: 2000;
-    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2); /* Shadow right side pe */
     overflow-y: auto;
 }
 
 .mobile-menu.active {
-    right: 0;
+    left: 0; /* Jab active hoga toh left pe 0 ho jayega */
 }
 
 .mobile-menu a {
@@ -1402,18 +1406,52 @@ nav {
         margin: 10px auto;
     }
 
+    header {
+        position: sticky !important;
+        top: 0;
+        z-index: 2000;
+        background-color: var(--primary);
+    }
+
     /* Top Bar & Header Adjustments */
     .top-bar {
         display: none;
     }
 
     .main-header {
-        padding: 12px 0 0 0;
+        padding: 0;
         border-bottom: none;
     }
 
+    /* Flexbox use karke hum position control karenge */
+    .header-flex {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    /* 1. Ad Banner sabse upar (Top) dikhega */
+    #ad-header {
+        width: 100%;
+        margin: 5px auto !important; /* Mobile ke liye thoda kam margin */
+        order: 1; 
+    }
+
+    /* 2. Mobile Nav bar Ad ke theek niche (Bottom) dikhega */
+    .nav-container-mobile {
+        background-color: var(--primary);
+        height: 60px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        width: 100%;
+        order: 2; 
+    }
+
     .logo {
-        gap: 8px;
+        gap: 0;
+        margin: 0;
     }
 
     .logo-icon {
@@ -1421,7 +1459,8 @@ nav {
     }
 
     .logo-text {
-        font-size: 22px;
+        font-size: 20px;
+        font-weight: bold;
     }
 
     .logo-tagline {
@@ -1429,20 +1468,16 @@ nav {
     }
 
     /* Navigation Adjustments */
-    .nav-links,
-    .nav-right {
-        display: none;
-    }
-
-    .nav-flex {
-        padding: 8px 0 12px 0;
+    nav {
+        display: none; /* Purani desktop nav hide rahegi */
     }
 
     .mobile-btn {
         display: block;
-        font-size: 22px;
-        padding-left: 20px;
+        font-size: 26px;
         margin: 0;
+        margin-right: 12px;
+        padding: 0;
     }
 
     .mobile-menu {
@@ -1545,8 +1580,8 @@ nav {
 
     /* Mobile Menu Adjustments for Small Screens */
     .mobile-btn {
-        font-size: 20px;
-        padding-left: 15px;
+        font-size: 26px;
+        padding-left: 0;
     }
 
     .mobile-menu {

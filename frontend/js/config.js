@@ -7,10 +7,9 @@ if (typeof API_BASE_URL === 'undefined') {
 
 const CONFIG = {
     API_BASE_URL: APP_CONFIG.API_BASE_URL || window.API_BASE_URL,
-    GOOGLE_CLIENT_ID: APP_CONFIG.GOOGLE_CLIENT_ID || '615098838513-hnphi7ekcv9nhjv94f0mfj0509nd63hu.apps.googleusercontent.com',
+    GOOGLE_CLIENT_ID: APP_CONFIG.GOOGLE_CLIENT_ID || '818426114586-hqvv55t1tb77v08uod8cvsm7c93n44ru.apps.googleusercontent.com',
     
-    // YAHAN PAR NAYI PUBLIC KEY UPDATE KARNI HAI 👇
-    VAPID_PUBLIC_KEY: APP_CONFIG.VAPID_PUBLIC_KEY || 'BKRjaNs4FmbucsdQbG-dyzcPmgMJWbbEFl8Ln1i-tE-A28xTGscEIzQITNvkZnWGKOwH-JTs0YZsvncxbvl_6Qg',
+    VAPID_PUBLIC_KEY: APP_CONFIG.VAPID_PUBLIC_KEY || 'BH8GKhv_vAp6O5yHcn135xmll0JicEFp7G4Dp0r2p7Y6DNlOKJXltKi1K6JGS_xWC_5NC2wpxiM93Hp8LZfaiRA=',
     
     SENTRY_DSN: APP_CONFIG.SENTRY_DSN || '',
     SENTRY_ENVIRONMENT: APP_CONFIG.SENTRY_ENVIRONMENT || (window.location.hostname === 'localhost' || isFileProtocol ? 'development' : 'production'),

@@ -110,7 +110,7 @@
         padding: 18px;
     }
 
-    .main-content {
+    /* .main-content {
         display: flex;
         flex-direction: column;
         gap: 18px;
@@ -168,7 +168,7 @@
 
     #categories-list-section {
         order: 12;
-    }
+    } */
 
     .featured-image {
         aspect-ratio: 16 / 9;
@@ -459,5 +459,167 @@
         right: 12px;
         left: 12px;
         bottom: 12px;
+    }
+}
+
+
+
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    /* Tablet should reuse the mobile header and navigation behavior. */
+    .main-content {
+        gap: 15px;
+        margin: 10px auto;
+    }
+
+    .header-flex {
+        align-items: stretch;
+        gap: 0;
+    }
+
+    .nav-container-mobile {
+        gap: 10px;
+        min-height: 56px;
+        padding: 0 10px 0 6px;
+    }
+
+    .logo {
+        max-width: calc(100% - 54px);
+    }
+
+    .logo-icon {
+        font-size: 26px;
+    }
+
+    .logo-text {
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+    }
+
+    .logo-tagline {
+        display: none;
+    }
+
+    nav {
+        display: none;
+    }
+
+    .mobile-btn {
+        display: inline-flex;
+        font-size: 22px;
+    }
+
+    .mobile-menu {
+        padding-top: 70px;
+    }
+
+    .mobile-menu a {
+        padding: 16px 22px;
+        font-size: 0.98rem;
+    }
+
+    .close-btn {
+        top: 18px;
+        right: 18px;
+    }
+
+    .mobile-search {
+        padding: 18px;
+    }
+
+    .breaking {
+        padding: 8px 0;
+        margin: 0;
+    }
+
+    .breaking-flex {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .breaking-label {
+        margin-right: 0;
+        padding: 4px 10px;
+        font-size: 0.72rem;
+    }
+
+    .ticker {
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        scrollbar-width: none;
+    }
+
+    .ticker::-webkit-scrollbar {
+        display: none;
+    }
+
+    .ticker span {
+        display: inline-block;
+        padding-left: 100%;
+        font-size: 0.84rem;
+        font-weight: 500;
+        line-height: 1.2;
+        animation: ticker 25s linear infinite;
+    }
+
+    /* Force the article listing and footer into the same single-column mobile layout. */
+    .articles-container {
+        grid-template-columns: 1fr;
+    }
+
+    .article-meta,
+    .pagination,
+    .footer-bottom-container {
+        align-items: stretch;
+    }
+
+    .article-meta {
+        flex-direction: column;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+    }
+
+    .page-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .side-post,
+    .trending-news-item {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .featured-title {
+        font-size: 1.5rem;
+    }
+
+    .featured-image {
+        aspect-ratio: 4 / 3;
+    }
+
+    .category-heading {
+        font-size: 1.8rem;
+    }
+
+    .category-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .main-post img {
+        aspect-ratio: 16 / 9;
+    }
+
+    .side-post img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
     }
 }

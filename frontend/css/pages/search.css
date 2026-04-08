@@ -60,3 +60,22 @@
         word-break: break-word;
     }
 }
+
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    /* Tablet intentionally mirrors the mobile search header presentation. */
+    .search-header-container {
+        margin-bottom: 2rem;
+        padding: 1.25rem 0;
+    }
+
+    #search-heading {
+        font-size: 1.1rem;
+        flex-wrap: wrap;
+    }
+
+    .highlight-search {
+        font-size: 1rem;
+        padding: 0.35rem 0.85rem;
+        word-break: break-word;
+    }
+}

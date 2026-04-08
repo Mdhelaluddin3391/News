@@ -113,7 +113,7 @@ function initHeaderScripts() {
     const headerPlaceholder = document.getElementById('header-placeholder');
 
     const syncMobileHeaderOffset = () => {
-        const stickyHeaderMedia = window.matchMedia('(max-width: 992px)');
+        const stickyHeaderMedia = window.matchMedia('(max-width: 1024px)');
         const offset = stickyHeaderMedia.matches && headerPlaceholder ? headerPlaceholder.offsetHeight : 0;
         document.documentElement.style.setProperty('--mobile-header-offset', `${offset}px`);
     };
@@ -121,7 +121,7 @@ function initHeaderScripts() {
     window.syncMobileHeaderOffset = syncMobileHeaderOffset;
 
     if (nav && mainHeader) {
-        const stickyHeaderMedia = window.matchMedia('(max-width: 992px)');
+        const stickyHeaderMedia = window.matchMedia('(max-width: 1024px)');
 
         const syncStickyNav = () => {
             if (stickyHeaderMedia.matches) {

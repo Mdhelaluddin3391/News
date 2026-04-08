@@ -1,6 +1,6 @@
 /* ==================== Responsive Design (Media Queries) ==================== */
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
     #header-placeholder {
         position: fixed;
         top: 0;
@@ -20,66 +20,101 @@
         padding-top: var(--mobile-header-offset);
     }
 
+    .top-bar {
+        display: none;
+    }
+
+    .main-header {
+        padding: 0;
+        border-bottom: none;
+    }
+
     .ad-banner {
         margin-top: 15px;
     }
 
-    .top-flex {
-        justify-content: center;
-    }
-
-    .date-time {
-        justify-content: center;
-        text-align: center;
-        width: 100%;
-    }
-
-    .social-icons {
-        justify-content: center;
-        width: 100%;
-    }
-
     .header-flex {
-        align-items: center;
-        justify-content: center;
-        text-align: center;
+        align-items: stretch;
+        gap: 0;
+        text-align: left;
     }
 
-    .nav-flex {
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .nav-links {
-        margin-right: 0;
+    #ad-header {
         width: 100%;
-        justify-content: center;
+        margin: 4px auto 0 !important;
+        order: 2;
     }
 
-    .nav-right {
+    .nav-container-mobile {
+        background-color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        min-height: 58px;
+        padding: 0 14px 0 10px;
+        box-shadow: none;
         width: 100%;
-        justify-content: center;
-        flex-wrap: wrap;
+        order: 1;
+        border-radius: 0;
     }
 
     .logo {
-        justify-content: center;
-        text-align: center;
+        margin: 0;
+        max-width: calc(100% - 58px);
+        justify-content: flex-start;
+        text-align: left;
     }
 
-    .search-box {
-        flex: 1 1 320px;
-        max-width: 420px;
+    .logo-icon {
+        font-size: 28px;
     }
 
-    .search-box input {
-        width: 100%;
+    .logo-text {
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+    }
+
+    .logo-tagline {
+        display: none;
+    }
+
+    nav {
+        display: none;
+    }
+
+    .mobile-btn {
+        display: inline-flex;
+        font-size: 22px;
+        margin: 0;
+        padding: 0;
+        flex-shrink: 0;
+    }
+
+    .mobile-menu {
+        padding-top: 72px;
+    }
+
+    .mobile-menu a {
+        padding: 16px 22px;
+        font-size: 0.98rem;
+    }
+
+    .close-btn {
+        top: 18px;
+        right: 18px;
+    }
+
+    .mobile-search {
+        padding: 18px;
     }
 
     .main-content {
         display: flex;
         flex-direction: column;
+        gap: 18px;
+        margin: 12px auto 36px;
     }
 
     .left-column,
@@ -141,7 +176,7 @@
 
     .articles-container {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1.5rem;
+        gap: 1.25rem;
     }
 
     .footer-grid {
@@ -156,46 +191,19 @@
         margin: 10px auto;
     }
 
-    /* Top Bar & Header Adjustments */
-    .top-bar {
-        display: none;
-    }
-
-    .main-header {
-        padding: 0;
-        border-bottom: none;
-    }
-
     .header-flex {
         align-items: stretch;
         gap: 0;
     }
 
-    #ad-header {
-        width: 100%;
-        margin: 4px auto 0 !important;
-        order: 2;
-    }
-
     .nav-container-mobile {
-        background-color: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
         gap: 10px;
         min-height: 56px;
         padding: 0 10px 0 6px;
-        box-shadow: none;
-        width: 100%;
-        order: 1;
-        border-radius: 0;
     }
 
     .logo {
-        margin: 0;
         max-width: calc(100% - 54px);
-        justify-content: flex-start;
-        text-align: left;
     }
 
     .logo-icon {
@@ -213,17 +221,8 @@
     }
 
     /* Navigation Adjustments */
-    nav {
-        display: none; /* Purani desktop nav hide rahegi */
-    }
-
     .mobile-btn {
-        display: inline-flex;
         font-size: 22px;
-        margin: 0;
-        margin-right: 0;
-        padding: 0;
-        flex-shrink: 0;
     }
 
     .mobile-menu {

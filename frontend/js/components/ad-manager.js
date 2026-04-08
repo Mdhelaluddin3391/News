@@ -38,6 +38,10 @@ window.fetchActiveAds = function() {
                     
                     adContainer.innerHTML = adContent;
                     adContainer.style.display = 'block'; // Ad aane par hi div show hoga
+
+                    if (typeof window.syncMobileHeaderOffset === 'function') {
+                        window.syncMobileHeaderOffset();
+                    }
                     
                     // Google AdSense script run karein
                     if (adData.ad_type === 'google') {
@@ -45,6 +49,9 @@ window.fetchActiveAds = function() {
                             (adsbygoogle = window.adsbygoogle || []).push({});
                         } catch (e) {
                             console.error("AdSense error:", e);
+                        }
+                        if (typeof window.syncMobileHeaderOffset === 'function') {
+                            window.syncMobileHeaderOffset();
                         }
                     }
                 }

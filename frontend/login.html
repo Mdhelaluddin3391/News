@@ -11,8 +11,20 @@
     <link rel="canonical" href="https://www.feroxtimes.com/login">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/auth.css">
-    <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/components/top-bar.css">
+    <link rel="stylesheet" href="css/components/header.css">
+    <link rel="stylesheet" href="css/components/breaking-news.css">
+    <link rel="stylesheet" href="css/components/listing.css">
+    <link rel="stylesheet" href="css/components/sidebar.css">
+    <link rel="stylesheet" href="css/components/ads.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/components/poll.css">
+    <link rel="stylesheet" href="css/components/live-badge.css">
+    <link rel="stylesheet" href="css/components/footer.css">
+    <link rel="stylesheet" href="css/components/responsive.css">
+    <link rel="stylesheet" href="css/components/search.css">
+    <link rel="stylesheet" href="css/components/web-stories.css">
+    <link rel="stylesheet" href="css/pages/auth.css">
 
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -30,20 +42,19 @@
                     <input type="email" id="email" name="email" required>
                 </div>
                 <div class="form-group">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
-                        <label for="password" style="margin-bottom: 0;">Password</label>
-                        <a href="/forgot-password" style="font-size: 0.9rem; color: var(--primary); text-decoration: none;">Forgot Password?</a>
+                    <div class="auth-password-row">
+                        <label for="password" class="auth-label-inline">Password</label>
+                        <a href="/forgot-password" class="auth-inline-link">Forgot Password?</a>
                     </div>
                     <input type="password" id="password" name="password" required>
                 </div>
                 <button type="submit" class="auth-btn">Login</button>
             </form>
 
-            <div style="text-align: center; margin: 1.5rem 0;">
-                <p style="color: var(--gray); margin-bottom: 10px; font-size: 0.9rem;">OR</p>
+            <div class="auth-alt-auth">
+                <p class="auth-muted-copy">OR</p>
 
-                <div id="google-button-container" style="display: flex; justify-content: center;"></div>
+                <div id="google-button-container" class="auth-social-center"></div>
             </div>
             <p class="auth-link">Don't have an account? <a href="/register">Register here</a></p>
         </div>
@@ -54,12 +65,13 @@
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/script.js"></script>
-    <script src="js/homepage.js"></script>
-    <script src="js/index-ui.js"></script>
-    <script src="js/login.js"></script>
-    <script src="js/loadComponents.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/ad-manager.js"></script>
+    <script src="js/components/index-ui.js"></script>
+    <script src="js/components/loadComponents.js"></script>
+    <script src="js/components/ad-manager.js"></script>
+    <script src="js/pages/index.js"></script>
+    <script src="js/pages/homepage.js"></script>
+    <script src="js/pages/login.js"></script>
+    <script src="js/pages/search.js"></script>
 </body>
 
 </html>

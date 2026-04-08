@@ -134,16 +134,19 @@
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
     padding: 0.8rem 1rem;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 1rem;
     transition: var(--transition);
+    width: 100%;
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(0,82,204,0.1);
@@ -164,6 +167,103 @@
 
 .submit-btn:hover {
     background-color: var(--primary-dark);
+}
+
+.page-container--wide {
+    max-width: 1000px;
+}
+
+.page-container--bare {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+
+.page-container--tight {
+    padding: 1rem;
+}
+
+.page-hero-copy {
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+    opacity: 0.9;
+}
+
+.page-hero-copy--wide {
+    max-width: 700px;
+    font-size: 1.15rem;
+}
+
+.page-section-title {
+    margin-bottom: 1.5rem;
+    color: var(--dark);
+    border-left: 4px solid var(--primary);
+    padding-left: 10px;
+}
+
+.page-centered-heading {
+    margin-bottom: 2rem;
+    color: var(--dark);
+    text-align: center;
+}
+
+.page-grid-loading {
+    grid-column: 1 / -1;
+    color: var(--gray);
+    text-align: center;
+}
+
+.page-form-heading {
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+
+.page-form-heading--large-gap {
+    margin-bottom: 1rem;
+}
+
+.page-form-copy {
+    color: var(--gray);
+    margin-bottom: 2rem;
+}
+
+.page-status-banner {
+    display: none;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.page-two-col-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.page-two-col-fields--spaced,
+.page-form-group-spaced,
+.page-submit-full {
+    margin-top: 1.5rem;
+}
+
+.page-form-select {
+    background: white;
+}
+
+.page-submit-full {
+    width: 100%;
+    display: block;
+    text-align: center;
+}
+
+.page-submit-secondary {
+    background-color: var(--secondary);
+}
+
+.page-submit-secondary:hover {
+    background-color: #d9461f;
 }
 
 /* 404 page */
@@ -340,6 +440,11 @@
         border-radius: 16px;
     }
 
+    .page-container {
+        margin: 1.25rem auto;
+        padding: 1.25rem;
+    }
+
     .page-hero {
         margin-bottom: 2rem;
         padding-bottom: 1.5rem;
@@ -349,12 +454,125 @@
         font-size: 1.9rem;
     }
 
+    .page-content,
     .page-lead,
     .page-list {
         font-size: 1rem;
     }
 
+    .submit-btn,
+    .back-home {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .error-code {
+        font-size: 4.25rem;
+    }
+
     .about-grid-2 {
         grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    main.page-container > .container,
+    .page-header,
+    .contact-box {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    main.page-container > .container {
+        margin: 20px auto !important;
+    }
+
+    .faq-header .page-title,
+    .unsubscribe-form .submit-btn {
+        width: 100%;
+    }
+
+    main.page-container .careers-hero,
+    main.page-container .advertise-hero,
+    main.page-container .application-form-container,
+    main.page-container .ad-form-container {
+        padding: 1.5rem !important;
+    }
+
+    main.page-container .careers-hero h1,
+    main.page-container .advertise-hero h1 {
+        font-size: 2rem !important;
+    }
+
+    main.page-container .jobs-grid,
+    main.page-container .ad-slots-grid,
+    #advertise-form > div:first-child,
+    .page-two-col-fields {
+        grid-template-columns: 1fr !important;
+    }
+
+    main.page-container .job-meta {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-main {
+        padding: 1.5rem 0 2.5rem;
+    }
+
+    .page-shell,
+    .page-container {
+        padding-left: 0.9rem;
+        padding-right: 0.9rem;
+    }
+
+    .page-card {
+        padding: 1rem;
+    }
+
+    .page-title {
+        font-size: 1.6rem;
+    }
+
+    .page-section h2,
+    .error-message-static {
+        font-size: 1.35rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-box p,
+    .page-section p,
+    .page-content,
+    .page-list {
+        font-size: 0.95rem;
+    }
+
+    .error-code {
+        font-size: 3.25rem;
+    }
+
+    main.page-container .careers-hero,
+    main.page-container .advertise-hero,
+    main.page-container .application-form-container,
+    main.page-container .ad-form-container {
+        padding: 1rem !important;
+    }
+
+    #advertise-hero-description,
+    .careers-hero p {
+        font-size: 1rem !important;
+    }
+
+    .page-section-title,
+    .page-centered-heading,
+    .page-form-heading {
+        font-size: 1.35rem;
     }
 }

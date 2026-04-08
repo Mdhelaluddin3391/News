@@ -1,0 +1,46 @@
+/* ==================== Top Bar ==================== */
+.top-bar {
+    background-color: var(--primary);
+    color: white;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.top-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.date-time {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.social-icons {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.social-icons a,
+.social-icons span {
+    color: white;
+    margin-left: 0;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: var(--transition);
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.social-icons a:hover {
+    color: var(--secondary);
+}

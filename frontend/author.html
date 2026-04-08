@@ -23,18 +23,30 @@
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/author.css">
-    <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/components/top-bar.css">
+    <link rel="stylesheet" href="css/components/header.css">
+    <link rel="stylesheet" href="css/components/breaking-news.css">
+    <link rel="stylesheet" href="css/components/listing.css">
+    <link rel="stylesheet" href="css/components/sidebar.css">
+    <link rel="stylesheet" href="css/components/ads.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/components/poll.css">
+    <link rel="stylesheet" href="css/components/live-badge.css">
+    <link rel="stylesheet" href="css/components/footer.css">
+    <link rel="stylesheet" href="css/components/responsive.css">
+    <link rel="stylesheet" href="css/components/search.css">
+    <link rel="stylesheet" href="css/components/web-stories.css">
+    <link rel="stylesheet" href="css/pages/author.css">
 </head>
 <body>
     <div id="header-placeholder"></div>
 
-    <main class="container" style="margin-top: 2rem;">
+    <main class="container author-page">
         <div class="author-header-card" id="author-details">
             <p>Loading author details...</p>
         </div>
 
-        <h2 class="category-heading" style="margin-top: 3rem;">Articles by this Author</h2>
+        <h2 class="category-heading author-articles-heading">Articles by this Author</h2>
         <div class="articles-container" id="author-articles">
             </div>
     </main>
@@ -44,11 +56,12 @@
     <script src="js/config.js" defer></script>
     <script src="js/auth.js" defer></script>
     <script src="js/script.js" defer></script>
-    <script src="js/homepage.js" defer></script> 
-    <script src="js/index-ui.js" defer></script>
-    <script src="js/loadComponents.js" defer></script>
-    <script src="js/author.js" defer></script>
-    <script src="js/search.js" defer></script>
-    <script src="js/ad-manager.js" defer></script>
+    <script src="js/components/index-ui.js" defer></script>
+    <script src="js/components/loadComponents.js" defer></script>
+    <script src="js/components/ad-manager.js" defer></script>
+    <script src="js/pages/index.js" defer></script>
+    <script src="js/pages/homepage.js" defer></script> 
+    <script src="js/pages/author.js" defer></script>
+    <script src="js/pages/search.js" defer></script>
 </body>
 </html>

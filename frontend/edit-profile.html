@@ -11,9 +11,21 @@
     <link rel="canonical" href="https://www.feroxtimes.com/edit-profile">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/auth.css">
-    <link rel="stylesheet" href="css/edit-profile.css">
-    <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/components/top-bar.css">
+    <link rel="stylesheet" href="css/components/header.css">
+    <link rel="stylesheet" href="css/components/breaking-news.css">
+    <link rel="stylesheet" href="css/components/listing.css">
+    <link rel="stylesheet" href="css/components/sidebar.css">
+    <link rel="stylesheet" href="css/components/ads.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/components/poll.css">
+    <link rel="stylesheet" href="css/components/live-badge.css">
+    <link rel="stylesheet" href="css/components/footer.css">
+    <link rel="stylesheet" href="css/components/responsive.css">
+    <link rel="stylesheet" href="css/components/search.css">
+    <link rel="stylesheet" href="css/components/web-stories.css">
+    <link rel="stylesheet" href="css/pages/auth.css">
+    <link rel="stylesheet" href="css/pages/edit-profile.css">
 </head>
 
 <body>
@@ -26,12 +38,12 @@
             <div class="auth-error" id="edit-error"></div>
 
             <form class="auth-form" id="edit-profile-form">
-                <div class="form-group" style="text-align: center; margin-bottom: 15px;">
-                    <label style="margin-bottom: 10px; display: block;">Profile Picture</label>
-                    <div style="margin-bottom: 15px; position: relative; display: inline-block;">
-                        <img id="profile-pic-preview" src="" alt="Profile Preview" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary); box-shadow: var(--shadow);">
+                <div class="form-group edit-profile-media">
+                    <label class="edit-profile-media-label">Profile Picture</label>
+                    <div class="edit-profile-preview-wrap">
+                        <img id="profile-pic-preview" src="" alt="Profile Preview" class="edit-profile-preview">
                     </div>
-                    <input type="file" id="edit-profile-pic" accept="image/*" style="font-size: 0.9rem; padding: 5px; border: none;">
+                    <input type="file" id="edit-profile-pic" accept="image/*" class="edit-profile-file-input">
                 </div>
                 <div class="form-group">
                     <label for="edit-name">Full Name</label>
@@ -39,15 +51,14 @@
                 </div>
                 <div class="form-group">
                     <label for="edit-email">Email Address (Cannot be changed)</label>
-                    <input type="email" id="edit-email" disabled style="background-color: #f1f5f9;">
+                    <input type="email" id="edit-email" disabled class="edit-profile-readonly">
                 </div>
-                <div class="form-group" style="margin-top: 10px;">
+                <div class="form-group edit-profile-bio-group">
                     <label for="edit-bio">Bio</label>
-                    <textarea id="edit-bio" rows="4" placeholder="Tell us about yourself..."
-                        style="padding: 0.8rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; resize: vertical;"></textarea>
+                    <textarea id="edit-bio" rows="4" placeholder="Tell us about yourself..." class="edit-profile-bio"></textarea>
                 </div>
-                <hr style="border:0; border-top:1px solid var(--border); margin: 10px 0;">
-                <p style="font-size:0.9rem; color:var(--gray);">Leave password fields blank if you don't want to change
+                <hr class="edit-profile-divider">
+                <p class="edit-profile-note">Leave password fields blank if you don't want to change
                     it.</p>
                 <div class="form-group">
                     <label for="new-password">New Password</label>
@@ -68,12 +79,13 @@
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/script.js"></script>
-    <script src="js/homepage.js"></script>
-    <script src="js/index-ui.js"></script>
-    <script src="js/loadComponents.js"></script>
-    <script src="js/edit-profile.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/ad-manager.js"></script>
+    <script src="js/components/index-ui.js"></script>
+    <script src="js/components/loadComponents.js"></script>
+    <script src="js/components/ad-manager.js"></script>
+    <script src="js/pages/index.js"></script>
+    <script src="js/pages/homepage.js"></script>
+    <script src="js/pages/edit-profile.js"></script>
+    <script src="js/pages/search.js"></script>
 </body>
 
 </html>

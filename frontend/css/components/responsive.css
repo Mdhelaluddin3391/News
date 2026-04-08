@@ -1,0 +1,464 @@
+/* ==================== Responsive Design (Media Queries) ==================== */
+
+@media (max-width: 992px) {
+    #header-placeholder {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 2000;
+    }
+
+    #header-placeholder > header,
+    header {
+        position: relative;
+        top: 0;
+        background-color: var(--primary);
+    }
+
+    body {
+        padding-top: var(--mobile-header-offset);
+    }
+
+    .ad-banner {
+        margin-top: 15px;
+    }
+
+    .top-flex {
+        justify-content: center;
+    }
+
+    .date-time {
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+    }
+
+    .social-icons {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .header-flex {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .nav-flex {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-links {
+        margin-right: 0;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .nav-right {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .logo {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .search-box {
+        flex: 1 1 320px;
+        max-width: 420px;
+    }
+
+    .search-box input {
+        width: 100%;
+    }
+
+    .main-content {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .left-column,
+    .right-column {
+        display: contents;
+    }
+
+    .featured-news {
+        order: 1;
+    }
+
+    #top-stories-section {
+        order: 2;
+    }
+
+    #trending-section {
+        order: 3;
+    }
+
+    .recent-news-section {
+        order: 4;
+    }
+
+    #home-categories-container {
+        order: 5;
+    }
+
+    #category-scroll-loader {
+        order: 6;
+    }
+
+    #editors-picks-section {
+        order: 7;
+    }
+
+    #poll-widget-section {
+        order: 8;
+    }
+
+    #ad-section {
+        order: 9;
+    }
+
+    #article-top-ad {
+        order: 10;
+    }
+
+    #newsletter-section {
+        order: 11;
+    }
+
+    #categories-list-section {
+        order: 12;
+    }
+
+    .featured-image {
+        aspect-ratio: 16 / 9;
+    }
+
+    .articles-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* 📱 Mobile UI Fixes (No !important required) */
+@media (max-width: 768px) {
+    .main-content {
+        gap: 15px;
+        margin: 10px auto;
+    }
+
+    /* Top Bar & Header Adjustments */
+    .top-bar {
+        display: none;
+    }
+
+    .main-header {
+        padding: 0;
+        border-bottom: none;
+    }
+
+    .header-flex {
+        align-items: stretch;
+        gap: 0;
+    }
+
+    #ad-header {
+        width: 100%;
+        margin: 4px auto 0 !important;
+        order: 2;
+    }
+
+    .nav-container-mobile {
+        background-color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        min-height: 56px;
+        padding: 0 10px 0 6px;
+        box-shadow: none;
+        width: 100%;
+        order: 1;
+        border-radius: 0;
+    }
+
+    .logo {
+        margin: 0;
+        max-width: calc(100% - 54px);
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .logo-icon {
+        font-size: 26px;
+    }
+
+    .logo-text {
+        font-size: 19px;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+    }
+
+    .logo-tagline {
+        display: none;
+    }
+
+    /* Navigation Adjustments */
+    nav {
+        display: none; /* Purani desktop nav hide rahegi */
+    }
+
+    .mobile-btn {
+        display: inline-flex;
+        font-size: 22px;
+        margin: 0;
+        margin-right: 0;
+        padding: 0;
+        flex-shrink: 0;
+    }
+
+    .mobile-menu {
+        padding-top: 70px;
+    }
+
+    .mobile-menu a {
+        padding: 16px 22px;
+        font-size: 0.98rem;
+    }
+
+    .close-btn {
+        top: 18px;
+        right: 18px;
+    }
+
+    .mobile-search {
+        padding: 18px;
+    }
+
+    .breaking {
+        padding: 8px 0;
+        margin: 0;
+    }
+
+    .breaking-flex {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .breaking-label {
+        margin-right: 0;
+        padding: 4px 10px;
+        font-size: 0.72rem;
+    }
+
+    .ticker {
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        scrollbar-width: none;
+    }
+
+    .ticker::-webkit-scrollbar {
+        display: none;
+    }
+
+    .ticker span {
+        display: inline-block;
+        padding-left: 100%;
+        font-size: 0.84rem;
+        font-weight: 500;
+        line-height: 1.2;
+        animation: ticker 25s linear infinite;
+    }
+
+    .articles-container {
+        grid-template-columns: 1fr;
+    }
+
+    .article-meta,
+    .pagination,
+    .footer-bottom-container {
+        align-items: stretch;
+    }
+
+    .article-meta {
+        flex-direction: column;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+    }
+
+    .page-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .side-post,
+    .trending-news-item {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .featured-title {
+        font-size: 1.5rem;
+    }
+
+    .featured-image {
+        aspect-ratio: 4 / 3; /* Mobile par thodi lambi image achi lagti hai */
+    }
+
+    .category-heading {
+        font-size: 1.8rem;
+    }
+
+    .category-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .main-post img {
+        aspect-ratio: 16 / 9; /* Height 200px hata dein */
+    }
+
+    .side-post img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-col,
+    .footer-bottom-container {
+        text-align: center;
+    }
+
+    .footer-col h3::after {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+@media (max-width: 576px) {
+    .featured-image {
+        aspect-ratio: 4 / 3;
+    }
+
+    .featured-overlay {
+        padding: 15px;
+    }
+
+    .featured-title {
+        font-size: 1.1rem;
+    }
+
+    .featured-meta {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .breaking-flex {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .breaking-label {
+        margin-right: 0;
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+
+    .ticker {
+        white-space: nowrap;
+    }
+
+    .ticker span {
+        display: inline-block;
+        padding-left: 100%;
+        font-size: 0.8rem;
+        font-weight: 500;
+        line-height: 1.2;
+        animation: ticker 25s linear infinite;
+    }
+
+    .sidebar-title {
+        font-size: 1.2rem;
+    }
+
+    .trending-number {
+        font-size: 1.5rem;
+        min-width: 30px;
+    }
+
+    .trending-content h4 {
+        font-size: 0.9rem;
+    }
+
+    .nav-container-mobile {
+        gap: 8px;
+        padding: 0 8px 0 4px;
+    }
+
+    /* Mobile Menu Adjustments for Small Screens */
+    .mobile-btn {
+        font-size: 20px;
+        padding-left: 0;
+    }
+
+    .mobile-menu {
+        width: min(92vw, 320px);
+        padding-top: 60px;
+    }
+
+    .mobile-menu a {
+        padding: 14px 16px;
+        font-size: 0.95rem;
+    }
+
+    .close-btn {
+        top: 15px;
+        right: 15px;
+        font-size: 22px;
+    }
+
+    .mobile-search {
+        padding: 15px;
+    }
+
+    .mobile-search input {
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    .mobile-search button {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    .side-post {
+        gap: 12px;
+    }
+
+    .side-post img {
+        width: 72px;
+        height: 72px;
+    }
+
+    #toast-container {
+        right: 12px;
+        left: 12px;
+        bottom: 12px;
+    }
+}

@@ -48,13 +48,15 @@ function renderTrending(trending) {
     const container = document.getElementById('trending-container');
     if (!container) return;
 
-    if (trending.length === 0) {
-        container.innerHTML = '<p style="color: var(--gray); font-size: 0.9rem;">No trending news.</p>';
+    const items = (trending || []).slice(0, 5);
+
+    if (items.length === 0) {
+        container.innerHTML = '<p class="home-sidebar-loading">No trending news.</p>';
         return;
     }
 
     let html = '';
-    trending.forEach((item, index) => {
+    items.forEach((item, index) => {
         const number = (index + 1).toString().padStart(2, '0');
         const categoryName = item.category ? item.category.name : 'News';
         const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(item.title || 'Untitled') : (item.title || 'Untitled');
@@ -117,23 +119,25 @@ function renderEditorsPicks(picks) {
     const container = document.getElementById('editors-picks-container');
     if (!container) return;
 
-    if (!picks || picks.length === 0) {
-        container.innerHTML = '<p style="color: var(--gray); font-size: 0.9rem;">No editor picks available at the moment.</p>';
+    const items = (picks || []).slice(0, 5);
+
+    if (items.length === 0) {
+        container.innerHTML = '<p class="home-sidebar-loading">No editor picks available at the moment.</p>';
         return;
     }
 
     let html = '';
-    picks.forEach(item => {
+    items.forEach(item => {
         const imageUrl = window.getFullImageUrl(item.featured_image, '/images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
         const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(item.title || 'Untitled') : (item.title || 'Untitled');
         
         // ✅ SEO FIX: Use clean URL path for onclick
         html += `
-            <div class="side-post" onclick="window.location.href='/article/${item.slug}'" style="margin-bottom: 15px; cursor: pointer;">
+            <div class="side-post home-side-post" onclick="window.location.href='/article/${item.slug}'">
                 <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}" loading="lazy">
                 <div class="side-post-content">
-                    <h4 style="font-size: 0.95rem;">${safeTitle}</h4>
+                    <h4 class="home-side-post-title">${safeTitle}</h4>
                     <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(item.published_at)}</span>
                 </div>
             </div>
@@ -211,19 +215,19 @@ async function loadNextCategories(count = 1) {
             const sideArticles = articles.slice(1, 5);
 
             let sideHtml = sideArticles.map(a => {
-                const sideLiveBadge = a.is_live ? `<div class="live-badge-card" style="padding: 2px 5px; font-size: 0.6rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
+                const sideLiveBadge = a.is_live ? `<div class="live-badge-card live-badge-card--compact"><i class="fas fa-circle"></i> LIVE</div>` : '';
                 const sideImageUrl = window.getFullImageUrl(a.featured_image, '/images/default-news.png');
                 const sideContainClass = sideImageUrl.includes('default-news.png') ? 'img-contain' : '';
                 const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(a.title || 'Untitled') : (a.title || 'Untitled');
                 
                 // ✅ SEO FIX: Clean URL for side-post
                 return `
-                <div class="side-post" onclick="window.location.href='/article/${a.slug}'" style="position: relative;">
+                <div class="side-post home-side-post" onclick="window.location.href='/article/${a.slug}'">
                     ${sideLiveBadge}
                     <img src="${sideImageUrl}" alt="${safeTitle}" class="${sideContainClass}" loading="lazy">
                     
                     <div class="side-post-content">
-                        <h4>${safeTitle}</h4>
+                        <h4 class="home-side-post-title">${safeTitle}</h4>
                         <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(a.published_at)}</span>
                     </div>
                 </div>
@@ -243,10 +247,10 @@ async function loadNextCategories(count = 1) {
             // ✅ SEO FIX: Clean URL for category link and main post
             html += `
                 <div class="category-block">
-                    <h2 class="category-heading" style="margin-top: 1rem; margin-bottom: 1.5rem; font-size: 1.8rem;">
-                        <a href="/category/${cat.slug}" style="text-decoration:none; color:inherit; display:flex; justify-content:space-between; align-items:center;">
-                            ${safeCategoryName} 
-                            <span style="font-size:0.9rem; color:var(--primary); font-family:'Roboto', sans-serif;">View All →</span>
+                    <h2 class="category-heading home-category-heading">
+                        <a href="/category/${cat.slug}" class="home-category-link">
+                            <span class="home-category-label">${safeCategoryName}</span>
+                            <span class="home-category-view-all">View All →</span>
                         </a>
                     </h2>
                     <div class="category-grid">
@@ -304,6 +308,7 @@ async function initHomepage() {
         }
         currentCategory = currentCategory || 'general';
 
+        window.loadTopStories();
         window.loadEditorsPicks();
         window.loadTrendingNews();
         window.loadCategoriesSidebar();
@@ -337,19 +342,22 @@ async function initHomepage() {
         renderBreakingTicker(breakingArticles);
 
         if (recentData.results) {
-            renderRecentNews(recentData.results.slice(0, 5));
+            renderRecentNews(recentData.results.slice(0, 10));
         } else if (Array.isArray(recentData)) {
-            renderRecentNews(recentData.slice(0, 5));
+            renderRecentNews(recentData.slice(0, 10));
         }
 
         if (currentCategory === 'general') {
             allCategoriesList = categoriesList;
             currentCategoryIndex = 0;
             const homeContainer = document.getElementById('home-categories-container');
+            const isMobileHomepage = window.matchMedia('(max-width: 768px)').matches;
             if(homeContainer) {
                 homeContainer.innerHTML = ''; 
-                await loadNextCategories(2); 
-                setupScrollObserver();
+                await loadNextCategories(isMobileHomepage ? allCategoriesList.length : 2);
+                if (!isMobileHomepage) {
+                    setupScrollObserver();
+                }
             }
             
             if (typeof updateSEOMetaTags === 'function') {
@@ -411,9 +419,9 @@ function showCustomPushPrompt() {
     const promptDiv = document.createElement('div');
     promptDiv.id = 'custom-push-prompt';
     promptDiv.innerHTML = `
-        <div style="position: fixed; bottom: 20px; left: 20px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 9999; max-width: 350px; border-left: 5px solid var(--primary); font-family: 'Roboto', sans-serif; animation: slideInUp 0.5s ease-out;">
+        <div style="position: fixed; bottom: 20px; left: 20px; right: 20px; width: auto; max-width: 350px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 9999; border-left: 5px solid var(--primary); font-family: 'Roboto', sans-serif; animation: slideInUp 0.5s ease-out;">
             <h4 style="margin: 0 0 10px 0; color: var(--dark); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-                <i class="fas fa-bell" style="color: var(--secondary);"></i> 
+                <i class="fas fa-bell" style="color: var(--secondary);"></i>
                 Get Breaking News Alerts!
             </h4>
             <p style="margin: 0 0 15px 0; font-size: 0.95rem; color: var(--gray); line-height: 1.5;">
@@ -435,6 +443,15 @@ function showCustomPushPrompt() {
             }
             #push-allow-btn:hover { background: var(--primary-dark) !important; }
             #push-dismiss-btn:hover { background: #e2e8f0 !important; }
+            @media (max-width: 480px) {
+                #custom-push-prompt > div {
+                    left: 12px !important;
+                    right: 12px !important;
+                    bottom: 12px !important;
+                    max-width: none !important;
+                    padding: 16px !important;
+                }
+            }
         </style>
     `;
     
@@ -510,17 +527,17 @@ function renderRecentNews(articles) {
         const timeAgo = formatTimeAgo(article.published_at);
         const imageUrl = window.getFullImageUrl(article.featured_image, '/images/default-news.png');
         const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
-        const liveBadge = article.is_live ? `<div class="live-badge-card" style="padding: 2px 4px; font-size: 0.65rem; top: 5px; left: 5px;"><i class="fas fa-circle" style="font-size: 6px;"></i> LIVE</div>` : '';
+        const liveBadge = article.is_live ? `<div class="live-badge-card live-badge-card--compact"><i class="fas fa-circle"></i> LIVE</div>` : '';
         const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(article.title || 'Untitled') : (article.title || 'Untitled');
 
         // ✅ SEO FIX: Use clean URL for recent news
         html += `
-            <div class="recent-news-card" onclick="window.location.href='/article/${article.slug}'" style="position: relative; min-width: 160px; width: 160px; cursor: pointer; flex-shrink: 0; background: var(--card-bg); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid var(--border); transition: transform 0.2s ease;">
+            <div class="recent-news-card" onclick="window.location.href='/article/${article.slug}'">
                 ${liveBadge}
-                <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}" style="width: 100%; height: 100px; object-fit: cover; border-bottom: 1px solid var(--border);" loading="lazy">
-                <div style="padding: 12px 10px;">
-                    <h4 style="font-size: 0.85rem; margin-bottom: 8px; line-height: 1.4; color: var(--dark); font-family: 'Roboto', sans-serif; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${safeTitle}</h4>
-                    <span style="font-size: 0.75rem; color: var(--secondary); font-weight: 600;"><i class="far fa-clock"></i> ${timeAgo}</span>
+                <img src="${imageUrl}" alt="${safeTitle}" class="recent-news-card__image ${containClass}" loading="lazy">
+                <div class="recent-news-card__body">
+                    <h4 class="recent-news-card__title">${safeTitle}</h4>
+                    <span class="recent-news-card__meta"><i class="far fa-clock"></i> ${timeAgo}</span>
                 </div>
             </div>
         `;
@@ -546,24 +563,26 @@ function renderTopStories(stories) {
     const container = document.getElementById('top-stories-container');
     if (!container) return;
 
-    if (!stories || stories.length === 0) {
-        container.innerHTML = '<p style="color: var(--gray); font-size: 0.9rem;">No top stories at the moment.</p>';
+    const items = (stories || []).slice(0, 5);
+
+    if (items.length === 0) {
+        container.innerHTML = '<p class="home-sidebar-loading">No top stories at the moment.</p>';
         return;
     }
 
     let html = '';
-    stories.forEach((item, index) => {
+    items.forEach((item, index) => {
         const number = (index + 1).toString().padStart(2, '0');
         const categoryName = item.category ? item.category.name : 'News';
         const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(item.title || 'Untitled') : (item.title || 'Untitled');
         const safeCategoryName = typeof window.escapeHtml === 'function' ? window.escapeHtml(categoryName) : categoryName;
 
         html += `
-            <div class="trending-news-item" data-slug="${item.slug}" style="cursor: pointer;">
-                <div class="trending-number" style="color: var(--primary); font-size: 1.8rem;">${number}</div>
+            <div class="trending-news-item home-top-story" data-slug="${item.slug}">
+                <div class="trending-number home-top-story-number">${number}</div>
                 <div class="trending-content">
-                    <h4 style="font-size: 0.95rem; margin-bottom: 5px;">${safeTitle}</h4>
-                    <div class="trending-category" style="font-size: 0.75rem;">${safeCategoryName.toUpperCase()}</div>
+                    <h4 class="home-top-story-title">${safeTitle}</h4>
+                    <div class="trending-category home-top-story-category">${safeCategoryName.toUpperCase()}</div>
                 </div>
             </div>
         `;

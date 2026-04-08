@@ -1,0 +1,70 @@
+/* ==================== Advertisement Slots ==================== */
+.ad-slot {
+    text-align: center;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 10px;
+    margin: 25px auto;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.ad-slot img,
+.ad-slot iframe,
+.ad-slot ins,
+.ad-slot a {
+    max-width: 100%;
+}
+
+.ad-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.ad-sidebar {
+    min-height: 250px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.ad-in-article {
+    max-width: 100%;
+    margin: 30px 0;
+}
+
+.ad-banner {
+    width: 100%;
+    max-width: 728px;
+    min-height: 90px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray);
+}
+
+
+#ad-header img,
+#ad-header iframe,
+#ad-header ins {
+    height: 50px !important;      /* Matched with footer app download button size */
+    width: auto !important;       /* Width automatically adjusts based on height */
+    max-width: 100%;              /* Won't exceed screen width */
+    display: inline-block;
+    object-fit: contain;          /* Image ko stretch hone se rokne ke liye */
+}
+
+#ad-header {
+    margin: 15px 0 !important;    /* Top & bottom margin for spacing */
+    min-height: 50px;             /* Minimum height to match app buttons */
+    display: flex;                /* Flexbox for better alignment */
+    align-items: center;          /* Vertically center content */
+    justify-content: center;      /* Horizontally center content */
+}

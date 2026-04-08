@@ -1,0 +1,264 @@
+/* css/extra-pages.css */
+
+/* Coming Soon Pages Style */
+.coming-soon-container {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.coming-soon-icon {
+    font-size: 5rem;
+    color: var(--primary);
+    margin-bottom: 1.5rem;
+}
+
+.coming-soon-title {
+    font-size: 2.5rem;
+    color: var(--dark);
+    margin-bottom: 1rem;
+}
+
+.coming-soon-text {
+    font-size: 1.2rem;
+    color: var(--gray);
+    margin-bottom: 2rem;
+}
+
+/* Unsubscribe Page Style */
+.unsubscribe-form {
+    max-width: 500px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.unsubscribe-message {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    color: var(--gray);
+}
+
+.unsubscribe-status {
+    max-width: 500px;
+    margin: 0 auto 1rem;
+}
+
+.unsubscribe-status--success {
+    background: #d1fae5;
+    color: #065f46;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Cookie policy page */
+.cookie-policy-page {
+    max-width: none;
+    background: transparent;
+    box-shadow: none;
+}
+
+.cookie-policy-shell {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.cookie-policy-header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #e74c3c;
+    padding-bottom: 20px;
+}
+
+.cookie-policy-title {
+    color: #333;
+    font-size: 2.5rem;
+}
+
+.cookie-policy-updated {
+    color: #777;
+    margin-top: 10px;
+}
+
+.cookie-policy-content {
+    line-height: 1.8;
+    color: #555;
+    font-size: 1.05rem;
+}
+
+.cookie-policy-section {
+    margin-bottom: 30px;
+}
+
+.cookie-policy-section-title,
+.cookie-policy-contact-title {
+    color: #222;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+}
+
+.cookie-policy-section-title {
+    border-left: 4px solid #e74c3c;
+    padding-left: 15px;
+}
+
+.cookie-policy-lead {
+    font-size: 1.1rem;
+}
+
+.cookie-policy-list-intro {
+    margin-bottom: 10px;
+}
+
+.cookie-policy-card {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.cookie-policy-card + .cookie-policy-card {
+    margin-top: 20px;
+}
+
+.cookie-policy-card-title {
+    color: #e74c3c;
+    margin-bottom: 10px;
+}
+
+.cookie-policy-list {
+    margin-left: 20px;
+}
+
+.cookie-policy-list-top {
+    margin-top: 15px;
+}
+
+.cookie-policy-code {
+    background: #e8e8e8;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.cookie-policy-note-text {
+    color: #666;
+    margin-top: 10px;
+}
+
+.cookie-policy-warning {
+    margin-top: 15px;
+    color: #d9534f;
+    background: #fff3cd;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.cookie-policy-contact {
+    background: #e8f4f8;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 30px;
+}
+
+.cookie-policy-contact-email {
+    margin-top: 10px;
+}
+
+.cookie-policy-link {
+    color: #e74c3c;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .coming-soon-container {
+        padding: 3rem 1.25rem;
+    }
+
+    .coming-soon-icon {
+        font-size: 4rem;
+    }
+
+    .coming-soon-title {
+        font-size: 2rem;
+    }
+
+    .coming-soon-text,
+    .unsubscribe-message {
+        font-size: 1rem;
+    }
+
+    .cookie-policy-shell {
+        margin: 24px auto;
+        padding: 16px;
+    }
+
+    .cookie-policy-title {
+        font-size: 2rem;
+    }
+
+    .cookie-policy-content {
+        font-size: 1rem;
+    }
+
+    .cookie-policy-section-title,
+    .cookie-policy-contact-title {
+        font-size: 1.3rem;
+    }
+
+    .cookie-policy-card,
+    .cookie-policy-contact {
+        padding: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .coming-soon-container {
+        padding: 2.5rem 1rem;
+    }
+
+    .coming-soon-icon {
+        font-size: 3.2rem;
+    }
+
+    .coming-soon-title {
+        font-size: 1.7rem;
+    }
+
+    .cookie-policy-shell {
+        padding: 14px;
+    }
+
+    .cookie-policy-header {
+        margin-bottom: 22px;
+        padding-bottom: 16px;
+    }
+
+    .cookie-policy-title {
+        font-size: 1.65rem;
+    }
+
+    .cookie-policy-content {
+        font-size: 0.95rem;
+    }
+
+    .cookie-policy-section-title,
+    .cookie-policy-contact-title {
+        font-size: 1.15rem;
+        padding-left: 12px;
+    }
+
+    .cookie-policy-card,
+    .cookie-policy-contact {
+        padding: 12px;
+    }
+
+    .cookie-policy-list {
+        margin-left: 18px;
+    }
+}

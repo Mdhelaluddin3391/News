@@ -19,6 +19,7 @@
 
 .detail-content {
     padding: 0.5rem 2.5rem 2.5rem 2.5rem; /
+    min-width: 0;
 }
 
 .article-content blockquote {
@@ -113,7 +114,8 @@
 }
 
 .share-btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     padding: 0.5rem 1rem;
     background-color: var(--primary);
     color: white;
@@ -121,6 +123,7 @@
     border-radius: 20px;
     font-size: 0.9rem;
     transition: var(--transition);
+    min-height: 44px;
 }
 
 .share-btn:hover {
@@ -181,6 +184,7 @@
 
 .related-card .related-content {
     flex: 1;
+    min-width: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
@@ -281,6 +285,8 @@
 .comment-header {
     display: flex;
     justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
     color: var(--gray);
@@ -316,6 +322,9 @@
     cursor: pointer;
     font-size: 0.85rem;
     transition: var(--transition);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
 }
 
 .comment-actions button:hover {
@@ -354,6 +363,7 @@
     font-size: 1rem;
     margin-bottom: 1rem;
     resize: vertical;
+    min-height: 140px;
 }
 
 .comment-form button {
@@ -364,6 +374,7 @@
     border-radius: 30px;
     cursor: pointer;
     transition: var(--transition);
+    min-height: 44px;
 }
 
 .comment-form button:hover {
@@ -437,6 +448,7 @@
     cursor: pointer;
     transition: var(--transition);
     font-size: 0.95rem;
+    min-height: 44px;
 }
 
 .custom-modal-cancel {
@@ -517,6 +529,102 @@
 .login-prompt a {
     color: var(--primary);
     text-decoration: none;
+}
+
+@media (max-width: 1024px) {
+    .detail-title {
+        font-size: 2.1rem;
+    }
+
+    .detail-content {
+        padding: 1rem 2rem 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .article-detail {
+        border-radius: 12px;
+    }
+
+    .detail-image {
+        max-height: 360px;
+    }
+
+    .detail-content {
+        padding: 1rem 1rem 1.5rem;
+    }
+
+    .detail-title {
+        font-size: 1.8rem;
+        line-height: 1.25;
+    }
+
+    .detail-meta {
+        gap: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .detail-description,
+    .detail-body,
+    .article-content blockquote {
+        font-size: 1rem !important;
+    }
+
+    .detail-description,
+    .article-content blockquote {
+        padding: 0.9rem 1rem !important;
+    }
+
+    .related-card a {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .related-card img {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 16 / 9;
+    }
+
+    .comment-feedback-toast {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        max-width: none;
+    }
+
+    .custom-modal-box {
+        padding: 1.5rem;
+    }
+
+    .custom-modal-actions {
+        flex-direction: column;
+    }
+
+    .custom-modal-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .detail-title {
+        font-size: 1.55rem;
+    }
+
+    .share-buttons {
+        gap: 0.75rem;
+    }
+
+    .share-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .comment-form,
+    .comment {
+        padding: 1rem;
+    }
 }
 
 .login-prompt a:hover {

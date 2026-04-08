@@ -10,8 +10,20 @@
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/pages.css">
-    <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/components/top-bar.css">
+    <link rel="stylesheet" href="css/components/header.css">
+    <link rel="stylesheet" href="css/components/breaking-news.css">
+    <link rel="stylesheet" href="css/components/listing.css">
+    <link rel="stylesheet" href="css/components/sidebar.css">
+    <link rel="stylesheet" href="css/components/ads.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/components/poll.css">
+    <link rel="stylesheet" href="css/components/live-badge.css">
+    <link rel="stylesheet" href="css/components/footer.css">
+    <link rel="stylesheet" href="css/components/responsive.css">
+    <link rel="stylesheet" href="css/components/search.css">
+    <link rel="stylesheet" href="css/components/web-stories.css">
+    <link rel="stylesheet" href="css/pages/pages.css">
     
     <style>
         .advertise-hero {
@@ -67,28 +79,28 @@
 
     <div id="header-placeholder"></div>
 
-    <main class="container page-container" style="max-width: 1000px;">
+    <main class="container page-container page-container--wide">
         
         <div class="advertise-hero">
             <h1 id="advertise-hero-title">Grow Your Brand With Ferox Times</h1>
-            <p id="advertise-hero-description" style="font-size: 1.1rem; max-width: 600px; margin: 0 auto; opacity: 0.9;">
+            <p id="advertise-hero-description" class="page-hero-copy">
                 Reach a highly engaged audience through our premium digital news platform. We offer strategic ad placements to maximize your visibility.
             </p>
         </div>
 
-        <h2 id="advertise-slots-title" style="text-align: center; margin-bottom: 2rem; color: var(--dark);">Available Ad Slots</h2>
+        <h2 id="advertise-slots-title" class="page-centered-heading">Available Ad Slots</h2>
         <div class="ad-slots-grid" id="advertise-slots-grid">
-            <p id="advertise-slots-loading" style="text-align: center; grid-column: 1 / -1; color: var(--gray);">Loading advertising options...</p>
+            <p id="advertise-slots-loading" class="page-grid-loading">Loading advertising options...</p>
         </div>
 
         <div class="ad-form-container">
-            <h2 id="advertise-inquiry-title" style="margin-bottom: 1rem; color: var(--primary);">Advertisement Inquiry</h2>
-            <p id="advertise-inquiry-description" style="color: var(--gray); margin-bottom: 2rem;">Fill out the form below and our advertising team will get back to you with pricing and analytics details.</p>
+            <h2 id="advertise-inquiry-title" class="page-form-heading page-form-heading--large-gap">Advertisement Inquiry</h2>
+            <p id="advertise-inquiry-description" class="page-form-copy">Fill out the form below and our advertising team will get back to you with pricing and analytics details.</p>
             
-            <div id="ad-status" style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;"></div>
+            <div id="ad-status" class="page-status-banner"></div>
 
             <form class="contact-form" id="advertise-form">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="page-two-col-fields">
                     <div class="form-group">
                         <label for="company-name">Company / Brand Name</label>
                         <input type="text" id="company-name" required>
@@ -99,19 +111,19 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-top: 1.5rem;">
+                <div class="form-group page-form-group-spaced">
                     <label for="interested-slot" id="advertise-slot-label">Interested Ad Slot</label>
-                    <select id="interested-slot" style="padding: 0.8rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: white;" required>
+                    <select id="interested-slot" class="page-form-select" required>
                         <option value="">-- Select an option --</option>
                     </select>
                 </div>
 
-                <div class="form-group" style="margin-top: 1.5rem;">
+                <div class="form-group page-form-group-spaced">
                     <label for="message">Tell us about your campaign</label>
                     <textarea id="message" rows="5" placeholder="What are you looking to promote? Do you have a specific budget or timeline in mind?" required></textarea>
                 </div>
 
-                <button type="submit" class="submit-btn" id="advertise-submit-btn" style="margin-top: 1.5rem; width: 100%; text-align: center; display: block;">Submit Inquiry</button>
+                <button type="submit" class="submit-btn page-submit-full" id="advertise-submit-btn">Submit Inquiry</button>
             </form>
         </div>
 
@@ -120,11 +132,12 @@
     <div id="footer-placeholder"></div>
 
     <script src="js/config.js"></script>
-    <script src="js/loadComponents.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/script.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/advertise.js"></script>
-    <script src="js/ad-manager.js"></script>
+    <script src="js/components/loadComponents.js"></script>
+    <script src="js/components/ad-manager.js"></script>
+    <script src="js/pages/index.js"></script>
+    <script src="js/pages/advertise.js"></script>
+    <script src="js/pages/search.js"></script>
 </body>
 </html>

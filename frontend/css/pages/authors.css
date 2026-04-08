@@ -1,5 +1,25 @@
 /* css/authors.css */
 
+.authors-page {
+    margin-top: 2rem;
+}
+
+.page-container--bare {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+
+.authors-heading {
+    margin-top: 0;
+}
+
+.authors-intro {
+    color: var(--gray);
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
 .authors-grid {
     display: grid;
     /* Grid system: Screen size ke hisab se cards set ho jayenge */
@@ -65,8 +85,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 35px;
-    height: 35px;
+    width: 44px;
+    height: 44px;
     background-color: var(--light);
     color: var(--gray);
     border-radius: 50%;
@@ -78,4 +98,25 @@
 .author-card-social a:hover {
     background-color: var(--primary);
     color: white;
+}
+
+@media (max-width: 768px) {
+    .authors-intro {
+        font-size: 1rem;
+    }
+
+    .authors-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .author-card {
+        padding: 1.5rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .authors-grid {
+        grid-template-columns: 1fr;
+    }
 }

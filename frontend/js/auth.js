@@ -240,9 +240,9 @@ function updateAuthUI() {
     authLinks.forEach((link) => {
         if (user) {
             if (link.classList.contains('login-link') || link.classList.contains('register-link')) link.style.display = 'none';
-            if (link.classList.contains('profile-link') || link.classList.contains('saved-link') || link.classList.contains('logout-link')) link.style.display = 'inline-block';
+            if (link.classList.contains('profile-link') || link.classList.contains('saved-link') || link.classList.contains('logout-link')) link.style.display = '';
         } else {
-            if (link.classList.contains('login-link') || link.classList.contains('register-link')) link.style.display = 'inline-block';
+            if (link.classList.contains('login-link') || link.classList.contains('register-link')) link.style.display = '';
             if (link.classList.contains('profile-link') || link.classList.contains('saved-link') || link.classList.contains('logout-link')) link.style.display = 'none';
         }
     });

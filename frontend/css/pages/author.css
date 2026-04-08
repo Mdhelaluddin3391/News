@@ -1,4 +1,12 @@
 /* css/author.css */
+.author-page {
+    margin-top: 2rem;
+}
+
+.author-articles-heading {
+    margin-top: 3rem;
+}
+
 .author-header-card {
     background: var(--card-bg);
     border-radius: 16px;
@@ -43,6 +51,11 @@
     font-size: 1.2rem;
     margin-right: 1rem;
     transition: var(--transition);
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .author-social a:hover {
@@ -54,5 +67,35 @@
     .author-header-card {
         flex-direction: column;
         text-align: center;
+        padding: 1.5rem;
+        gap: 1.25rem;
+    }
+
+    .author-avatar {
+        width: 120px;
+        height: 120px;
+    }
+
+    .author-info h1 {
+        font-size: 1.9rem;
+    }
+
+    .author-bio {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .author-header-card {
+        padding: 1rem;
+    }
+
+    .author-avatar {
+        width: 104px;
+        height: 104px;
+    }
+
+    .author-info h1 {
+        font-size: 1.6rem;
     }
 }

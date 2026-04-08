@@ -34,7 +34,20 @@
         rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,900;1,400;1,900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/components/top-bar.css">
+    <link rel="stylesheet" href="css/components/header.css">
+    <link rel="stylesheet" href="css/components/breaking-news.css">
+    <link rel="stylesheet" href="css/components/listing.css">
+    <link rel="stylesheet" href="css/components/sidebar.css">
+    <link rel="stylesheet" href="css/components/ads.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/components/poll.css">
+    <link rel="stylesheet" href="css/components/live-badge.css">
+    <link rel="stylesheet" href="css/components/footer.css">
+    <link rel="stylesheet" href="css/components/responsive.css">
+    <link rel="stylesheet" href="css/components/search.css">
+    <link rel="stylesheet" href="css/components/web-stories.css">
+    <link rel="stylesheet" href="css/pages/index.css">
 </head>
 
 <body>
@@ -55,11 +68,9 @@
                 <div id="featured-news-container" class="featured-news-item">
                 </div>
             </section>
-            <section class="web-stories-section" style="margin-bottom: 40px;">
-                <h3
-                    style="font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--dark); margin-bottom: 15px; border-left: 4px solid var(--secondary); padding-left: 10px;">
-                    Web Stories (Shorts) <i class="fas fa-bolt"
-                        style="color: #f59e0b; font-size: 1.1rem; margin-left: 5px;"></i>
+            <section class="web-stories-section home-section">
+                <h3 class="home-section-heading">
+                    Web Stories (Shorts) <i class="fas fa-bolt home-section-icon"></i>
                 </h3>
 
                 <div id="story-thumbnails-container" class="story-thumbnails-wrapper">
@@ -81,21 +92,19 @@
                 </div>
             </div>
 
-            <section class="recent-news-section" id="recent-news-section" style="display: none; margin-bottom: 40px;">
-                <h3
-                    style="font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--dark); margin-bottom: 15px; border-left: 4px solid var(--secondary); padding-left: 10px;">
+            <section class="recent-news-section home-section" id="recent-news-section" style="display: none;">
+                <h3 class="home-section-heading">
                     Latest News
                 </h3>
-                <div id="recent-news-container"
-                    style="display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: thin;">
+                <div id="recent-news-container" class="home-horizontal-scroller">
                 </div>
             </section>
 
 
 
             <div id="home-categories-container"></div>
-            <div class="loader" id="category-scroll-loader"
-                style="display: none; margin: 30px auto; border-top-color: var(--secondary);"></div>
+            <div class="loader home-loader--secondary" id="category-scroll-loader"
+                style="display: none;"></div>
 
 
             <h1 class="category-heading" id="category-heading" style="display: none;">General News</h1>
@@ -119,14 +128,14 @@
             <section class="sidebar-section" id="top-stories-section">
                 <h3 class="sidebar-title">TOP STORIES</h3>
                 <div id="top-stories-container" class="trending-news">
-                    <p style="color: var(--gray); font-size: 0.9rem;">Loading top stories...</p>
+                    <p class="home-sidebar-loading">Loading top stories...</p>
                 </div>
             </section>
 
             <section class="sidebar-section" id="editors-picks-section">
                 <h3 class="sidebar-title">EDITOR'S PICKS</h3>
                 <div id="editors-picks-container" class="trending-news">
-                    <p style="color: var(--gray); font-size: 0.9rem;">Loading picks...</p>
+                    <p class="home-sidebar-loading">Loading picks...</p>
                 </div>
             </section>
 
@@ -149,7 +158,7 @@
             </section>
 
             <section class="sidebar-section" id="ad-section">
-               <div id="ad-sidebar" class="ad-container" style="display: none; margin: 15px 0;"></div>
+               <div id="ad-sidebar" class="ad-container home-ad-sidebar" style="display: none;"></div>
             </section>
 
 
@@ -171,13 +180,14 @@
     <script src="js/config.js" defer></script>
     <script src="js/auth.js" defer></script>
     <script src="js/script.js" defer></script>
-    <script src="js/homepage.js" defer></script>
-    <script src="js/index-ui.js" defer></script>
-    <script src="js/loadComponents.js" defer></script>
-    <script src="js/poll.js" defer></script>
-    <script src="js/search.js" defer></script>
-    <script src="js/push-notifications.js" defer></script>
-    <script src="js/ad-manager.js" defer></script>
+    <script src="js/components/index-ui.js" defer></script>
+    <script src="js/components/loadComponents.js" defer></script>
+    <script src="js/components/poll.js" defer></script>
+    <script src="js/components/push-notifications.js" defer></script>
+    <script src="js/components/ad-manager.js" defer></script>
+    <script src="js/pages/index.js" defer></script>
+    <script src="js/pages/homepage.js" defer></script>
+    <script src="js/pages/search.js" defer></script>
    <script type="application/ld+json">
 {
   "@context": "https://schema.org",

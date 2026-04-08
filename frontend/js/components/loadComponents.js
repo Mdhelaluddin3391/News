@@ -35,20 +35,50 @@ function initHeaderScripts() {
     const menuBtn = document.getElementById("menuBtn");
     const mobileMenu = document.getElementById("mobileMenu");
     const closeBtn = document.getElementById("closeBtn");
+    const mobileMenuBackdrop = document.getElementById("mobileMenuBackdrop");
+
+    const toggleMobileMenu = (isOpen) => {
+        if (!mobileMenu) return;
+        mobileMenu.classList.toggle("active", isOpen);
+        if (mobileMenuBackdrop) {
+            mobileMenuBackdrop.classList.toggle("active", isOpen);
+        }
+        if (menuBtn) {
+            menuBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        }
+        document.body.classList.toggle("no-scroll", isOpen);
+        document.documentElement.classList.toggle("no-scroll", isOpen);
+    };
 
     if (menuBtn && mobileMenu && closeBtn) {
         menuBtn.addEventListener("click", () => {
-            mobileMenu.classList.add("active");
-            document.body.classList.add("no-scroll");
-            document.documentElement.classList.add("no-scroll"); // Naya add kiya: html tag ke liye
+            toggleMobileMenu(true);
         });
         
         closeBtn.addEventListener("click", () => {
-            mobileMenu.classList.remove("active");
-            document.body.classList.remove("no-scroll");
-            document.documentElement.classList.remove("no-scroll"); // Naya add kiya: html tag ke liye
+            toggleMobileMenu(false);
         });
     }
+
+    if (mobileMenuBackdrop) {
+        mobileMenuBackdrop.addEventListener("click", () => {
+            toggleMobileMenu(false);
+        });
+    }
+
+    if (mobileMenu) {
+        mobileMenu.addEventListener("click", (event) => {
+            if (event.target.closest("a[href]")) {
+                toggleMobileMenu(false);
+            }
+        });
+    }
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && mobileMenu?.classList.contains("active")) {
+            toggleMobileMenu(false);
+        }
+    });
 
     function updateDateTime() {
         const dateTimeEl = document.getElementById("dateTime");
@@ -80,13 +110,30 @@ function initHeaderScripts() {
     const nav = document.querySelector('nav');
     const topBar = document.querySelector('.top-bar');
     const mainHeader = document.querySelector('.main-header');
+    const headerPlaceholder = document.getElementById('header-placeholder');
+
+    const syncMobileHeaderOffset = () => {
+        const stickyHeaderMedia = window.matchMedia('(max-width: 992px)');
+        const offset = stickyHeaderMedia.matches && headerPlaceholder ? headerPlaceholder.offsetHeight : 0;
+        document.documentElement.style.setProperty('--mobile-header-offset', `${offset}px`);
+    };
+
+    window.syncMobileHeaderOffset = syncMobileHeaderOffset;
 
     if (nav && mainHeader) {
-        // Calculate karte hain ki nav kab top par pahuchega
-        const topBarHeight = topBar ? topBar.offsetHeight : 0;
-        const scrollThreshold = topBarHeight + mainHeader.offsetHeight;
+        const stickyHeaderMedia = window.matchMedia('(max-width: 992px)');
 
-        window.addEventListener('scroll', () => {
+        const syncStickyNav = () => {
+            if (stickyHeaderMedia.matches) {
+                nav.classList.remove('sticky-nav');
+                mainHeader.style.marginBottom = '0px';
+                return;
+            }
+
+            // Calculate karte hain ki nav kab top par pahuchega
+            const topBarHeight = topBar ? topBar.offsetHeight : 0;
+            const scrollThreshold = topBarHeight + mainHeader.offsetHeight;
+
             if (window.scrollY >= scrollThreshold) {
                 nav.classList.add('sticky-nav');
                 // Layout ko tootne se bachane ke liye mainHeader ke niche space dete hain
@@ -95,7 +142,23 @@ function initHeaderScripts() {
                 nav.classList.remove('sticky-nav');
                 mainHeader.style.marginBottom = '0px';
             }
+        };
+
+        window.addEventListener('scroll', syncStickyNav);
+        window.addEventListener('resize', () => {
+            syncStickyNav();
+            syncMobileHeaderOffset();
         });
+        syncStickyNav();
+    }
+
+    syncMobileHeaderOffset();
+
+    if (headerPlaceholder && typeof ResizeObserver !== 'undefined') {
+        const headerResizeObserver = new ResizeObserver(() => {
+            syncMobileHeaderOffset();
+        });
+        headerResizeObserver.observe(headerPlaceholder);
     }
 }
 

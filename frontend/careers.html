@@ -12,8 +12,20 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/pages.css">
-    <link rel="stylesheet" href="css/search.css">
+    <link rel="stylesheet" href="css/components/top-bar.css">
+    <link rel="stylesheet" href="css/components/header.css">
+    <link rel="stylesheet" href="css/components/breaking-news.css">
+    <link rel="stylesheet" href="css/components/listing.css">
+    <link rel="stylesheet" href="css/components/sidebar.css">
+    <link rel="stylesheet" href="css/components/ads.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/components/poll.css">
+    <link rel="stylesheet" href="css/components/live-badge.css">
+    <link rel="stylesheet" href="css/components/footer.css">
+    <link rel="stylesheet" href="css/components/responsive.css">
+    <link rel="stylesheet" href="css/components/search.css">
+    <link rel="stylesheet" href="css/components/web-stories.css">
+    <link rel="stylesheet" href="css/pages/pages.css">
 
     <style>
         .careers-hero {
@@ -95,34 +107,32 @@
 
     <div id="header-placeholder"></div>
 
-    <main class="container page-container" style="max-width: 1000px; padding: 1rem;">
+    <main class="container page-container page-container--wide page-container--tight">
 
         <div class="careers-hero">
             <h1>Shape the Future of News</h1>
-            <p style="font-size: 1.15rem; max-width: 700px; margin: 0 auto; opacity: 0.9;">
+            <p class="page-hero-copy page-hero-copy--wide">
                 At Ferox Times, we are always looking for passionate storytellers, sharp editors, and brilliant tech minds
                 to join our mission of delivering the truth to the world.
             </p>
         </div>
 
-        <h2
-            style="margin-bottom: 1.5rem; color: var(--dark); border-left: 4px solid var(--primary); padding-left: 10px;">
+        <h2 class="page-section-title">
             Open Positions</h2>
 
         <div class="jobs-grid" id="dynamic-jobs-container">
-            <p style="text-align: center; grid-column: 1/-1; color: var(--gray);">Loading open positions...</p>
+            <p class="page-grid-loading">Loading open positions...</p>
         </div>
 
         <div id="apply-section" class="application-form-container">
-            <h2 style="margin-bottom: 0.5rem; color: var(--primary);">Submit Your Application</h2>
-            <p style="color: var(--gray); margin-bottom: 2rem;">Don't see your role above? You can still drop your
+            <h2 class="page-form-heading">Submit Your Application</h2>
+            <p class="page-form-copy">Don't see your role above? You can still drop your
                 details. We are always hiring good talent.</p>
 
-            <div id="career-status"
-                style="display: none; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;"></div>
+            <div id="career-status" class="page-status-banner"></div>
 
             <form class="contact-form" id="career-form">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="page-two-col-fields">
                     <div class="form-group">
                         <label for="applicant-name">Full Name</label>
                         <input type="text" id="applicant-name" required>
@@ -133,35 +143,32 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                <div class="page-two-col-fields page-two-col-fields--spaced">
                     <div class="form-group">
                         <label for="applicant-phone">Phone Number</label>
                         <input type="tel" id="applicant-phone" required>
                     </div>
                     <div class="form-group">
                         <label for="applied-role">Applying For</label>
-                        <select id="applied-role"
-                            style="padding: 0.8rem 1rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: white;"
-                            required>
+                        <select id="applied-role" class="page-form-select" required>
                             <option value="">-- Select a role --</option>
                             <option value="General / Other">General Application (Other)</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-top: 1.5rem;">
+                <div class="form-group page-form-group-spaced">
                     <label for="portfolio-link">Portfolio / LinkedIn Profile Link</label>
                     <input type="url" id="portfolio-link" placeholder="https://linkedin.com/in/yourprofile" required>
                 </div>
 
-                <div class="form-group" style="margin-top: 1.5rem;">
+                <div class="form-group page-form-group-spaced">
                     <label for="cover-letter">Cover Letter / Short Intro</label>
                     <textarea id="cover-letter" rows="6" placeholder="Tell us why you'd be a great fit for Ferox Times..."
                         required></textarea>
                 </div>
 
-                <button type="submit" class="submit-btn"
-                    style="margin-top: 1.5rem; width: 100%; text-align: center; display: block; background-color: var(--secondary);">Submit
+                <button type="submit" class="submit-btn page-submit-full page-submit-secondary">Submit
                     Application</button>
             </form>
         </div>
@@ -171,12 +178,13 @@
     <div id="footer-placeholder"></div>
 
     <script src="js/config.js"></script>
-    <script src="js/loadComponents.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/script.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/careers.js"></script>
-    <script src="js/ad-manager.js"></script>
+    <script src="js/components/loadComponents.js"></script>
+    <script src="js/components/ad-manager.js"></script>
+    <script src="js/pages/index.js"></script>
+    <script src="js/pages/careers.js"></script>
+    <script src="js/pages/search.js"></script>
 </body>
 
 </html>

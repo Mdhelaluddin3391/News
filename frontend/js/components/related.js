@@ -69,7 +69,7 @@ async function renderRelated(containerId, categorySlug, currentArticleId) {
             <div class="related-card">
                 <a href="/article/${a.slug}">
                     ${liveBadge}
-                    <img src="${imageUrl}" alt="${a.title}" class="${containClass}" loading="lazy">
+                    <img src="${imageUrl}" alt="${a.title}" class="${containClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                     <div class="related-content">
                         <h4>${a.title}</h4>
                         <div class="related-meta-time"><i class="far fa-clock"></i> ${timeAgo}</div>

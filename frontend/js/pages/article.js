@@ -248,7 +248,7 @@ function renderArticle(article) {
             </div>
         </div>
         
-        <img src="${imageUrl}" alt="${safeTitle} - Ferox Times" class="detail-image ${containClass}" fetchpriority="high" loading="eager" width="800" height="450">
+        <img src="${imageUrl}" alt="${safeTitle} - Ferox Times" class="detail-image ${containClass}" fetchpriority="high" loading="eager" width="800" height="450" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
         
         <div class="detail-content" style="padding-top: 2rem;">
             ${description ? `<p class="detail-description">${safeDescription}</p>` : ''}

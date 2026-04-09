@@ -92,7 +92,7 @@ function renderSearchArticles(articles, query) {
         return `
             <div class="article-card" style="display: flex; flex-direction: column; height: 100%;">
                 <a href="/article/${article.slug}" style="text-decoration: none; color: inherit;">
-                    <img src="${imageUrl}" alt="${safeTitleAttr}" class="article-image ${containClass}" loading="lazy" style="height: 200px; object-fit: cover;">
+                    <img src="${imageUrl}" alt="${safeTitleAttr}" class="article-image ${containClass}" loading="lazy" style="height: 200px; object-fit: cover;" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                 </a>
                 <div class="article-content" style="flex: 1; display: flex; flex-direction: column;">
                     <span class="article-source" style="font-size: 0.8rem; color: var(--primary); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">${highlightText(source, query)}</span>

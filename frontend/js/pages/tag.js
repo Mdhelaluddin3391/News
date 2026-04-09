@@ -34,7 +34,7 @@ function renderTagArticles(articles) {
         // ✅ SEO FIX: Use clean URL for article links
         return `
             <div class="article-card">
-                <img src="${imageUrl}" alt="${safeTitle}" class="article-image ${containClass}">
+                <img src="${imageUrl}" alt="${safeTitle}" class="article-image ${containClass}" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                 <div class="article-content">
                     <h3 class="article-title">${safeTitle}</h3>
                     <p class="article-description">${safeDescription}</p>

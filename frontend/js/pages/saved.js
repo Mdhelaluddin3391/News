@@ -34,7 +34,7 @@ function renderSavedArticles(articles) {
         // ✅ SEO FIX: Use clean URL for the read-more link
         return `
             <div class="article-card">
-                <img src="${imageUrl}" alt="${title}" class="article-image ${containClass}" loading="lazy">
+                <img src="${imageUrl}" alt="${title}" class="article-image ${containClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                 <div class="article-content">
                     <h3 class="article-title">${title}</h3>
                     <p class="article-description">${description}</p>

@@ -534,7 +534,7 @@ function renderRecentNews(articles) {
         html += `
             <div class="recent-news-card" onclick="window.location.href='/article/${article.slug}'">
                 ${liveBadge}
-                <img src="${imageUrl}" alt="${safeTitle}" class="recent-news-card__image ${containClass}" loading="lazy">
+                <img src="${imageUrl}" alt="${safeTitle}" class="recent-news-card__image ${containClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                 <div class="recent-news-card__body">
                     <h4 class="recent-news-card__title">${safeTitle}</h4>
                     <span class="recent-news-card__meta"><i class="far fa-clock"></i> ${timeAgo}</span>
@@ -648,7 +648,7 @@ function renderStoryThumbnails() {
         html += `
             <div class="story-thumb" onclick="openStoryModal(${index})">
                 <div class="story-thumb-inner">
-                    <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}" loading="lazy">
+                    <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                     <div class="story-thumb-overlay">
                         <div class="story-thumb-title">${safeTitle}</div>
                     </div>
@@ -691,7 +691,7 @@ function showStory() {
     
     // ✅ SEO FIX: Use clean URL for "Read More" button
     display.innerHTML = `
-        <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}">
+        <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
         <div class="story-text-container">
             <span class="story-badge">${safeCategoryName}</span>
             <h2 class="story-modal-title">${safeTitle}</h2>

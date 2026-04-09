@@ -58,7 +58,7 @@ async function fetchAuthorAndArticles() {
 
         // Render Author Profile
         authorCard.innerHTML = `
-            <img src="${avatar}" alt="${safeName}" class="author-avatar ${avatarContainClass}">
+            <img src="${avatar}" alt="${safeName}" class="author-avatar ${avatarContainClass}" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
             <div class="author-info">
                 <h1>${safeName}</h1>
                 <div class="author-role">${safeRole}</div>
@@ -131,7 +131,7 @@ async function fetchAuthorAndArticles() {
             // ✅ SEO FIX: Use clean URL path for articles
             articlesHtml += `
                 <div class="article-card">
-                    <img src="${imageUrl}" alt="${safeTitle}" class="article-image ${containClass}">
+                    <img src="${imageUrl}" alt="${safeTitle}" class="article-image ${containClass}" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                     <div class="article-content">
                         <h3 class="article-title">${safeTitle}</h3>
                         <p class="article-description">${safeDescription}</p>

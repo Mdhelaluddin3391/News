@@ -271,7 +271,7 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
                     // ✅ SEO FIX: Clean URL for autocomplete article click
                     html += `
                         <a href="/article/${article.slug}" class="suggestion-item">
-                            <img src="${imgUrl}" class="${containClass}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                            <img src="${imgUrl}" class="${containClass}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                             <div style="flex: 1; min-width: 0;">
                                 <div class="suggestion-title">${highlightedTitle}</div>
                                 <div style="font-size: 0.75rem; color: var(--gray);">${safeCategoryName}</div>

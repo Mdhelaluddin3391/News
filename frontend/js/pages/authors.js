@@ -46,7 +46,7 @@ async function fetchAndRenderAuthors() {
             // ✅ SEO FIX: Added clean URL routing and an actual <a> tag so search engine bots can crawl to the author profile
             html += `
                 <div class="author-card" onclick="window.location.href='/author/${author.slug}'" style="cursor: pointer;">
-                    <img src="${avatarUrl}" alt="${safeName}" class="author-card-avatar ${avatarContainClass}" loading="lazy">
+                    <img src="${avatarUrl}" alt="${safeName}" class="author-card-avatar ${avatarContainClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                     <h3 class="author-card-name">
                         <a href="/author/${author.slug}" style="text-decoration: none; color: inherit;">${safeName}</a>
                     </h3>

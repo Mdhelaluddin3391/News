@@ -1,7 +1,7 @@
 // js/script.js
 // ==================== CONFIGURATION ====================
 // Real Django API Endpoint
-const NEWS_API_URL = `${window.APP_CONFIG.API_BASE_URL}/news`;
+var NEWS_API_URL = window.NEWS_API_URL || `${window.APP_CONFIG.API_BASE_URL}/news`;
 const DEFAULT_CATEGORY = 'general';
 const ARTICLES_PER_PAGE = 10;
 
@@ -86,7 +86,7 @@ function renderArticles(articles) {
         return `
             <div class="article-card category-article-card" style="position: relative;" data-article-url="/article/${articleSlug}">
                 ${liveBadgeHTML}
-                <img src="${imageUrl}" alt="${safeTitle}" class="article-image ${containClass}" loading="lazy">
+                <img src="${imageUrl}" alt="${safeTitle}" class="article-image ${containClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                 <div class="article-content">
                     <h3 class="article-title">
                         <a href="/article/${articleSlug}" class="article-title-link">${safeTitle}</a>

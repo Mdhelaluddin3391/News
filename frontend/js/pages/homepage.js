@@ -26,7 +26,7 @@ function renderFeatured(article) {
 
     container.innerHTML = `
         ${liveBadgeHTML}
-        <img src="${imageUrl}" alt="${safeTitle}" class="featured-image ${containClass}" loading="lazy">
+        <img src="${imageUrl}" alt="${safeTitle}" class="featured-image ${containClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
         <div class="featured-overlay">
             <span class="featured-category">${safeCategoryName.toUpperCase()}</span>
             <h2 class="featured-title">${safeTitle}</h2>
@@ -135,7 +135,7 @@ function renderEditorsPicks(picks) {
         // ✅ SEO FIX: Use clean URL path for onclick
         html += `
             <div class="side-post home-side-post" onclick="window.location.href='/article/${item.slug}'">
-                <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}" loading="lazy">
+                <img src="${imageUrl}" alt="${safeTitle}" class="${containClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                 <div class="side-post-content">
                     <h4 class="home-side-post-title">${safeTitle}</h4>
                     <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(item.published_at)}</span>
@@ -224,7 +224,7 @@ async function loadNextCategories(count = 1) {
                 return `
                 <div class="side-post home-side-post" onclick="window.location.href='/article/${a.slug}'">
                     ${sideLiveBadge}
-                    <img src="${sideImageUrl}" alt="${safeTitle}" class="${sideContainClass}" loading="lazy">
+                    <img src="${sideImageUrl}" alt="${safeTitle}" class="${sideContainClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                     
                     <div class="side-post-content">
                         <h4 class="home-side-post-title">${safeTitle}</h4>
@@ -256,7 +256,7 @@ async function loadNextCategories(count = 1) {
                     <div class="category-grid">
                         <div class="main-post" onclick="window.location.href='/article/${mainArticle.slug}'">
                             ${mainLiveBadge}
-                            <img src="${mainImageUrl}" alt="${safeMainTitle}" class="${containClass}">
+                            <img src="${mainImageUrl}" alt="${safeMainTitle}" class="${containClass}" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                             <div class="main-post-content">
                                 <h3>${safeMainTitle}</h3>
                                 <p>${safeMainDescription}</p>

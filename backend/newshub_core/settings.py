@@ -119,7 +119,7 @@ ROOT_URLCONF = 'newshub_core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -373,8 +373,8 @@ SITE_ID = 1
 
 # JWT Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_COOKIE_ACCESS': os.getenv('AUTH_COOKIE_ACCESS', 'ft_access_token'),
     'AUTH_COOKIE_REFRESH': os.getenv('AUTH_COOKIE_REFRESH', 'ft_refresh_token'),

@@ -1,0 +1,12 @@
+Hello {{ user_name }},
+
+Welcome to Ferox Times.
+Please verify your email address to activate your account.
+
+Verification link: {{ verification_link }}
+
+Verification token: {{ verification_token }}
+
+This link is valid for 24 hours.
+
+If you did not sign up for this account, you can ignore this email.

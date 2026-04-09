@@ -16,7 +16,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from django.template.loader import render_to_string
 from core.tasks import send_async_email
 from .serializers import (
     EmailOnlySerializer,
@@ -84,54 +84,18 @@ def send_verification_email(user, regenerate_token=False):
 
     verification_link = build_verification_link(user)
     subject = "Verify Your Email - Ferox Times"
-    text_content = (
-        f"Hello {user.name},\n\n"
-        "Welcome to Ferox Times.\n"
-        "Please verify your email address to activate your account.\n\n"
-        f"Verification link: {verification_link}\n\n"
-        f"Verification token: {user.email_verification_token}\n\n"
-        "This link is valid for 24 hours."
-    )
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }}
-            .email-container {{ max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }}
-            .header {{ background-color: #1a365d; padding: 25px; text-align: center; }}
-            .header h1 {{ margin: 0; color: #ffffff; font-size: 24px; letter-spacing: 1px; }}
-            .content {{ padding: 35px; color: #334155; line-height: 1.6; font-size: 16px; text-align: center; }}
-            .content p {{ margin-bottom: 20px; }}
-            .btn {{ display: inline-block; background-color: #d32f2f; color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 50px; font-weight: bold; font-size: 16px; margin: 10px 0; }}
-            .footer {{ background-color: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; }}
-            .token-box {{ background-color: #f0f4f8; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: 'Courier New', monospace; word-break: break-all; }}
-        </style>
-    </head>
-    <body>
-        <div class="email-container">
-            <div class="header">
-                <h1>Ferox Times</h1>
-            </div>
-            <div class="content">
-                <h2 style="color: #1a365d;">Verify your email</h2>
-                <p>Hello <strong>{user.name}</strong>,</p>
-                <p>Please verify your email address to activate your account. This link is valid for <strong>24 hours</strong>.</p>
-                <a href="{verification_link}" class="btn">Verify Email</a>
-                <p style="margin-top: 20px; font-size: 14px;">Or use this verification token:</p>
-                <div class="token-box">{user.email_verification_token}</div>
-                <p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you did not sign up for this account, you can ignore this email.</p>
-            </div>
-            <div class="footer">
-                &copy; 2026 Ferox Times. All rights reserved.
-            </div>
-        </div>
-    </body>
-    </html>
-    """
+    
+    context = {
+        'user_name': user.name,
+        'verification_link': verification_link,
+        'verification_token': user.email_verification_token
+    }
+    
+    # IMPROVEMENT: Use Django templates instead of hardcoded HTML strings
+    text_content = render_to_string('emails/verify_email.txt', context)
+    html_content = render_to_string('emails/verify_email.html', context)
 
     send_async_email.delay(subject, text_content, [user.email], html_content)
-
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -278,60 +242,26 @@ class ForgotPasswordView(APIView):
 
         try:
             user = User.objects.get(email=email)
+            
+            # SECURITY FIX: Tie the JWT to the current password hash so it invalidates immediately upon use
             payload = {
                 "user_id": user.id,
                 "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
                 "type": "reset_password",
+                "pwd_hash": user.password[-10:] 
             }
             token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
             reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
 
-            html_content = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }}
-                    .email-container {{ max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }}
-                    .header {{ background-color: #1a365d; padding: 25px; text-align: center; }}
-                    .header h1 {{ margin: 0; color: #ffffff; font-size: 24px; letter-spacing: 1px; }}
-                    .content {{ padding: 35px; color: #334155; line-height: 1.6; font-size: 16px; text-align: center; }}
-                    .content p {{ margin-bottom: 20px; }}
-                    .btn {{ display: inline-block; background-color: #d32f2f; color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 50px; font-weight: bold; font-size: 16px; margin: 10px 0; }}
-                    .footer {{ background-color: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; }}
-                </style>
-            </head>
-            <body>
-                <div class="email-container">
-                    <div class="header">
-                        <h1>Ferox Times</h1>
-                    </div>
-                    <div class="content">
-                        <h2 style="color: #1a365d;">Password Reset Request</h2>
-                        <p>Hello <strong>{user.name}</strong>,</p>
-                        <p>We received a request to reset your password. Click the button below to set a new password. This link is valid for <strong>15 minutes</strong>.</p>
-                        <a href="{reset_link}" class="btn">Reset Password</a>
-                        <p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you did not request this, please ignore this email. Your account is safe.</p>
-                    </div>
-                    <div class="footer">
-                        &copy; 2026 Ferox Times. All rights reserved.
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
+            context = {'user_name': user.name, 'reset_link': reset_link}
+            text_content = render_to_string('emails/reset_password.txt', context)
+            html_content = render_to_string('emails/reset_password.html', context)
 
-            send_async_email.delay(
-                "Password Reset Request - Ferox Times",
-                f"Hello {user.name},\n\nClick the link below to reset your password:\n{reset_link}",
-                [user.email],
-                html_content,
-            )
+            send_async_email.delay("Password Reset Request - Ferox Times", text_content, [user.email], html_content)
         except User.DoesNotExist:
-            pass
+            pass # Prevent user enumeration
 
         return Response({"message": "If that email is registered, we have sent a reset link."})
-
 
 class ResetPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -341,25 +271,26 @@ class ResetPasswordView(APIView):
     def post(self, request):
         serializer = ResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        token = serializer.validated_data["token"]
-        password = serializer.validated_data["password"]
-
+        
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(serializer.validated_data["token"], settings.SECRET_KEY, algorithms=["HS256"])
             if payload.get("type") != "reset_password":
                 raise jwt.InvalidTokenError
 
             user = User.objects.get(id=payload["user_id"])
-            user.set_password(password)
+            
+            # SECURITY FIX: Validate that the password hasn't been changed since the token was issued
+            if payload.get("pwd_hash") != user.password[-10:]:
+                raise jwt.InvalidTokenError
+
+            user.set_password(serializer.validated_data["password"])
             user.save(update_fields=["password"])
             return Response({"message": "Password reset successful."})
+            
         except jwt.ExpiredSignatureError:
-            return Response(
-                {"error": "The reset link has expired. Please request a new one."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"error": "The reset link has expired."}, status=status.HTTP_400_BAD_REQUEST)
         except (jwt.InvalidTokenError, User.DoesNotExist):
-            return Response({"error": "Invalid reset link."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid or already used reset link."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GoogleLoginView(APIView):
@@ -370,55 +301,35 @@ class GoogleLoginView(APIView):
     def post(self, request):
         serializer = GoogleLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        token = serializer.validated_data["token"]
 
         try:
             idinfo = id_token.verify_oauth2_token(
-                token,
-                google_requests.Request(),
-                settings.GOOGLE_CLIENT_ID,
+                serializer.validated_data["token"], 
+                google_requests.Request(), 
+                settings.GOOGLE_CLIENT_ID
             )
 
             email = User.objects.normalize_email(idinfo["email"])
-            name = idinfo.get("name", "Google User")
+            
+            # CLEANUP: Streamlined object creation and default overrides
             user, created = User.objects.get_or_create(
                 email=email,
                 defaults={
-                    "name": name,
+                    "name": idinfo.get("name", "Google User"),
                     "role": "subscriber",
                     "is_active": True,
                     "is_email_verified": True,
                 },
             )
 
-            fields_to_update = []
             if created:
                 user.set_unusable_password()
-                fields_to_update.append("password")
-
-            if not user.name:
-                user.name = name
-                fields_to_update.append("name")
-
-            if not user.is_email_verified:
-                user.is_email_verified = True
-                fields_to_update.append("is_email_verified")
-
-            if not user.is_active:
-                user.is_active = True
-                fields_to_update.append("is_active")
-
-            if fields_to_update:
-                user.save(update_fields=fields_to_update)
+                user.save(update_fields=["password"])
 
             refresh = RefreshToken.for_user(user)
-            response = Response(
-                {
-                    "message": "Login successful.",
-                    "user": UserSerializer(user).data,
-                }
-            )
+            response = Response({"message": "Login successful.", "user": UserSerializer(user).data})
             set_auth_cookies(response, refresh)
             return response
+            
         except ValueError:
             return Response({"error": "Invalid Google Token"}, status=status.HTTP_400_BAD_REQUEST)

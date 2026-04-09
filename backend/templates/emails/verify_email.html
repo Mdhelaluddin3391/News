@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; }
+        .email-container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
+        .header { background-color: #1a365d; padding: 25px; text-align: center; }
+        .header h1 { margin: 0; color: #ffffff; font-size: 24px; letter-spacing: 1px; }
+        .content { padding: 35px; color: #334155; line-height: 1.6; font-size: 16px; text-align: center; }
+        .content p { margin-bottom: 20px; }
+        .btn { display: inline-block; background-color: #d32f2f; color: #ffffff; text-decoration: none; padding: 14px 30px; border-radius: 50px; font-weight: bold; font-size: 16px; margin: 10px 0; }
+        .footer { background-color: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; }
+        .token-box { background-color: #f0f4f8; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: 'Courier New', monospace; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Ferox Times</h1>
+        </div>
+        <div class="content">
+            <h2 style="color: #1a365d;">Verify your email</h2>
+            <p>Hello <strong>{{ user_name }}</strong>,</p>
+            <p>Please verify your email address to activate your account. This link is valid for <strong>24 hours</strong>.</p>
+            <a href="{{ verification_link }}" class="btn">Verify Email</a>
+            <p style="margin-top: 20px; font-size: 14px;">Or use this verification token:</p>
+            <div class="token-box">{{ verification_token }}</div>
+            <p style="margin-top: 30px; font-size: 14px; color: #94a3b8;">If you did not sign up for this account, you can ignore this email.</p>
+        </div>
+        <div class="footer">
+            &copy; 2026 Ferox Times. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

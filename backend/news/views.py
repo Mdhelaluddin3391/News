@@ -16,7 +16,7 @@ from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db import connection
 from django.db.models import F, Q
 from rest_framework.throttling import AnonRateThrottle
-
+from django.shortcuts import render
 
 class ArticleViewThrottle(AnonRateThrottle):
     rate = '10/day'
@@ -195,38 +195,16 @@ class ArticleViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
     def share(self, request, slug=None):
         article = self.get_object()
-        frontend_url = f"{settings.FRONTEND_URL}/article/{article.slug}"
         
-        image_url = request.build_absolute_uri(article.featured_image.url) if article.featured_image else f"{settings.FRONTEND_URL}/images/default-news.png"
-        safe_title = escape(article.title)
-        safe_desc = escape(article.description[:200]) if article.description else ""
-
-        # ✅ SEO FIX: Added canonical tag to the meta HTML
-        html_content = f"""
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>{safe_title} - Ferox Times</title>
-            <link rel="canonical" href="{frontend_url}" />
-            <meta property="og:type" content="article">
-            <meta property="og:title" content="{safe_title}">
-            <meta property="og:description" content="{safe_desc}">
-            <meta property="og:image" content="{image_url}">
-            <meta property="og:url" content="{frontend_url}">
-            <meta property="og:site_name" content="Ferox Times">
-            <meta name="twitter:card" content="summary_large_image">
-            <meta name="twitter:title" content="{safe_title}">
-            <meta name="twitter:description" content="{safe_desc}">
-            <meta name="twitter:image" content="{image_url}">
-            <meta http-equiv="refresh" content="0; url={frontend_url}">
-        </head>
-        <body>
-            <p>Redirecting to article... <a href="{frontend_url}">Click here</a>.</p>
-        </body>
-        </html>
-        """
-        return HttpResponse(html_content)
+        # IMPROVEMENT: Using Django render instead of hardcoded HTML string to prevent XSS
+        context = {
+            'safe_title': article.title,
+            'safe_desc': article.description[:200] if article.description else "",
+            'frontend_url': f"{settings.FRONTEND_URL}/article/{article.slug}",
+            'image_url': request.build_absolute_uri(article.featured_image.url) if article.featured_image else f"{settings.FRONTEND_URL}/images/default-news.png"
+        }
+        
+        return render(request, 'news/share_redirect.html', context)
 
 class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Author.objects.all()

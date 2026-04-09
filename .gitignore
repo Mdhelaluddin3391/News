@@ -29,3 +29,4 @@ build/
 .env.prd
 backend/celerybeat-schedule
 backend/celerybeat-schedule
+backend/create_superuser.py

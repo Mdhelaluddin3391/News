@@ -1,14 +1,16 @@
 import bleach
+from urllib.parse import urlparse
 from rest_framework import serializers
 
 from users.serializers import UserSerializer
-
 from .models import Bookmark, Comment, CommentReport, Poll, PollOption, PushSubscription
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    # Comment kisne kiya hai, uski detail read-only format mein
     user_detail = UserSerializer(source='user', read_only=True)
+    
+    # SECURITY FIX: Enforce max_length to prevent Bleach CPU Exhaustion DoS
+    text = serializers.CharField(max_length=1500, trim_whitespace=True)
 
     class Meta:
         model = Comment
@@ -16,14 +18,19 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'is_active', 'created_at')
 
     def validate_text(self, value):
+        # Bleach is now safe to run because max_length prevents massive payloads
         cleaned_value = bleach.clean(value, tags=[], strip=True).strip()
         if len(cleaned_value) < 2:
             raise serializers.ValidationError('Comment must contain at least 2 characters.')
         return cleaned_value
 
+
 class CommentReportSerializer(serializers.ModelSerializer):
     reported_by_detail = UserSerializer(source='reported_by', read_only=True)
     comment_detail = CommentSerializer(source='comment', read_only=True)
+    
+    # SECURITY FIX: Limit payload size to prevent database DoS
+    description = serializers.CharField(max_length=1000, required=False, allow_blank=True, trim_whitespace=True)
 
     class Meta:
         model = CommentReport
@@ -51,6 +58,7 @@ class CommentReportSerializer(serializers.ModelSerializer):
 
         return attrs
 
+
 class BookmarkSerializer(serializers.ModelSerializer):
     def validate_article(self, value):
         request = self.context.get('request')
@@ -70,6 +78,7 @@ class PollOptionSerializer(serializers.ModelSerializer):
         model = PollOption
         fields = ['id', 'text', 'votes']
 
+
 class PollSerializer(serializers.ModelSerializer):
     options = PollOptionSerializer(many=True, read_only=True)
     total_votes = serializers.SerializerMethodField()
@@ -80,13 +89,21 @@ class PollSerializer(serializers.ModelSerializer):
 
     def get_total_votes(self, obj):
         return sum(option.votes for option in obj.options.all())
-    
 
 
 class PushSubscriptionSerializer(serializers.ModelSerializer):
+    
     def validate_endpoint(self, value):
-        if not value.startswith(('https://', 'http://localhost')):
-            raise serializers.ValidationError('Push endpoint must be an HTTP(S) URL.')
+        # SECURITY FIX: Protect against Server-Side Request Forgery (SSRF)
+        if not value.startswith('https://'):
+            raise serializers.ValidationError('Push endpoint must be a secure HTTPS URL.')
+        
+        parsed = urlparse(value)
+        # Block internal network IPs so attackers cannot port-scan your internal AWS/Docker infrastructure
+        if parsed.hostname in ['localhost', '127.0.0.1', '0.0.0.0'] or \
+           str(parsed.hostname).startswith(('192.168.', '10.', '172.')):
+            raise serializers.ValidationError('Invalid push endpoint. Localhost/Internal IPs are forbidden.')
+            
         return value
 
     class Meta:

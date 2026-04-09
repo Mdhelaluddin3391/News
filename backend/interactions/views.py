@@ -5,7 +5,7 @@ from django.core.validators import validate_email
 from django.utils import timezone
 import datetime
 import jwt
-
+from django.template.loader import render_to_string
 from django.core.cache import cache
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
@@ -112,51 +112,20 @@ class SubscribeNewsletterView(APIView):
         subscriber.is_active = True
         subscriber.save()
 
-        # ================== NAYA CODE: WELCOME EMAIL ==================
         if created or subscriber.is_active:
             subject = "🎉 Welcome to Ferox Times - Stay Updated!"
-            message = "Thank you for subscribing to Ferox Times! You will now receive our daily top stories and breaking news alerts."
+            context = {
+                'email': email,
+                'frontend_url': settings.FRONTEND_URL
+            }
             
-            html_content = f"""
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body {{ font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }}
-                    .container {{ max-width: 600px; background: white; padding: 30px; border-radius: 8px; margin: auto; border-top: 5px solid #1a365d; }}
-                    h2 {{ color: #1a365d; }}
-                    p {{ color: #444; line-height: 1.6; font-size: 16px; }}
-                    .btn {{ display: inline-block; background: #d32f2f; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; }}
-                    .footer {{ margin-top: 30px; font-size: 12px; color: #888; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h2>Welcome to Ferox Times! 📰</h2>
-                    <p>Hi there,</p>
-                    <p>Thank you for subscribing! You are now part of our community. We promise to bring you the most accurate, fast, and reliable news directly to your inbox.</p>
-                    <p><strong>What to expect:</strong></p>
-                    <ul>
-                        <li>🚨 Instant Breaking News Alerts</li>
-                        <li>🌙 Daily Night Digest (Top stories of the day)</li>
-                        <li>⭐ Weekend Editor's Special</li>
-                    </ul>
-                    <a href="{settings.FRONTEND_URL}/" class="btn" style="color: white;">Read Latest News Now</a>
-                    
-                    <div class="footer">
-                        If you ever wish to stop receiving emails, you can <a href="{settings.FRONTEND_URL}/unsubscribe?email={email}">unsubscribe here</a>.
-                    </div>
-                </div>
-            </body>
-            </html>
-            """
+            # IMPROVEMENT: Raw HTML ki jagah templates use kiye
+            text_content = render_to_string('emails/subscribe_welcome.txt', context)
+            html_content = render_to_string('emails/subscribe_welcome.html', context)
             
-            # Email ko background mein bhejein taaki UI slow na ho
-            send_async_email.delay(subject, message, [email], html_content)
+            send_async_email.delay(subject, text_content, [email], html_content)
 
         return Response({"message": "Successfully subscribed to the newsletter!"}, status=status.HTTP_201_CREATED)
-
-
 
 class UnsubscribeNewsletterView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -167,33 +136,22 @@ class UnsubscribeNewsletterView(APIView):
         token = request.data.get('token')
         raw_email = (request.data.get('email') or '').strip()
 
-        # === 1. CONFIRM UNSUBSCRIBE LOGIC (Agar request mein token aaya hai) ===
+        # === 1. CONFIRM UNSUBSCRIBE LOGIC ===
         if token:
             try:
-                # Token verify aur decode karein
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-                
                 if payload.get('type') != 'unsubscribe':
                     raise jwt.InvalidTokenError
                 
                 sub_email = payload.get('email')
                 subscriber = NewsletterSubscriber.objects.get(email=sub_email)
                 
-                # === NAYA: Check if token has already been used ===
                 if subscriber.unsubscribe_token_used_at is not None:
-                    return Response(
-                        {"error": "This unsubscribe link has already been used. You are already unsubscribed."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    return Response({"error": "This link has already been used."}, status=status.HTTP_400_BAD_REQUEST)
                 
-                # Verify that the token matches what we have stored
                 if subscriber.unsubscribe_token != token:
-                    return Response(
-                        {"error": "Invalid or expired unsubscribe token."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    return Response({"error": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
                 
-                # User ko inactive mark karein AND mark token as used
                 subscriber.is_active = False
                 subscriber.unsubscribe_token_used_at = timezone.now()
                 subscriber.save()
@@ -201,11 +159,11 @@ class UnsubscribeNewsletterView(APIView):
                 return Response({"message": "You have been successfully unsubscribed."})
                 
             except jwt.ExpiredSignatureError:
-                return Response({"error": "The unsubscribe link has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "The link has expired."}, status=status.HTTP_400_BAD_REQUEST)
             except (jwt.InvalidTokenError, NewsletterSubscriber.DoesNotExist):
                 return Response({"error": "Invalid token or subscriber not found."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # === 2. REQUEST UNSUBSCRIBE LOGIC (Agar request mein email aaya hai) ===
+        # === 2. REQUEST UNSUBSCRIBE LOGIC ===
         if raw_email:
             email = User.objects.normalize_email(raw_email)
             try:
@@ -219,7 +177,6 @@ class UnsubscribeNewsletterView(APIView):
                 if not subscriber.is_active:
                     return Response({"message": "This email is already unsubscribed."})
 
-                # Ek secure JWT Token Generate karein (1 Hour expiry)
                 payload = {
                     'email': email,
                     'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1),
@@ -227,38 +184,30 @@ class UnsubscribeNewsletterView(APIView):
                 }
                 unsub_token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
                 
-                # === NAYA: Store token in database ===
                 subscriber.unsubscribe_token = unsub_token
-                subscriber.unsubscribe_token_used_at = None  # Token is newly issued, not yet used
+                subscriber.unsubscribe_token_used_at = None
                 subscriber.save()
                 
-                # Unsubscribe Link banayein
                 unsub_link = f"{settings.FRONTEND_URL}/unsubscribe?token={unsub_token}"
-                
-                # Email Bhejein
                 subject = "Confirm Unsubscribe - Ferox Times"
-                message = f"Please click the following link to confirm your unsubscription: {unsub_link}"
                 
-                html_content = f"""
-                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-                    <h2 style="color: #d32f2f;">Confirm Unsubscribe</h2>
-                    <p>We received a request to unsubscribe this email from Ferox Times alerts.</p>
-                    <p>If you wish to proceed, please click the button below. This link is valid for 1 hour.</p>
-                    <a href="{unsub_link}" style="display: inline-block; padding: 12px 25px; background-color: #d32f2f; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px;">Confirm Unsubscribe</a>
-                    <p style="margin-top: 20px; font-size: 12px; color: #64748b;">If you didn't request this, you can safely ignore this email.</p>
-                </div>
-                """
+                context = {'unsub_link': unsub_link}
                 
-                # Background task call karke email bhejein
-                send_async_email.delay(subject, message, [email], html_content)
+                # IMPROVEMENT: Raw HTML ki jagah templates use kiye
+                text_content = render_to_string('emails/confirm_unsubscribe.txt', context)
+                html_content = render_to_string('emails/confirm_unsubscribe.html', context)
                 
-                return Response({"message": "A secure confirmation link has been sent to your email. Please check your inbox."})
+                send_async_email.delay(subject, text_content, [email], html_content)
+                
+                return Response({"message": "A secure confirmation link has been sent."})
                 
             except NewsletterSubscriber.DoesNotExist:
-                return Response({"error": "This email is not registered in our subscriber list."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error": "This email is not registered."}, status=status.HTTP_404_NOT_FOUND)
 
         return Response({"error": "Email or token is required."}, status=status.HTTP_400_BAD_REQUEST)
-        
+    
+
+    
 class ActivePollView(APIView):
     permission_classes = [permissions.AllowAny]
 

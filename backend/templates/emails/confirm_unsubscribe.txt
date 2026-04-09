@@ -1,0 +1,8 @@
+Confirm Unsubscribe - Ferox Times
+
+We received a request to unsubscribe this email from Ferox Times alerts.
+Please click the following link to confirm your unsubscription: 
+
+{{ unsub_link }}
+
+This link is valid for 1 hour. If you didn't request this, you can safely ignore this email.

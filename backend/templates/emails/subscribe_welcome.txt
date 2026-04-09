@@ -1,0 +1,13 @@
+Welcome to Ferox Times! 📰
+
+Hi there,
+Thank you for subscribing! You are now part of our community.
+
+What to expect:
+- Instant Breaking News Alerts
+- Daily Night Digest
+- Weekend Editor's Special
+
+Read Latest News Now: {{ frontend_url }}/
+
+If you wish to stop receiving emails, unsubscribe here: {{ frontend_url }}/unsubscribe?email={{ email }}

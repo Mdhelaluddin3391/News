@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; padding: 20px; }
+        .container { max-width: 600px; background: white; padding: 30px; border-radius: 8px; margin: auto; border-top: 5px solid #1a365d; }
+        h2 { color: #1a365d; }
+        p { color: #444; line-height: 1.6; font-size: 16px; }
+        .btn { display: inline-block; background: #d32f2f; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-weight: bold; }
+        .footer { margin-top: 30px; font-size: 12px; color: #888; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome to Ferox Times! 📰</h2>
+        <p>Hi there,</p>
+        <p>Thank you for subscribing! You are now part of our community. We promise to bring you the most accurate, fast, and reliable news directly to your inbox.</p>
+        <p><strong>What to expect:</strong></p>
+        <ul>
+            <li>🚨 Instant Breaking News Alerts</li>
+            <li>🌙 Daily Night Digest (Top stories of the day)</li>
+            <li>⭐ Weekend Editor's Special</li>
+        </ul>
+        <a href="{{ frontend_url }}/" class="btn" style="color: white;">Read Latest News Now</a>
+        
+        <div class="footer">
+            If you ever wish to stop receiving emails, you can <a href="{{ frontend_url }}/unsubscribe?email={{ email }}">unsubscribe here</a>.
+        </div>
+    </div>
+</body>
+</html>

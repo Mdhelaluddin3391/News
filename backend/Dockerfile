@@ -39,7 +39,7 @@ RUN pip install --no-cache /wheels/* gunicorn uvicorn
 # Create non-root user
 RUN useradd -m appuser
 
-# Copy project
+# Copy project correctly in one line
 COPY --chown=appuser:appuser . /app/
 
 RUN mkdir -p /app/staticfiles /app/media && \

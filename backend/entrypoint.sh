@@ -8,8 +8,8 @@ if [ "$RUN_MIGRATIONS" = "true" ]; then
     echo "Applying database migrations..."
     python manage.py migrate --noinput
 
-    echo "Checking/Creating Superuser..."
-    python create_superuser.py
+    # echo "Checking/Creating Superuser..."
+    # python create_superuser.py
 fi
 
 # Skip collectstatic during development

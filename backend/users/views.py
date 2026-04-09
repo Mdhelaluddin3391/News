@@ -243,12 +243,14 @@ class ForgotPasswordView(APIView):
         try:
             user = User.objects.get(email=email)
             
-            # SECURITY FIX: Tie the JWT to the current password hash so it invalidates immediately upon use
+            # ✅ SECURITY FIX: Hash ka secure digest banayein
+            pwd_digest = hashlib.sha256(user.password.encode()).hexdigest()[:10]
+            
             payload = {
                 "user_id": user.id,
                 "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=15),
                 "type": "reset_password",
-                "pwd_hash": user.password[-10:] 
+                "pwd_hash": pwd_digest # Yahan update kiya gaya hai
             }
             token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
             reset_link = f"{settings.FRONTEND_URL}/reset-password?token={token}"
@@ -279,8 +281,9 @@ class ResetPasswordView(APIView):
 
             user = User.objects.get(id=payload["user_id"])
             
-            # SECURITY FIX: Validate that the password hasn't been changed since the token was issued
-            if payload.get("pwd_hash") != user.password[-10:]:
+            # ✅ SECURITY FIX: Validate with SHA-256 digest
+            current_pwd_digest = hashlib.sha256(user.password.encode()).hexdigest()[:10]
+            if payload.get("pwd_hash") != current_pwd_digest:
                 raise jwt.InvalidTokenError
 
             user.set_password(serializer.validated_data["password"])

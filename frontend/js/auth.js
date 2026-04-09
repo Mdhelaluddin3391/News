@@ -362,8 +362,14 @@ async function handleGoogleLogin(response) {
         await syncBookmarks();
 
         const urlParams = new URLSearchParams(window.location.search);
-        // ✅ SEO FIX: Redirect to clean URL root
-        const redirect = urlParams.get('redirect') || '/';
+        let redirect = urlParams.get('redirect') || '/';
+        
+        // ✅ SECURITY FIX: Prevent Open Redirect
+        // Check karte hain ki redirect ek safe local path hai
+        if (!redirect.startsWith('/') || redirect.startsWith('//') || redirect.startsWith('\\\\')) {
+            redirect = '/';
+        }
+        
         window.location.href = redirect;
     } catch (error) {
         reportAuthError(error, { action: 'googleLogin' });

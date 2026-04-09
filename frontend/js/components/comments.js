@@ -1,7 +1,9 @@
+// frontend/js/components/comments.js
+
 const COMMENTS_API_URL = `${CONFIG.API_BASE_URL}/interactions/comments/`;
 const COMMENT_REPORTS_API_URL = `${CONFIG.API_BASE_URL}/interactions/reports/comments/`;
 
-// SECURITY FIX: Centralized HTML escaper
+// SECURITY FIX: Centralized HTML escaper (Aapne banaya tha, ise as backup rakha hai)
 function escapeHtml(value) {
     return String(value || '')
         .replace(/&/g, '&amp;')
@@ -101,25 +103,45 @@ function showCustomConfirm(message, onConfirmCallback) {
     const overlay = document.createElement('div');
     overlay.id = 'custom-confirm-overlay';
     overlay.className = 'custom-modal-overlay';
-    overlay.innerHTML = `
-        <div class="custom-modal-box">
-            <h3>Confirm Action</h3>
-            <p>${escapeHtml(message)}</p>
-            <div class="custom-modal-actions">
-                <button class="custom-modal-btn custom-modal-cancel" id="custom-modal-cancel-btn">Cancel</button>
-                <button class="custom-modal-btn custom-modal-delete" id="custom-modal-delete-btn">Delete</button>
-            </div>
-        </div>
-    `;
+
+    // ✅ SECURITY FIX: Created modal using DOM API instead of innerHTML to completely block DOM XSS
+    const modalBox = document.createElement('div');
+    modalBox.className = 'custom-modal-box';
+
+    const h3 = document.createElement('h3');
+    h3.textContent = 'Confirm Action';
+
+    const p = document.createElement('p');
+    p.textContent = message; // textContent automatically escapes dangerous chars
+
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'custom-modal-actions';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'custom-modal-btn custom-modal-cancel';
+    cancelBtn.id = 'custom-modal-cancel-btn';
+    cancelBtn.textContent = 'Cancel';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'custom-modal-btn custom-modal-delete';
+    deleteBtn.id = 'custom-modal-delete-btn';
+    deleteBtn.textContent = 'Delete';
+
+    actionsDiv.appendChild(cancelBtn);
+    actionsDiv.appendChild(deleteBtn);
+    modalBox.appendChild(h3);
+    modalBox.appendChild(p);
+    modalBox.appendChild(actionsDiv);
+    overlay.appendChild(modalBox);
 
     document.body.appendChild(overlay);
 
-    document.getElementById('custom-modal-cancel-btn').addEventListener('click', () => {
+    cancelBtn.addEventListener('click', () => {
         overlay.classList.remove('active');
         setTimeout(() => overlay.remove(), 250);
     });
 
-    document.getElementById('custom-modal-delete-btn').addEventListener('click', () => {
+    deleteBtn.addEventListener('click', () => {
         overlay.classList.remove('active');
         setTimeout(() => overlay.remove(), 250);
         onConfirmCallback();
@@ -132,33 +154,53 @@ function renderCommentForm(articleId, containerId, user, articleSlug) {
     const formContainer = document.getElementById('comment-form-container');
     if (!formContainer) return;
 
+    formContainer.innerHTML = ''; // Clear the container safely
+
     if (!user) {
-        // SECURITY FIX: Escaped articleSlug to prevent Reflected XSS
-        formContainer.innerHTML = `
-            <p class="login-prompt">
-                <a href="/login?redirect=/article/${escapeHtml(articleSlug)}">Log in</a> to post a comment or flag one for review.
-            </p>
-        `;
+        // ✅ SECURITY FIX: Built login prompt safely
+        const promptP = document.createElement('p');
+        promptP.className = 'login-prompt';
+
+        const loginLink = document.createElement('a');
+        loginLink.href = `/login?redirect=/article/${encodeURIComponent(articleSlug)}`;
+        loginLink.textContent = 'Log in';
+
+        promptP.appendChild(loginLink);
+        promptP.appendChild(document.createTextNode(' to post a comment or flag one for review.'));
+        
+        formContainer.appendChild(promptP);
         return;
     }
 
-    formContainer.innerHTML = `
-        <div class="comment-form">
-            <h4>Add a Comment</h4>
-            <textarea id="new-comment-text" rows="3" placeholder="Write your comment..."></textarea>
-            <button id="submit-comment" type="button">Post Comment</button>
-        </div>
-    `;
+    // ✅ SECURITY FIX: Built comment form safely via DOM API
+    const formDiv = document.createElement('div');
+    formDiv.className = 'comment-form';
 
-    document.getElementById('submit-comment').addEventListener('click', async () => {
-        const textarea = document.getElementById('new-comment-text');
-        const button = document.getElementById('submit-comment');
+    const h4 = document.createElement('h4');
+    h4.textContent = 'Add a Comment';
+
+    const textarea = document.createElement('textarea');
+    textarea.id = 'new-comment-text';
+    textarea.rows = 3;
+    textarea.placeholder = 'Write your comment...';
+
+    const submitBtn = document.createElement('button');
+    submitBtn.id = 'submit-comment';
+    submitBtn.type = 'button';
+    submitBtn.textContent = 'Post Comment';
+
+    formDiv.appendChild(h4);
+    formDiv.appendChild(textarea);
+    formDiv.appendChild(submitBtn);
+    formContainer.appendChild(formDiv);
+
+    submitBtn.addEventListener('click', async () => {
         const text = textarea.value.trim();
 
         if (!text) return showCommentFeedback('Please write a comment before posting.', 'error');
 
-        button.disabled = true;
-        button.textContent = 'Posting...';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Posting...';
 
         try {
             await postComment(articleId, text);
@@ -167,8 +209,8 @@ function renderCommentForm(articleId, containerId, user, articleSlug) {
             await renderComments(articleId, containerId, articleSlug);
         } catch (error) {
             showCommentFeedback(error.message, 'error');
-            button.disabled = false;
-            button.textContent = 'Post Comment';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Post Comment';
         }
     });
 }
@@ -179,7 +221,7 @@ function showReportModal(commentId) {
         existingOverlay.remove();
     }
 
-    const overlay = buildReportModal();
+    const overlay = buildReportModal(); // Note: ensure this function also uses DOM element creation properly
     document.body.appendChild(overlay);
 
     const cancelButton = document.getElementById('report-cancel-btn');
@@ -233,45 +275,103 @@ async function renderComments(articleId, containerId, articleSlug) {
     const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
     const comments = await fetchComments(articleId);
 
+    container.innerHTML = ''; // Safely clear old comments
+
     if (!comments.length) {
-        container.innerHTML = '<p class="comments-empty">No comments yet. Start the conversation.</p>';
+        const emptyMsg = document.createElement('p');
+        emptyMsg.className = 'comments-empty';
+        emptyMsg.textContent = 'No comments yet. Start the conversation.';
+        container.appendChild(emptyMsg);
+        
         renderCommentForm(articleId, containerId, currentUser, articleSlug);
         return;
     }
 
-    container.innerHTML = comments.map((comment) => {
+    // ✅ SECURITY FIX: Build comments using secure DOM element creation instead of .map().join('')
+    comments.forEach((comment) => {
         const commentUser = comment.user_detail || {};
         const isOwner = currentUser && commentUser.id === currentUser.id;
-        const deleteBtn = isOwner ? `<button type="button" class="comment-action-btn" data-delete-comment="${comment.id}">Delete</button>` : '';
-        const reportBtn = currentUser && !isOwner ? `<button type="button" class="comment-action-btn" data-report-comment="${comment.id}">Report Flag</button>` : '';
 
-        return `
-            <article class="comment-card">
-                <div class="comment-card-header">
-                    <div>
-                        <strong class="comment-author">${escapeHtml(commentUser.name || 'Anonymous')}</strong>
-                        <span class="comment-author-role">${escapeHtml(commentUser.role || 'Reader')}</span>
-                    </div>
-                    <time class="comment-date" datetime="${escapeHtml(comment.created_at)}">${formatCommentDate(comment.created_at)}</time>
-                </div>
-                <p class="comment-text">${escapeHtml(comment.text)}</p>
-                <div class="comment-actions">${deleteBtn}${reportBtn}</div>
-            </article>
-        `;
-    }).join('');
+        const articleEl = document.createElement('article');
+        articleEl.className = 'comment-card';
 
-    container.querySelectorAll('[data-delete-comment]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            showCustomConfirm('Delete this comment permanently?', async () => {
-                try {
-                    await deleteComment(btn.dataset.deleteComment);
-                    showCommentFeedback('Comment deleted successfully.');
-                    await renderComments(articleId, containerId, articleSlug);
-                } catch (error) {
-                    showCommentFeedback(error.message, 'error');
+        // 1. Header
+        const headerEl = document.createElement('div');
+        headerEl.className = 'comment-card-header';
+
+        const authorInfoDiv = document.createElement('div');
+        const authorStrong = document.createElement('strong');
+        authorStrong.className = 'comment-author';
+        authorStrong.textContent = commentUser.name || 'Anonymous';
+
+        const authorRoleSpan = document.createElement('span');
+        authorRoleSpan.className = 'comment-author-role';
+        authorRoleSpan.textContent = commentUser.role || 'Reader';
+
+        authorInfoDiv.appendChild(authorStrong);
+        authorInfoDiv.appendChild(authorRoleSpan);
+
+        const timeEl = document.createElement('time');
+        timeEl.className = 'comment-date';
+        timeEl.setAttribute('datetime', comment.created_at);
+        timeEl.textContent = formatCommentDate(comment.created_at);
+
+        headerEl.appendChild(authorInfoDiv);
+        headerEl.appendChild(timeEl);
+
+        // 2. Text Content
+        const textEl = document.createElement('p');
+        textEl.className = 'comment-text';
+        textEl.textContent = comment.text;
+
+        // 3. Actions
+        const actionsEl = document.createElement('div');
+        actionsEl.className = 'comment-actions';
+
+        if (isOwner) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'comment-action-btn';
+            deleteBtn.dataset.deleteComment = comment.id;
+            deleteBtn.textContent = 'Delete';
+
+            deleteBtn.addEventListener('click', () => {
+                showCustomConfirm('Delete this comment permanently?', async () => {
+                    try {
+                        await deleteComment(deleteBtn.dataset.deleteComment);
+                        showCommentFeedback('Comment deleted successfully.');
+                        await renderComments(articleId, containerId, articleSlug);
+                    } catch (error) {
+                        showCommentFeedback(error.message, 'error');
+                    }
+                });
+            });
+
+            actionsEl.appendChild(deleteBtn);
+        } else if (currentUser) {
+            const reportBtn = document.createElement('button');
+            reportBtn.type = 'button';
+            reportBtn.className = 'comment-action-btn';
+            reportBtn.dataset.reportComment = comment.id;
+            reportBtn.textContent = 'Report Flag';
+
+            reportBtn.addEventListener('click', () => {
+                // Ensure showReportModal triggers properly
+                if (typeof showReportModal === 'function') {
+                    showReportModal(reportBtn.dataset.reportComment);
                 }
             });
-        });
+
+            actionsEl.appendChild(reportBtn);
+        }
+
+        // Assemble article
+        articleEl.appendChild(headerEl);
+        articleEl.appendChild(textEl);
+        articleEl.appendChild(actionsEl);
+
+        // Add to container
+        container.appendChild(articleEl);
     });
 
     renderCommentForm(articleId, containerId, currentUser, articleSlug);

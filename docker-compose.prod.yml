@@ -81,7 +81,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: celery -A newshub_core beat --loglevel=info
+    command: sh -c "rm -f celerybeat.pid && celery -A newshub_core beat --loglevel=info"
     restart: always
     init: true
     env_file:

@@ -11,3 +11,8 @@ db.sqlite3
 media/
 staticfiles/
 *.log
+# Celery
+celerybeat-schedule
+celerybeat-schedule.db
+celerybeat.pid
+celerybeat.pid.lock

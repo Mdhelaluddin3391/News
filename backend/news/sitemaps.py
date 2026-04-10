@@ -1,7 +1,10 @@
 from django.contrib.sitemaps import Sitemap
 from .models import Article, Category, Author, Tag
 
-class ArticleSitemap(Sitemap):
+class CanonicalSitemap(Sitemap):
+    protocol = "https"
+
+class ArticleSitemap(CanonicalSitemap):
     changefreq = "hourly"
     priority = 0.9
 
@@ -15,7 +18,7 @@ class ArticleSitemap(Sitemap):
         # FIX: Clean URL for articles
         return f"/article/{obj.slug}"
 
-class CategorySitemap(Sitemap):
+class CategorySitemap(CanonicalSitemap):
     changefreq = "daily"
     priority = 0.8
 
@@ -26,7 +29,7 @@ class CategorySitemap(Sitemap):
         # FIX: Clean URL for categories
         return f"/category/{obj.slug}"
 
-class AuthorSitemap(Sitemap):
+class AuthorSitemap(CanonicalSitemap):
     changefreq = "weekly"
     priority = 0.6
 
@@ -36,7 +39,7 @@ class AuthorSitemap(Sitemap):
     def location(self, obj):
         return f"/author/{obj.slug}"
 
-class TagSitemap(Sitemap):
+class TagSitemap(CanonicalSitemap):
     changefreq = "daily"
     priority = 0.7
 
@@ -44,16 +47,4 @@ class TagSitemap(Sitemap):
         return Tag.objects.all()
 
     def location(self, obj):
-        # FIX: Clean URL for tags
         return f"/tag/{obj.slug}"
-
-class StaticViewSitemap(Sitemap):
-    changefreq = "monthly"
-    priority = 0.5
-
-    def items(self):
-        # FIX: Use clean URLs for static views
-        return ['about', 'contact', 'careers', 'advertise', 'authors']
-
-    def location(self, item):
-        return f"/{item}"

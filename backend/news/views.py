@@ -195,13 +195,20 @@ class ArticleViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
     def share(self, request, slug=None):
         article = self.get_object()
+        image_url = f"{settings.FRONTEND_URL}/images/default-news.png"
+        if article.featured_image:
+            image_path = article.featured_image.url
+            if image_path.startswith(('http://', 'https://')):
+                image_url = image_path
+            else:
+                image_url = f"{settings.FRONTEND_URL.rstrip('/')}{image_path}"
         
         # IMPROVEMENT: Using Django render instead of hardcoded HTML string to prevent XSS
         context = {
             'safe_title': article.title,
             'safe_desc': article.description[:200] if article.description else "",
             'frontend_url': f"{settings.FRONTEND_URL}/article/{article.slug}",
-            'image_url': request.build_absolute_uri(article.featured_image.url) if article.featured_image else f"{settings.FRONTEND_URL}/images/default-news.png"
+            'image_url': image_url,
         }
         
         return render(request, 'news/share_redirect.html', context)

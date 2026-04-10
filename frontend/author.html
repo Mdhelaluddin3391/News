@@ -13,11 +13,16 @@
     <meta property="og:title" content="Author Profile - Ferox Times">
     <meta property="og:description" content="Read articles and news written by our expert journalists at Ferox Times.">
     <meta property="og:type" content="profile">
-    
-    <link rel="canonical" id="canonical-url" href="https://www.feroxtimes.com/author/">
+    <meta property="og:image" content="https://www.feroxtimes.com/images/default-avatar.png">
+    <link rel="canonical" id="canonical-url" href="">
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('canonical-url').setAttribute('href', 'https://www.feroxtimes.com' + window.location.pathname);
+        document.addEventListener("DOMContentLoaded", () => {
+            const canonicalOrigin = ['feroxtimes.com', 'www.feroxtimes.com'].includes(window.location.hostname)
+                ? 'https://www.feroxtimes.com'
+                : window.location.origin;
+            const canonicalPath = window.location.pathname.replace(/\/+$/, '') || '/';
+            document.getElementById("canonical-url")
+                .setAttribute("href", canonicalOrigin + canonicalPath);
         });
     </script>
     

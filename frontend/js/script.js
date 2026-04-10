@@ -2,7 +2,16 @@
 
 const DEFAULT_SITE_NAME = 'Ferox Times';
 const DEFAULT_SITE_DESCRIPTION = 'Stay updated with the latest breaking news, trending stories, and in-depth articles from around the world on Ferox Times.';
-const DEFAULT_SITE_IMAGE = window.location.origin + '/images/default-news.png';
+const PRODUCTION_CANONICAL_ORIGIN = 'https://www.feroxtimes.com';
+const PRODUCTION_HOSTS = new Set(['feroxtimes.com', 'www.feroxtimes.com']);
+
+function getCanonicalOrigin() {
+    return PRODUCTION_HOSTS.has(window.location.hostname)
+        ? PRODUCTION_CANONICAL_ORIGIN
+        : window.location.origin;
+}
+
+const DEFAULT_SITE_IMAGE = getCanonicalOrigin() + '/images/default-news.png';
 
 // ==================== GLOBAL HELPER FUNCTION (For Images) ====================
 window.getFullImageUrl = function(imagePath, fallbackImage = '/images/default-news.png') {
@@ -64,11 +73,27 @@ function showToast(message, type = 'success') {
 
 // ==================== SEO META TAGS & CANONICAL UPDATER ====================
 function normalizeMetaUrl(pageUrl) {
-    return new URL(pageUrl || window.location.href, window.location.origin).toString().split('#')[0];
+    const normalized = new URL(pageUrl || window.location.href, getCanonicalOrigin());
+    normalized.hash = '';
+    if (PRODUCTION_HOSTS.has(normalized.hostname)) {
+        normalized.protocol = 'https:';
+        normalized.hostname = 'www.feroxtimes.com';
+        normalized.port = '';
+    }
+    if (normalized.pathname.length > 1) {
+        normalized.pathname = normalized.pathname.replace(/\/+$/, '');
+    }
+    return normalized.toString();
 }
 
 function normalizeImageUrl(imageUrl) {
-    return new URL(imageUrl || DEFAULT_SITE_IMAGE, window.location.origin).toString();
+    const normalized = new URL(imageUrl || DEFAULT_SITE_IMAGE, getCanonicalOrigin());
+    if (PRODUCTION_HOSTS.has(normalized.hostname)) {
+        normalized.protocol = 'https:';
+        normalized.hostname = 'www.feroxtimes.com';
+        normalized.port = '';
+    }
+    return normalized.toString();
 }
 
 function setMetaTag(attrName, attrValue, content) {
@@ -182,37 +207,44 @@ function getDefaultPageMetadata() {
         '/about': {
             title: 'About Ferox Times',
             description: 'Learn more about Ferox Times, our mission, vision, and editorial standards.',
-            type: 'website'
+            type: 'website',
+            robots: 'noindex, follow'
         },
         '/advertise': {
             title: 'Advertise With Us',
             description: 'Explore advertising opportunities, sponsorships, and brand partnerships with Ferox Times.',
-            type: 'website'
+            type: 'website',
+            robots: 'noindex, follow'
         },
         '/authors': {
             title: 'Our Authors',
             description: 'Meet the journalists, editors, and contributors behind Ferox Times.',
-            type: 'website'
+            type: 'website',
+            robots: 'noindex, follow'
         },
         '/careers': {
             title: 'Careers',
             description: 'Join the Ferox Times team across editorial, product, and engineering roles.',
-            type: 'website'
+            type: 'website',
+            robots: 'noindex, follow'
         },
         '/contact': {
             title: 'Contact Us',
             description: 'Get in touch with the Ferox Times editorial and support teams.',
-            type: 'website'
+            type: 'website',
+            robots: 'noindex, follow'
         },
         '/cookie-policy': {
             title: 'Cookie Policy',
             description: 'Read the Ferox Times cookie policy and learn how cookies are used on the site.',
-            type: 'website'
+            type: 'website',
+            robots: 'noindex, follow'
         },
         '/faq': {
             title: 'Frequently Asked Questions',
             description: 'Answers to common questions about Ferox Times subscriptions, accounts, and editorial coverage.',
-            type: 'website'
+            type: 'website',
+            robots: 'noindex, follow'
         },
         '/forgot-password': {
             title: 'Forgot Password',
@@ -229,7 +261,8 @@ function getDefaultPageMetadata() {
         '/privacy': {
             title: 'Privacy Policy',
             description: 'Review how Ferox Times collects, uses, and protects your personal data.',
-            type: 'website'
+            type: 'website',
+            robots: 'noindex, follow'
         },
         '/profile': {
             title: 'My Profile',
@@ -258,7 +291,8 @@ function getDefaultPageMetadata() {
         '/terms': {
             title: 'Terms of Service',
             description: 'Read the terms and conditions governing use of Ferox Times.',
-            type: 'website'
+            type: 'website',
+            robots: 'noindex, follow'
         },
         '/unsubscribe': {
             title: 'Unsubscribe',

@@ -30,7 +30,7 @@ from core.health_views import DatabaseHealthCheckView, HealthCheckView, RedisHea
 from core.views import ContactMessageCreateView, SiteSettingAPIView
 from interactions.views import SubscribeNewsletterView, UnsubscribeNewsletterView
 from news.feeds import LatestArticlesFeed
-from news.sitemaps import ArticleSitemap, AuthorSitemap, CategorySitemap, StaticViewSitemap, TagSitemap
+from news.sitemaps import ArticleSitemap, AuthorSitemap, CategorySitemap, TagSitemap
 from users.views import CookieTokenRefreshView, CsrfCookieView, LogoutView, set_auth_cookies
 
 User = get_user_model()
@@ -41,7 +41,6 @@ sitemaps = {
     'categories': CategorySitemap,
     'authors': AuthorSitemap,
     'tags': TagSitemap,
-    'static': StaticViewSitemap,
 }
 
 class CustomTokenObtainPairView(TokenObtainPairView):

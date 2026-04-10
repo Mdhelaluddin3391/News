@@ -43,31 +43,37 @@ def _derive_redis_url(url, database_number):
 
 # Security and Core Settings
 DEBUG = _get_bool_env('DEBUG', False)
+IS_PRODUCTION = not DEBUG
+APP_ENV = os.getenv('APP_ENV', 'development' if DEBUG else 'production').strip().lower()
+
 SECRET_KEY = os.getenv('SECRET_KEY')
 if not SECRET_KEY:
     if DEBUG:
         SECRET_KEY = 'django-insecure-development-only-key'
     else:
         raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is false.')
-elif not DEBUG and _is_placeholder_secret(SECRET_KEY):
+elif IS_PRODUCTION and _is_placeholder_secret(SECRET_KEY):
     raise ImproperlyConfigured('SECRET_KEY must be replaced with a real production secret.')
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = _get_bool_env('USE_X_FORWARDED_HOST', not DEBUG)
 X_FRAME_OPTIONS = 'DENY'
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
-if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+if IS_PRODUCTION:
+    SECURE_SSL_REDIRECT = _get_bool_env('SECURE_SSL_REDIRECT', True)
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = _get_bool_env('SECURE_HSTS_INCLUDE_SUBDOMAINS', True)
+    SECURE_HSTS_PRELOAD = _get_bool_env('SECURE_HSTS_PRELOAD', True)
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
-ALLOWED_HOSTS = _get_list_env('ALLOWED_HOSTS', '127.0.0.1,localhost,0.0.0.0')
-if not DEBUG and not ALLOWED_HOSTS:
+ALLOWED_HOSTS = _get_list_env(
+    'ALLOWED_HOSTS',
+    'feroxtimes.com,www.feroxtimes.com,admin.feroxtimes.com' if IS_PRODUCTION else '127.0.0.1,localhost,0.0.0.0'
+)
+if IS_PRODUCTION and not ALLOWED_HOSTS:
     raise ImproperlyConfigured('ALLOWED_HOSTS must contain at least one hostname in production.')
 
 WHITENOISE_MANIFEST_STRICT = False
@@ -319,18 +325,23 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # Core CORS / redirect behavior control (fixes CORS + 301 for API clients)
 APPEND_SLASH = False
 PORT = int(os.getenv('PORT', '5000'))
-APP_ENV = os.getenv('APP_ENV', 'development' if DEBUG else 'production')
 PUBLIC_API_CACHE_TTL = int(os.getenv('PUBLIC_API_CACHE_TTL', '300'))
 SITE_SETTINGS_CACHE_TTL = int(os.getenv('SITE_SETTINGS_CACHE_TTL', '3600'))
 
 # CORS config
 CORS_ALLOW_ALL_ORIGINS = _get_bool_env('CORS_ALLOW_ALL_ORIGINS', DEBUG)
+default_cors_origins = (
+    'https://feroxtimes.com,https://www.feroxtimes.com,https://admin.feroxtimes.com'
+    if IS_PRODUCTION
+    else 'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000,http://0.0.0.0:5000'
+)
+
 if CORS_ALLOW_ALL_ORIGINS:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
     CORS_ALLOWED_ORIGINS = _get_list_env(
         'CORS_ALLOWED_ORIGINS',
-        'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000,http://0.0.0.0:5000'
+        default_cors_origins
     )
 
 CORS_ALLOW_CREDENTIALS = _get_bool_env('CORS_ALLOW_CREDENTIALS', True)
@@ -345,7 +356,11 @@ CORS_EXPOSE_HEADERS = [
 
 CSRF_TRUSTED_ORIGINS = _get_list_env(
     'CSRF_TRUSTED_ORIGINS',
-    'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000'
+    (
+        'https://feroxtimes.com,https://www.feroxtimes.com,https://admin.feroxtimes.com'
+        if IS_PRODUCTION
+        else 'http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000'
+    )
 )
 
 # CSRF_TRUSTED_ORIGINS = [
@@ -367,9 +382,12 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 EMAIL_TIMEOUT = int(os.getenv('EMAIL_TIMEOUT', '15'))
 
 # URLs and IDs
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost').rstrip('/')
+FRONTEND_URL = os.getenv(
+    'FRONTEND_URL',
+    'https://www.feroxtimes.com' if IS_PRODUCTION else 'http://localhost'
+).rstrip('/')
 GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
-SITE_ID = 1
+SITE_ID = int(os.getenv('SITE_ID', '1'))
 
 # JWT Settings
 SIMPLE_JWT = {
@@ -551,10 +569,6 @@ TWITTER_API_KEY = os.getenv('TWITTER_API_KEY')
 TWITTER_API_SECRET = os.getenv('TWITTER_API_SECRET')
 TWITTER_ACCESS_TOKEN = os.getenv('TWITTER_ACCESS_TOKEN')
 TWITTER_ACCESS_TOKEN_SECRET = os.getenv('TWITTER_ACCESS_TOKEN_SECRET')
-
-
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-USE_X_FORWARDED_HOST = _get_bool_env('USE_X_FORWARDED_HOST', not DEBUG)
 
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'DEBUG' if DEBUG else 'INFO').upper()
 LOGGING = {

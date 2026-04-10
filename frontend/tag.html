@@ -14,15 +14,19 @@
     <meta property="og:title" content="Tag Results - Ferox Times">
     <meta property="og:description" content="Browse news articles by specific topics and tags on Ferox Times.">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="images/default-news.png">
+    <meta property="og:image" content="https://www.feroxtimes.com/images/default-news.png">
     
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Tag Results - Ferox Times">
-    
-    <link rel="canonical" id="canonical-url" href="https://www.feroxtimes.com/tag/">
+    <link rel="canonical" id="canonical-url" href="">
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('canonical-url').setAttribute('href', 'https://www.feroxtimes.com' + window.location.pathname);
+        document.addEventListener("DOMContentLoaded", () => {
+            const canonicalOrigin = ['feroxtimes.com', 'www.feroxtimes.com'].includes(window.location.hostname)
+                ? 'https://www.feroxtimes.com'
+                : window.location.origin;
+            const canonicalPath = window.location.pathname.replace(/\/+$/, '') || '/';
+            document.getElementById("canonical-url")
+                .setAttribute("href", canonicalOrigin + canonicalPath);
         });
     </script>
     

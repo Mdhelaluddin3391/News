@@ -15,19 +15,22 @@
     <meta property="og:title" content="Article - Ferox Times">
     <meta property="og:description" content="Read the latest breaking news and in-depth articles on Ferox Times.">
     <meta property="og:type" content="article">
+    <meta property="og:image" content="https://www.feroxtimes.com/images/default-news.png">
     
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Article - Ferox Times">
-    
-    <link rel="canonical" id="canonical-url" href="https://www.feroxtimes.com/">
+    <link rel="canonical" id="canonical-url" href="">
     <script>
-        // SEO: Dynamically update Canonical URL
-        document.addEventListener('DOMContentLoaded', () => {
-            const path = window.location.pathname;
-            document.getElementById('canonical-url').setAttribute('href', 'https://www.feroxtimes.com' + path);
+        document.addEventListener("DOMContentLoaded", () => {
+            const canonicalOrigin = ['feroxtimes.com', 'www.feroxtimes.com'].includes(window.location.hostname)
+                ? 'https://www.feroxtimes.com'
+                : window.location.origin;
+            const canonicalPath = window.location.pathname.replace(/\/+$/, '') || '/';
+            document.getElementById("canonical-url")
+                .setAttribute("href", canonicalOrigin + canonicalPath);
         });
-        // REMOVED the injectArticleSchema function from here
     </script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components/top-bar.css">

@@ -195,7 +195,7 @@ async function loadNextCategories(count = 1) {
     
     isLoadingCategory = true;
     const scrollLoader = document.getElementById('category-scroll-loader');
-    if (scrollLoader) scrollLoader.style.display = 'block';
+    if (scrollLoader) scrollLoader.style.display = 'block'; // Loader show karega
 
     const container = document.getElementById('home-categories-container');
     let html = '';
@@ -207,12 +207,14 @@ async function loadNextCategories(count = 1) {
         try {
             const artRes = await fetch(`${HOMEPAGE_API_URL}/articles/?category__slug=${cat.slug}`);
             const artData = await artRes.json();
-            const articles = (artData.results || artData).slice(0, 5);
+            
+            // 1 Main + 5 Side = Total 6 articles
+            const articles = (artData.results || artData).slice(0, 6);
 
             if (articles.length === 0) continue;
 
             const mainArticle = articles[0];
-            const sideArticles = articles.slice(1, 5);
+            const sideArticles = articles.slice(1, 6);
 
             let sideHtml = sideArticles.map(a => {
                 const sideLiveBadge = a.is_live ? `<div class="live-badge-card live-badge-card--compact"><i class="fas fa-circle"></i> LIVE</div>` : '';
@@ -220,9 +222,9 @@ async function loadNextCategories(count = 1) {
                 const sideContainClass = sideImageUrl.includes('default-news.png') ? 'img-contain' : '';
                 const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(a.title || 'Untitled') : (a.title || 'Untitled');
                 
-                // ✅ SEO FIX: Clean URL for side-post
+                // SEO FIX: Changed div with onclick to anchor (<a>) tag
                 return `
-                <div class="side-post home-side-post" onclick="window.location.href='/article/${a.slug}'">
+                <a href="/article/${a.slug}" class="side-post home-side-post" style="text-decoration: none; color: inherit; display: flex;">
                     ${sideLiveBadge}
                     <img src="${sideImageUrl}" alt="${safeTitle}" class="${sideContainClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                     
@@ -230,7 +232,7 @@ async function loadNextCategories(count = 1) {
                         <h4 class="home-side-post-title">${safeTitle}</h4>
                         <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(a.published_at)}</span>
                     </div>
-                </div>
+                </a>
                 `;
             }).join('');
 
@@ -244,7 +246,7 @@ async function loadNextCategories(count = 1) {
                 ? window.escapeHtml(mainArticle.description ? (mainArticle.description.length > 110 ? mainArticle.description.substring(0, 110) + '...' : mainArticle.description) : '')
                 : (mainArticle.description ? (mainArticle.description.length > 110 ? mainArticle.description.substring(0, 110) + '...' : mainArticle.description) : '');
 
-            // ✅ SEO FIX: Clean URL for category link and main post
+            // SEO FIX: Changed div with onclick to anchor (<a>) tag
             html += `
                 <div class="category-block">
                     <h2 class="category-heading home-category-heading">
@@ -254,7 +256,7 @@ async function loadNextCategories(count = 1) {
                         </a>
                     </h2>
                     <div class="category-grid">
-                        <div class="main-post" onclick="window.location.href='/article/${mainArticle.slug}'">
+                        <a href="/article/${mainArticle.slug}" class="main-post" style="text-decoration: none; color: inherit; display: block;">
                             ${mainLiveBadge}
                             <img src="${mainImageUrl}" alt="${safeMainTitle}" class="${containClass}" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                             <div class="main-post-content">
@@ -262,7 +264,7 @@ async function loadNextCategories(count = 1) {
                                 <p>${safeMainDescription}</p>
                                 <span class="main-meta"><i class="far fa-clock"></i> ${formatTimeAgo(mainArticle.published_at)}</span>
                             </div>
-                        </div>
+                        </a>
                         <div class="side-posts">
                             ${sideHtml}
                         </div>
@@ -278,20 +280,24 @@ async function loadNextCategories(count = 1) {
     
     currentCategoryIndex = endIndex;
     isLoadingCategory = false;
+    
+    // Batch processing khatam hone ke baad loader ko hide kar dega, par sentinel visible rahega
     if (scrollLoader) scrollLoader.style.display = 'none';
 }
 
 function setupScrollObserver() {
-    const scrollLoader = document.getElementById('category-scroll-loader');
-    if (!scrollLoader) return;
+    // Ab hum naye sentinel element ko observe kar rahe hain, jo kabhi display:none nahi hota
+    const sentinel = document.getElementById('scroll-sentinel');
+    if (!sentinel) return;
 
     const observer = new IntersectionObserver((entries) => {
+        // Jab user scroll karte huye bottom ke sentinel tak pahuchega, toh fetch next chalega
         if (entries[0].isIntersecting) {
             loadNextCategories(1);
         }
-    }, { root: null, rootMargin: '100px', threshold: 0.1 });
+    }, { root: null, rootMargin: '200px', threshold: 0.1 }); // 200px margin taaki smooth experience ho
 
-    observer.observe(scrollLoader);
+    observer.observe(sentinel);
 }
 
 

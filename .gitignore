@@ -31,3 +31,4 @@ backend/celerybeat-schedule
 backend/celerybeat-schedule
 backend/create_superuser.py
 docker-compose.dev.yml
+backend/media/

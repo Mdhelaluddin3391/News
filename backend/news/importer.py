@@ -18,8 +18,8 @@ def clean_text(text, max_length=None):
 
 def fetch_and_import_news(api_url, provider):
     """
-    API se news fetch karke Draft articles banata hai.
-    Ab ye pura article automatically scrape karega!
+    API se sirf Title aur URL fetch karega.
+    Baki pura Content aur Description Scraper khud nikalega!
     """
     try:
         response = requests.get(api_url, timeout=15)
@@ -36,18 +36,16 @@ def fetch_and_import_news(api_url, provider):
         imported_count = 0
         
         for item in articles_data:
-            # 1. MAPPING
+            # 1. MAPPING (Sirf Title, URL, Image, Source. API ka description hata diya gaya hai)
             if provider == 'gnews':
                 title = item.get('title', '').strip()
                 source_url = item.get('url', '')
-                raw_desc = item.get('description', '')
                 image_url = item.get('image', '')
                 source_name = item.get('source', {}).get('name', 'GNews')
             
             elif provider == 'newsdata':
                 title = item.get('title', '').strip()
                 source_url = item.get('link', '')
-                raw_desc = item.get('description', '')
                 image_url = item.get('image_url', '')
                 source_name = item.get('source_id', 'NewsData')
 
@@ -57,13 +55,13 @@ def fetch_and_import_news(api_url, provider):
             # 2. DUPLICATE CHECK
             if Article.objects.filter(source_url=source_url).exists() or Article.objects.filter(title=title).exists():
                 continue 
-            
-            clean_desc = clean_text(raw_desc, max_length=150)
 
             # ==========================================
-            # 🚀 NAYA SMART SCRAPER LOGIC START
+            # 🚀 FULL SCRAPER LOGIC START 
             # ==========================================
             full_content = ""
+            clean_desc = ""  # Homepage par dikhane wala chhota snippet
+            
             print(f"Scraping full article from: {source_url}")
             try:
                 # Article ke link par jao aur pura text nikalo
@@ -76,18 +74,24 @@ def fetch_and_import_news(api_url, provider):
                     # Paragraphs ko properly HTML <p> tags mein wrap karo
                     paragraphs = web_article.text.split('\n\n')
                     full_content = "".join([f"<p>{p.strip()}</p>" for p in paragraphs if p.strip()])
+                    
+                    # Homepage ke liye usi scraped content se shuruwati 150 words nikal lo
+                    clean_desc = clean_text(web_article.text, max_length=150)
+                    
             except Exception as e:
                 print(f"Scraping failed for {title}: {e}")
 
-            # Agar scraping fail ho jaye, tabhi purana snippet (description) use karo
-            final_html_content = full_content if full_content else f"<p>{clean_desc}</p>"
+            # Agar kisi wajah se scraping fail ho jaye aur content na mile, toh usko skip kar do
+            if not full_content:
+                print(f"⏩ Skipped '{title}' (Scraping se koi content nahi mila)")
+                continue
             # ==========================================
 
             # 4. CREATE DRAFT
             article = Article(
                 title=title,
-                description=clean_desc,
-                content=final_html_content,  # <-- Ab yahan pura scraped content aayega
+                description=clean_desc,          # <-- Ab yahan scraper ka hi chhota text aayega
+                content=full_content,            # <-- Yahan scraper ka pura text aayega
                 source_name=source_name[:100],
                 source_url=source_url[:500],
                 status='draft', 
@@ -109,7 +113,7 @@ def fetch_and_import_news(api_url, provider):
             article.save()
             imported_count += 1
             
-        return f"✅ Successfully imported {imported_count} new DRAFT articles from {provider} with FULL content."
+        return f"✅ Successfully imported {imported_count} new DRAFT articles from {provider} with FULL scraped content."
         
     except Exception as e:
         return f"❌ Error fetching from {provider}: {str(e)}"

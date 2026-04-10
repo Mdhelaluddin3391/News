@@ -178,45 +178,43 @@ def send_push_notifications_task(self, article_id):
 
 @shared_task(
     bind=True,
+    name="news.tasks.auto_import_news_task",
     autoretry_for=(Exception,),
     retry_backoff=True,
     retry_backoff_max=600,
     retry_jitter=True,
-    retry_kwargs={'max_retries': 3},
+    retry_kwargs={"max_retries": 3},
+    soft_time_limit=300,   # 5 min soft limit — raises SoftTimeLimitExceeded
+    time_limit=360,        # 6 min hard kill
 )
 def auto_import_news_task(self):
     """
-    Background Celery task jo har 30 minute mein chalega.
-    Primary: GNews | Fallback: NewsData.io
+    Celery Beat task that runs every 30 minutes.
+    Fetches top 5 trending headlines from GNews API, scrapes full text,
+    rewrites via Gemini AI, and saves each as a draft Article.
     """
-    gnews_key = os.getenv('GNEWS_API_KEY')
-    newsdata_key = os.getenv('NEWSDATA_API_KEY')
+    gnews_key = os.getenv("GNEWS_API_KEY")
+
+    if not gnews_key:
+        msg = "❌ GNEWS_API_KEY is not set in the environment."
+        logger.error(msg)
+        return msg
 
     try:
         from .importer import fetch_and_import_news
-    except ModuleNotFoundError as exc:
-        return f"❌ Optional importer dependency is missing: {exc}"
-    
-    # Primary API (GNews)
-    if gnews_key:
-        print("Fetching from GNews...")
-        url = f"https://gnews.io/api/v4/top-headlines?category=general&lang=en&apikey={gnews_key}"
-        result = fetch_and_import_news(url, provider='gnews')
-        
-        # Agar success hua aur koi error nahi aayi, toh yahi ruk jao
-        if "✅" in result:
-            return result
-        else:
-            print("GNews failed or limit reached. Trying NewsData.io...")
+    except ImportError as exc:
+        msg = f"❌ Could not import fetch_and_import_news: {exc}"
+        logger.exception(msg)
+        return msg
 
-    # Fallback API (NewsData.io)
-    if newsdata_key:
-        print("Fetching from NewsData.io...")
-        url = f"https://newsdata.io/api/1/news?apikey={newsdata_key}&language=en&category=top"
-        result = fetch_and_import_news(url, provider='newsdata')
-        return result
-
-    return "❌ No API keys found in .env file."
+    logger.info("[auto_import] Fetching GNews top-headlines (max=5)…")
+    gnews_url = (
+        f"https://gnews.io/api/v4/top-headlines"
+        f"?category=general&lang=en&max=5&apikey={gnews_key}"
+    )
+    result = fetch_and_import_news(gnews_url, provider="gnews")
+    logger.info("[auto_import] Result: %s", result)
+    return result
 
 
 @shared_task(

@@ -50,7 +50,7 @@
 }
 
 .footer-links-list li {
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.4rem;
 }
 
 .footer-links-list a {
@@ -60,7 +60,7 @@
     font-size: 0.95rem;
     display: inline-flex;
     align-items: center;
-    min-height: 44px;
+    padding: 5px 0;
     font-weight: 700;
 }
 

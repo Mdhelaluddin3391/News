@@ -161,6 +161,7 @@
     overflow-wrap: anywhere;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -291,7 +292,9 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
-    justify-content: space-between;
+    /* justify-content: flex-start — articles top se stack honge
+       Previously 'space-between' tha jo sirf 2-3 articles hone par bada gap deta tha */
+    justify-content: flex-start;
 }
 
 .side-post {
@@ -525,6 +528,7 @@
 
     .recent-news-card__title {
         -webkit-line-clamp: 4;
+        line-clamp: 4;
         font-size: 1rem;
     }
 
@@ -543,6 +547,15 @@
 
     .category-block {
         margin-bottom: 0;
+        /* Red divider line — categories ke beech clear separation ke liye */
+        padding-top: 1.5rem;
+        border-top: 3px solid var(--secondary);
+    }
+
+    /* Pehli category ke upar line mat dikhao */
+    .category-block:first-child {
+        border-top: none;
+        padding-top: 0;
     }
 
     .main-post {
@@ -804,6 +817,7 @@
 
     .recent-news-card__title {
         -webkit-line-clamp: 4;
+        line-clamp: 4;
         font-size: 1rem;
     }
 
@@ -822,6 +836,15 @@
 
     .category-block {
         margin-bottom: 0;
+        /* Red divider line — mobile mein categories ke beech separation */
+        padding-top: 1.5rem;
+        border-top: 3px solid var(--secondary);
+    }
+
+    /* Pehli category ke upar line mat dikhao */
+    .category-block:first-child {
+        border-top: none;
+        padding-top: 0;
     }
 
     .main-post {

@@ -120,6 +120,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 ROOT_URLCONF = 'newshub_core.urls'
 
 TEMPLATES = [

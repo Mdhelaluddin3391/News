@@ -8,6 +8,7 @@ const HOMEPAGE_API_URL = `${CONFIG.API_BASE_URL}/news`;
 let allCategoriesList = [];
 let currentCategoryIndex = 0;
 let isLoadingCategory = false;
+let pendingTrigger = false; // Fast scroll: agar load chal raha tha aur dobara trigger hua toh queue karo
 
 
 // ==================== Render Functions ====================
@@ -191,11 +192,20 @@ function formatTimeAgo(isoString) {
 }
 
 async function loadNextCategories(count = 1) {
-    if (isLoadingCategory || currentCategoryIndex >= allCategoriesList.length) return;
-    
+    // ── FIX 1: Agar abhi load chal raha hai aur dobara trigger hua (fast scroll)
+    // toh ek pending flag set karo. Load khatam hone ke baad automatically fire hoga.
+    if (isLoadingCategory) {
+        pendingTrigger = true;
+        return;
+    }
+
+    if (currentCategoryIndex >= allCategoriesList.length) return;
+
     isLoadingCategory = true;
+    pendingTrigger = false;
+
     const scrollLoader = document.getElementById('category-scroll-loader');
-    if (scrollLoader) scrollLoader.style.display = 'block'; // Loader show karega
+    if (scrollLoader) scrollLoader.style.display = 'block';
 
     const container = document.getElementById('home-categories-container');
     let html = '';
@@ -205,10 +215,11 @@ async function loadNextCategories(count = 1) {
     for (let i = currentCategoryIndex; i < endIndex; i++) {
         const cat = allCategoriesList[i];
         try {
-            const artRes = await fetch(`${HOMEPAGE_API_URL}/articles/?category__slug=${cat.slug}`);
+            // page_size=6: 1 Main + 4 Side = 5 articles dikhenge (baki waste fetch se bachne ke liye)
+            const artRes = await fetch(`${HOMEPAGE_API_URL}/articles/?category__slug=${cat.slug}&page_size=6`);
             const artData = await artRes.json();
-            
-            // 1 Main + 5 Side = Total 6 articles
+
+            // 1 Main + 4 Side = Total 5 articles
             const articles = (artData.results || artData).slice(0, 6);
 
             if (articles.length === 0) continue;
@@ -221,13 +232,11 @@ async function loadNextCategories(count = 1) {
                 const sideImageUrl = window.getFullImageUrl(a.featured_image, '/images/default-news.png');
                 const sideContainClass = sideImageUrl.includes('default-news.png') ? 'img-contain' : '';
                 const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(a.title || 'Untitled') : (a.title || 'Untitled');
-                
-                // SEO FIX: Changed div with onclick to anchor (<a>) tag
+
                 return `
                 <a href="/article/${a.slug}" class="side-post home-side-post" style="text-decoration: none; color: inherit; display: flex;">
                     ${sideLiveBadge}
                     <img src="${sideImageUrl}" alt="${safeTitle}" class="${sideContainClass}" loading="lazy" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
-                    
                     <div class="side-post-content">
                         <h4 class="home-side-post-title">${safeTitle}</h4>
                         <span class="side-meta"><i class="far fa-clock"></i> ${formatTimeAgo(a.published_at)}</span>
@@ -235,7 +244,6 @@ async function loadNextCategories(count = 1) {
                 </a>
                 `;
             }).join('');
-
 
             const mainLiveBadge = mainArticle.is_live ? `<div class="live-badge-card"><i class="fas fa-circle"></i> LIVE</div>` : '';
             const mainImageUrl = window.getFullImageUrl(mainArticle.featured_image, '/images/default-news.png');
@@ -246,7 +254,6 @@ async function loadNextCategories(count = 1) {
                 ? window.escapeHtml(mainArticle.description ? (mainArticle.description.length > 110 ? mainArticle.description.substring(0, 110) + '...' : mainArticle.description) : '')
                 : (mainArticle.description ? (mainArticle.description.length > 110 ? mainArticle.description.substring(0, 110) + '...' : mainArticle.description) : '');
 
-            // SEO FIX: Changed div with onclick to anchor (<a>) tag
             html += `
                 <div class="category-block">
                     <h2 class="category-heading home-category-heading">
@@ -273,29 +280,45 @@ async function loadNextCategories(count = 1) {
             `;
         } catch (e) {
             console.error(`Error loading category ${cat.name}`, e);
+            // ── FIX 2: Error ke baad bhi index aage badhao taaki failed category
+            // poore lazy loading ko permanently block na kare
         }
     }
 
-    if(container) container.insertAdjacentHTML('beforeend', html);
-    
+    if (container) container.insertAdjacentHTML('beforeend', html);
+
     currentCategoryIndex = endIndex;
+
+    // ── FIX 3: isLoadingCategory ko ALWAYS reset karo — chahe kuch bhi ho
+    // (previously error pe reset nahi hota tha aur loading permanently freeze ho jaati thi)
     isLoadingCategory = false;
-    
-    // Batch processing khatam hone ke baad loader ko hide kar dega, par sentinel visible rahega
     if (scrollLoader) scrollLoader.style.display = 'none';
+
+    // ── FIX 4: Agar fast scroll ki wajah se pending trigger tha, ab fire karo
+    if (pendingTrigger && currentCategoryIndex < allCategoriesList.length) {
+        pendingTrigger = false;
+        loadNextCategories(1);
+    }
 }
 
 function setupScrollObserver() {
-    // Ab hum naye sentinel element ko observe kar rahe hain, jo kabhi display:none nahi hota
     const sentinel = document.getElementById('scroll-sentinel');
     if (!sentinel) return;
 
     const observer = new IntersectionObserver((entries) => {
-        // Jab user scroll karte huye bottom ke sentinel tak pahuchega, toh fetch next chalega
         if (entries[0].isIntersecting) {
             loadNextCategories(1);
         }
-    }, { root: null, rootMargin: '200px', threshold: 0.1 }); // 200px margin taaki smooth experience ho
+    }, {
+        root: null,
+        // ── FIX 5: rootMargin 200px → 600px
+        // Fast scroll par browser ko 600px pehle hi next category load shuru kar dena chahiye.
+        // 200px bahut kam tha — API call async hai aur complete hone mein time lagta hai.
+        rootMargin: '600px',
+        threshold: 0
+        // threshold: 0 = sentinel ka koi bhi pixel visible hote hi trigger karo
+        // (0.1 tha pehle — yani 10% visible hone tak wait karta tha — fast scroll mein miss hota tha)
+    });
 
     observer.observe(sentinel);
 }

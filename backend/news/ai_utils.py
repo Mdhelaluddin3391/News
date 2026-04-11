@@ -34,71 +34,47 @@ if not _GROQ_KEY:
 # Groq model to use
 _MODEL_NAME = "llama-3.3-70b-versatile"
 
-# ─── Prompt ────────────────────────────────────────────────────────────────
 def _build_prompt(original_title: str, source_name: str) -> str:
     """
-    Returns the instruction prompt sent to Groq.
-
-    Design decisions:
-    • Strict IMPARTIALITY — even if the source article is heavily biased towards
-      or against governments, political parties, corporations, or individuals,
-      the AI must present BOTH sides and maintain journalistic neutrality.
-      This is the same standard used by BBC, Reuters, AP.
-    • Response must be a single valid JSON object only.
-    • Temperature 0.35 keeps output factual and creative but grounded.
+    Returns the upgraded instruction prompt sent to Groq.
+    Focuses on SEO, human-like addictive tone, and strict categorization.
     """
-    return f"""You are a Senior Journalistic Editor at a world-class, unbiased news portal.
+    return f"""You are a Senior Journalistic Editor at a world-class news portal named Ferox Times.
 Your mission is to transform the provided raw scraped article into a completely original,
-professional, SEO-optimised, and STRICTLY IMPARTIAL piece.
+highly engaging, professional, SEO-optimised, and STRICTLY IMPARTIAL piece.
 
 ── Context ──────────────────────────────────────────────────────────────────
 Original Source  : {source_name}
 Original Headline: {original_title}
 
 ── Rules ────────────────────────────────────────────────────────────────────
-1. PLAGIARISM-FREE — Rewrite entirely in your own professional journalistic voice.
-   Do NOT copy sentences verbatim from the raw text.
+1. HUMAN-LIKE & ENGAGING TONE (CRITICAL) — Rewrite entirely in your own professional journalistic voice.
+   The article MUST NOT sound like an AI wrote it. Write with a natural, conversational, yet authoritative tone that hooks the reader instantly. Make the article addictive to read.
 
-2. NO HALLUCINATION — Do NOT introduce any facts, quotes, statistics, or context
-   that are NOT present in the raw article text below. Stay strictly faithful to
-   the facts provided.
+2. PERFECT LENGTH & NO REPETITION — Do not repeat the same points just to increase word count. Keep the story moving forward with fresh information in every paragraph. Make the length naturally fit the story—detailed enough for excellent SEO, but concise enough to keep the reader engaged. No fluff or filler words.
 
-3. STRICT IMPARTIALITY (MOST IMPORTANT) ─────────────────────────────────────
-   • You MUST write in a neutral, balanced, and non-partisan manner.
-   • If the source article is biased FOR or AGAINST a government, political party,
-     corporation, religion, nation, or individual — you MUST neutralise that bias.
-   • Present ALL sides of the issue if multiple perspectives exist in the raw text.
-   • NEVER editorialize or inject opinion. Attribute any claims to their sources.
-   • Write like Reuters or BBC World — present facts, not judgements.
-   • Even if a government, party, or person is praised in the source text, maintain
-     journalistic distance. Report what happened, not what to think of it.
-   • Use neutral language: prefer "officials say" over "officials admit/claim".
+3. SEO OPTIMISATION — Identify the core topic and naturally integrate primary and LSI (Latent Semantic Indexing) keywords throughout the text. Ensure the content ranks well on Google without feeling "keyword-stuffed".
 
-4. HTML CONTENT — Write the `content` field as clean, semantic HTML using only:
+4. STRICT IMPARTIALITY & NO HALLUCINATION —
+   • Stay strictly faithful to the provided facts. Do not invent quotes or stats.
+   • Maintain absolute neutrality. Present ALL sides. Write like Reuters or BBC World.
+   • Neutralise any political or corporate bias from the source.
+
+5. HTML CONTENT & STRUCTURE — Write the `content` field as clean, semantic HTML:
    <p>, <h2>, <h3>, <ul>, <li>, <blockquote>, <strong>, <em>.
-   • No <html>, <head>, <body>, <style>, or <script> tags.
-   • No Markdown (no **, no ##, no ```).
-   • Use <h2> for sub-headings and <p> for paragraphs.
-   • Wrap notable quotes or pull-quotes in <blockquote>.
-   • Minimum 4 paragraphs. Each paragraph ≥ 40 words.
-   • Structure: Lead/Hook → Background → Details → Impact/Context → Conclusion
+   • No <html>, <head>, <body>, <style>, or <script> tags. No Markdown.
+   • Use catchy <h2> sub-headings to break up the text and make the article skimmable.
+   • Structure: Hook (Catchy Lead) → Core Facts → Context/Background → Conclusion/Impact.
 
-5. SEO TITLE — Write a catchy `title` that:
-   • Is concise (50-70 characters)
-   • Uses active voice
-   • Includes a primary keyword naturally
-   • Does NOT use sensationalist or clickbait language
+6. SEO TITLE — Write a highly clickable, catchy `title` (50-70 chars) using the main keyword naturally. No cheap clickbait.
 
-6. META DESCRIPTION — Write a compelling `meta_description` (130-155 characters)
-   that summarises the article factually and encourages clicks without being
-   misleading.
+7. META DESCRIPTION — Write a compelling `meta_description` (130-155 chars) that drives high click-through rates (CTR) on Google.
 
-7. CATEGORY — Suggest exactly 1 broad `category` from this fixed list:
-   Technology, World, Politics, Sports, Business, Entertainment, Science,
-   Health, Environment, Crime, Education, Economy.
+8. CATEGORY (STRICT MATCH) — Suggest EXACTLY 1 broad `category` from this fixed list:
+   Technology, World, Politics, Sports, Business, Entertainment, Science, Health, Environment, Crime, Education, Economy.
+   *Rule:* Do NOT create child categories. (e.g., "Geopolitics" or "Elections" MUST go into "Politics". "Startups" MUST go into "Business").
 
-8. TAGS — Suggest 3-5 specific, relevant tags as a JSON array of strings.
-   Examples: ["Artificial Intelligence", "US Elections", "Indian Economy"]
+9. TAGS — Suggest 5 to 7 highly specific, SEO-friendly tags as a JSON array. Include long-tail keywords where possible.
 
 ── Output Format ────────────────────────────────────────────────────────────
 Respond ONLY with a single valid JSON object — no markdown fences, no preamble.
@@ -107,12 +83,11 @@ The JSON MUST match this exact schema:
 {{
   "title":            "<string: SEO headline, 50-70 chars>",
   "meta_description": "<string: SEO meta, 130-155 chars>",
-  "content":          "<string: full HTML article body, min 4 paragraphs>",
-  "category":         "<string: one of the 12 categories above>",
-  "tags":             ["<string>", "<string>", "<string>"]
+  "content":          "<string: full HTML article body, highly engaging>",
+  "category":         "<string: strictly ONE of the 12 categories above>",
+  "tags":             ["<string>", "<string>", "<string>", "<string>", "<string>", "<string>"]
 }}
 """
-
 
 # ─── JSON extraction helper ────────────────────────────────────────────────
 _JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
@@ -284,14 +259,14 @@ def rewrite_article_with_ai(
             data["title"]            = str(data["title"]).strip()[:250]
             data["meta_description"] = str(data["meta_description"]).strip()[:160]
             data["category"]         = str(data["category"]).strip()[:100]
-            data["tags"]             = [str(t).strip()[:50] for t in data["tags"][:5] if str(t).strip()]
+            data["tags"]             = [str(t).strip()[:50] for t in data["tags"][:7] if str(t).strip()]
 
             # Ensure at least 1 tag survived sanitization
             if not data["tags"]:
                 data["tags"] = ["News"]
 
             logger.info(
-                "✅ Groq rewrite complete for '%s' → '%s' [%s] (attempt %d)",
+                " Groq rewrite complete for '%s' → '%s' [%s] (attempt %d)",
                 original_title,
                 data["title"],
                 data["category"],

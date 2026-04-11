@@ -7,6 +7,8 @@ from .views import (
     ResendVerificationEmailView,
     ResetPasswordView,
     VerifyEmailView,
+    ApplyActivistView,
+    ApproveActivistView,
 )
 
 urlpatterns = [
@@ -21,4 +23,8 @@ urlpatterns = [
     path('forgot-password/', ForgotPasswordView.as_view(), name='forgot-password'),
     path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),
     path('google-login/', GoogleLoginView.as_view(), name='google-login'),
+    
+    # Activist Application
+    path('apply-activist/', ApplyActivistView.as_view(), name='apply-activist'),
+    path('approve-activist/<int:user_id>/', ApproveActivistView.as_view(), name='approve-activist'),
 ]

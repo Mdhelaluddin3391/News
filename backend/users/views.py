@@ -27,6 +27,7 @@ from .serializers import (
     TokenOnlySerializer,
     UserSerializer,
 )
+from users.permissions import IsAdminUser
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -336,3 +337,52 @@ class GoogleLoginView(APIView):
             
         except ValueError:
             return Response({"error": "Invalid Google Token"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ApplyActivistView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
+
+    def post(self, request):
+        user = request.user
+        
+        if user.role != 'subscriber':
+            return Response({"error": "You already have elevated privileges (you are not a standard subscriber)."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if user.is_activist_applicant:
+            return Response({"error": "You have already submitted an activist application. Please wait for review."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.is_activist_applicant = True
+        user.save(update_fields=['is_activist_applicant'])
+
+        return Response({"message": "Your application to become a verified activist has been submitted successfully!"}, status=status.HTTP_200_OK)
+
+
+class ApproveActivistView(APIView):
+    permission_classes = (IsAdminUser,)
+
+    def post(self, request, user_id):
+        user = User.objects.filter(id=user_id).first()
+        if not user:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if not user.is_activist_applicant:
+            return Response({"error": f"The user {user.name} has not applied to be an activist."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Grant 'author' role and clear applicant flag
+        user.role = 'author'
+        user.is_activist_applicant = False
+        user.save(update_fields=['role', 'is_activist_applicant'])
+
+        # Build context and dispatch async Welcome Email
+        context = {
+            'user_name': user.name,
+            'frontend_url': settings.FRONTEND_URL
+        }
+        text_content = f"Hi {user.name}, your application to become an activist has been approved! You can now access the Write Raw Article dashboard."
+        html_content = render_to_string('emails/activist_welcome.html', context)
+        
+        send_async_email.delay("Welcome to Ferox Times - Verified Independent Journalism Contributor", text_content, [user.email], html_content)
+
+        return Response({"message": f"Successfully approved {user.name} as a Verified Activist (Author). Welcome email sent."}, status=status.HTTP_200_OK)

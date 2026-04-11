@@ -375,7 +375,7 @@ class CustomUserAdmin(admin.ModelAdmin):
         count = queryset.update(role='author', is_staff=True)
         self.message_user(request, f'📝 {count} user(s) set to Author.')
 
-    @admin.action(description='🎓 Verify as Guest Writer / Activist (+ Email)')
+    @admin.action(description='🎓 Verify as Independent Journalism Contributor (+ Email)')
     def verify_as_activist(self, request, queryset):
         if not (request.user.is_superuser or request.user.role == 'admin'):
             self.message_user(request, '⛔ Only Admins can verify activists.', level=messages.ERROR)
@@ -392,7 +392,7 @@ class CustomUserAdmin(admin.ModelAdmin):
             # Ensure Author profile exists
             Author.objects.get_or_create(
                 user=user,
-                defaults={'role': 'Guest Writer / Activist'}
+                defaults={'role': 'Independent Journalism Contributor'}
             )
             
             # Send welcome email
@@ -404,14 +404,14 @@ class CustomUserAdmin(admin.ModelAdmin):
             html_content = render_to_string('emails/activist_welcome.html', context)
             
             send_async_email.delay(
-                "Welcome to Ferox Times - Verified Guest Writer", 
+                "Welcome to Ferox Times - Verified Independent Journalism Contributor", 
                 text_content, 
                 [user.email], 
                 html_content
             )
             count += 1
             
-        self.message_user(request, f'🎓 {count} user(s) verified as Activist/Writer and emails sent.')
+        self.message_user(request, f'🎓 {count} user(s) verified as Independent Journalism Contributor and emails sent.')
 
     @admin.action(description='👤 Change role → Subscriber (revoke staff)')
     def make_role_subscriber(self, request, queryset):

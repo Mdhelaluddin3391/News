@@ -213,8 +213,8 @@ class ArticleAdminForm(forms.ModelForm):
 # ═══════════════════════════════════════════════════════════════════════════
 
 class ActivistDraftFilter(admin.SimpleListFilter):
-    """Filter to quickly find articles submitted by Guest Writers (Authors) that need editorial review."""
-    title = '✍️ Activist / Guest Writer Drafts'
+    """Filter to quickly find articles submitted by Independent Journalism Contributors (Authors) that need editorial review."""
+    title = '✍️ Independent Contributor Drafts'
     parameter_name = 'activist_drafts'
 
     def lookups(self, request, model_admin):
@@ -224,7 +224,7 @@ class ActivistDraftFilter(admin.SimpleListFilter):
         ]
 
     def queryset(self, request, queryset):
-        # Authors refer to the activist / guest writers
+        # Authors refer to the Independent Journalism Contributors
         if self.value() == 'pending_review':
             return queryset.filter(status='draft', author__user__role='author')
         if self.value() == 'published':
@@ -286,7 +286,7 @@ class ArticleAdmin(admin.ModelAdmin):
     list_filter = (
         StatusFilter,       # 📋 Draft / Published   (with counts)
         ImportTypeFilter,   # 🤖 AI Imported / Manual (with counts)
-        ActivistDraftFilter,# ✍️ Pending Guest Writer Drafts
+        ActivistDraftFilter,# ✍️ Pending Independent Contributor Drafts
         PublishDateFilter,  # 📅 Today / This Week / Last 30 days …
         FlagsFilter,        # 🚩 Breaking / Trending / Featured …
         HasImageFilter,     # 🖼️  Has Image / No Image

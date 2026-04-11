@@ -16,3 +16,17 @@ app.autodiscover_tasks()
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
     print(f'Request: {self.request!r}')
+
+from celery.schedules import crontab
+
+# Celery Beat Periodic Tasks Schedule
+app.conf.beat_schedule = {
+    'cleanup-unverified-users-daily': {
+        'task': 'users.tasks.cleanup_unverified_users',
+        'schedule': crontab(hour=0, minute=0), # Daily at midnight
+    },
+    'cleanup-old-contact-messages-weekly': {
+        'task': 'core.tasks.cleanup_old_contact_messages',
+        'schedule': crontab(day_of_week=0, hour=3, minute=0), # Weekly on Sunday at 3 AM
+    },
+}

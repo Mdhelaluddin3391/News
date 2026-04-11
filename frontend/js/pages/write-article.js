@@ -3,8 +3,22 @@
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Auth Check - Only allow roles author, reporter, editor, admin
     const user = getCurrentUser();
-    if (!user || !['author', 'reporter', 'editor', 'admin'].includes(user.role)) {
-        window.location.href = "/profile.html";
+    const formContainer = document.querySelector('.writer-container');
+
+    // Allow if user is staff/author OR if explicitly approved as an activist
+    const hasAccess = user && (['author', 'reporter', 'editor', 'admin'].includes(user.role) || user.is_activist_approved === true);
+
+    if (!hasAccess) {
+        formContainer.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px;">
+                <i class="fas fa-lock" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 20px;"></i>
+                <h1 style="color: #1e293b;">Verified Writers Only</h1>
+                <p style="color: #64748b; margin-bottom: 25px;">You must be approved by the Ferox Times editorial team to submit articles.</p>
+                <a href="/profile.html" class="btn-submit" style="background: #10b981; color: white; padding: 12px 25px; text-decoration: none; border-radius: 8px; display: inline-block; width: auto;">
+                    Apply to Become a Writer
+                </a>
+            </div>
+        `;
         return;
     }
 

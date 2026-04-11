@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <a href="/edit-profile.html" style="background-color: var(--primary); color: white; text-decoration: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 160px; text-align: center;">
                 <i class="fas fa-user-edit" style="margin-right: 8px;"></i> Edit Profile
             </a>
-            ${['author', 'reporter', 'editor', 'admin'].includes(user.role) ? `
+            ${(['author', 'reporter', 'editor', 'admin'].includes(user.role) || user.is_activist_approved === true) ? `
             <a href="/write-article.html" style="background-color: #10b981; color: white; text-decoration: none; padding: 12px 30px; border-radius: 30px; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 160px; text-align: center;">
                 <i class="fas fa-pen-nib" style="margin-right: 8px;"></i> Write Raw Article
             </a>

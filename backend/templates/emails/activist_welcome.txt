@@ -1,8 +1,8 @@
-Congratulations! You are now a Verified Guest Writer at Ferox Times.
+Congratulations! You are now a Verified Independent Journalism Contributor at Ferox Times.
 
 Hi {{ user_name }},
 
-Your application has been approved! We are thrilled to welcome you as a verified Guest Writer / Activist for Ferox Times.
+Your application has been approved! We are thrilled to welcome you as a verified Independent Journalism Contributor for Ferox Times.
 
 As a verified writer, you now have access to the "Write Raw Article" dashboard directly from your profile.
 

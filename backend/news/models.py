@@ -152,6 +152,10 @@ class Article(BaseModel):
         if self.status == 'published' and not self.published_at:
             self.published_at = timezone.now()
 
+        # 3. Clean up Scraped HTML (Database Bloat Optimization)
+        if self.status == 'published' and self.original_content:
+            self.original_content = None
+
         super().save(*args, **kwargs)
 
     def __str__(self):

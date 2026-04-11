@@ -22,41 +22,45 @@ async function loadDynamicJobs() {
 
         if (jobs.length === 0) {
             jobsContainer.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: var(--gray); font-size: 1.1rem;">Currently, there are no open positions. Check back later!</p>';
-            return;
+        } else {
+            let jobsHtml = '';
+            jobs.forEach(job => {
+                jobsHtml += `
+                    <div class="job-card">
+                        <div class="job-title">${job.title}</div>
+                        <div class="job-meta">
+                            <span><i class="fas fa-map-marker-alt"></i> ${job.location}</span>
+                            <span><i class="fas fa-briefcase"></i> ${job.employment_type_display}</span>
+                        </div>
+                        <div class="job-desc">${job.description}</div>
+                        <a href="#apply-section" class="read-more" style="font-weight: bold;" onclick="document.getElementById('applied-role').value='${job.title}'">Apply Now &rarr;</a>
+                    </div>
+                `;
+                optionsHtml += `<option value="${job.title}">${job.title}</option>`;
+            });
+            jobsContainer.innerHTML = jobsHtml;
         }
 
-        let jobsHtml = '';
-        let optionsHtml = '<option value="">-- Select a role --</option>';
-
-        jobs.forEach(job => {
-            // 1. Job Card banana
-            jobsHtml += `
-                <div class="job-card">
-                    <div class="job-title">${job.title}</div>
-                    <div class="job-meta">
-                        <span><i class="fas fa-map-marker-alt"></i> ${job.location}</span>
-                        <span><i class="fas fa-briefcase"></i> ${job.employment_type_display}</span>
-                    </div>
-                    <div class="job-desc">${job.description}</div>
-                    <a href="#apply-section" class="read-more" style="font-weight: bold;" onclick="document.getElementById('applied-role').value='${job.title}'">Apply Now &rarr;</a>
-                </div>
-            `;
-            // 2. Dropdown Option banana
-            optionsHtml += `<option value="${job.title}">${job.title}</option>`;
-        });
-
         // Niche ka custom options wapas add karna
-        optionsHtml += '<option value="Guest Writer / Activist" style="font-weight:bold; color:var(--primary);">Guest Writer / Activist</option>';
+        optionsHtml += '<option value="Independent Journalism Contributor" style="font-weight:bold; color:var(--primary);">Independent Journalism Contributor</option>';
         optionsHtml += '<option value="General / Other">General Application (Other)</option>';
 
-        jobsContainer.innerHTML = jobsHtml;
         if (roleSelect) {
             roleSelect.innerHTML = optionsHtml;
         }
 
     } catch (error) {
         console.error("Error loading jobs:", error);
-        jobsContainer.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: red;">Failed to load job postings. Please try again later.</p>';
+        if (jobsContainer) {
+            jobsContainer.innerHTML = '<p style="text-align: center; grid-column: 1/-1; color: red;">Failed to load job postings. Please try again later.</p>';
+        }
+        
+        // Agar error aaye, fir bhi guest aur general application options dikhao
+        if (roleSelect) {
+            optionsHtml += '<option value="Independent Journalism Contributor" style="font-weight:bold; color:var(--primary);">Independent Journalism Contributor</option>';
+            optionsHtml += '<option value="General / Other">General Application (Other)</option>';
+            roleSelect.innerHTML = optionsHtml;
+        }
     }
 }
 

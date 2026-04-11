@@ -45,6 +45,16 @@ class User(AbstractUser, BaseModel):
     profile_picture = models.ImageField(upload_to='users/avatars/', blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
 
+    # Activist Fields
+    is_activist_applicant = models.BooleanField(
+        default=False, 
+        help_text="Has the subscriber applied to become an activist?"
+    )
+    is_activist_approved = models.BooleanField(
+        default=False,
+        help_text="Is the user officially approved as a verified guest writer?"
+    )
+
     # Email Verification Fields
     is_email_verified = models.BooleanField(default=False, help_text="Is the email address verified?")
     email_verification_token = models.CharField(

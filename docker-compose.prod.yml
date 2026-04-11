@@ -63,7 +63,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    command: celery -A newshub_core worker --loglevel=info
+    command: celery -A newshub_core worker --loglevel=info --concurrency=2
     restart: always
     init: true
     env_file:

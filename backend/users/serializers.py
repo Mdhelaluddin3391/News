@@ -7,8 +7,8 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 'profile_picture', 'bio', 'role', 'is_email_verified', 'created_at')
-        read_only_fields = ('id', 'email', 'role', 'is_email_verified', 'created_at')
+        fields = ('id', 'name', 'email', 'profile_picture', 'bio', 'role', 'is_email_verified', 'created_at', 'is_activist_applicant', 'is_activist_approved')
+        read_only_fields = ('id', 'email', 'role', 'is_email_verified', 'created_at', 'is_activist_applicant', 'is_activist_approved')
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -21,8 +21,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 'profile_picture', 'bio', 'role', 'is_email_verified', 'created_at', 'password')
-        read_only_fields = ('id', 'email', 'role', 'is_email_verified', 'created_at')
+        fields = ('id', 'name', 'email', 'profile_picture', 'bio', 'role', 'is_email_verified', 'created_at', 'password', 'is_activist_applicant', 'is_activist_approved')
+        read_only_fields = ('id', 'email', 'role', 'is_email_verified', 'created_at', 'is_activist_applicant', 'is_activist_approved')
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)

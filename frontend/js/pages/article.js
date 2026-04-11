@@ -71,14 +71,17 @@ function renderArticle(article) {
     const containClass = imageUrl.includes('default-news.png') ? 'img-contain' : '';
 
     const title = article.title || 'Untitled';
-    const source = article.source_name || 'Ferox Times';
+    const sourceName = article.source_name || 'Ferox Times';
+    const safeSourceName = typeof window.escapeHtml === 'function' ? window.escapeHtml(sourceName) : sourceName;
+    const sourceHTML = article.source_url 
+        ? `<a href="${article.source_url}" target="_blank" rel="noopener noreferrer" class="source-link" style="color: inherit; text-decoration: underline;">${safeSourceName}</a>`
+        : safeSourceName;
     const date = article.published_at ? formatArticleDate(article.published_at) : 'Unknown date';
     const description = article.description || '';
     let content = article.content || article.description || '';
     const categorySlug = article.category ? article.category.slug : 'general';
     const categoryName = article.category ? article.category.name : 'News';
     const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(title) : title;
-    const safeSource = typeof window.escapeHtml === 'function' ? window.escapeHtml(source) : source;
     const safeDescription = typeof window.escapeHtml === 'function' ? window.escapeHtml(description) : description;
 
     // ======== IN-ARTICLE AD INJECTION LOGIC ========
@@ -242,7 +245,7 @@ function renderArticle(article) {
                 ${liveBadgeHTML}
             <h1 class="detail-title">${safeTitle}</h1>
             <div class="detail-meta" style="margin-bottom: 1rem; border-bottom: none;">
-                <span class="detail-source">${safeSource}</span>
+                <span class="detail-source">${sourceHTML}</span>
                 <span class="detail-date">${date}</span>
                 <span><i class="far fa-eye"></i> ${article.views || 0} views</span>
             </div>

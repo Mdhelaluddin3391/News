@@ -33,6 +33,7 @@ from urllib.robotparser import RobotFileParser
 
 import requests
 from django.utils.html import strip_tags
+from django.contrib.auth import get_user_model
 
 from news.models import Article, Category, Tag
 from newspaper import Article as WebArticle
@@ -366,6 +367,23 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
             if cat_created:
                 logger.info("Created new category: '%s'", category_name)
 
+            # ── Step 8.5: Resolve Virtual Reporter (AI User) ────────────────
+            User = get_user_model()
+            ai_user, user_created = User.objects.get_or_create(
+                email="ai_desk@feroxtimes.com",
+                defaults={
+                    "name": "Ferox Times",
+                    "role": "reporter",
+                    "is_staff": False,
+                    "is_active": True,
+                    "bio": "The official automated news desk of Ferox Times, bringing you lightning-fast updates from around the globe."
+                }
+            )
+            if user_created:
+                ai_user.set_unusable_password()  # Prevent anyone from logging in as this user
+                ai_user.save()
+                logger.info("Created default AI Reporter user: '%s'", ai_user.email)
+
             # ── Step 9: Build the Article object ──────────────────────────
             ai_content  = ai_data.get("content", "")
             description = _clean_text(ai_content, max_length=250)
@@ -379,6 +397,7 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
                 description      = description,
                 content          = ai_content,
                 category         = category_obj,
+                author           = ai_user,
 
                 # Original source tracking fields
                 original_title   = title[:500],

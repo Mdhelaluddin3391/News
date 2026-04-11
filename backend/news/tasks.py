@@ -185,8 +185,8 @@ def send_push_notifications_task(self, article_id):
     retry_backoff_max=600,
     retry_jitter=True,
     retry_kwargs={"max_retries": 3},
-    soft_time_limit=300,   # 5 min soft limit — raises SoftTimeLimitExceeded
-    time_limit=360,        # 6 min hard kill
+    soft_time_limit=600, 
+    time_limit=660,     
 )
 def auto_import_news_task(self):
     """
@@ -232,7 +232,7 @@ def auto_import_news_task(self):
         return result
 
     except SoftTimeLimitExceeded:
-        msg = "⏱️ auto_import_news_task hit soft time limit (5 min). Partial results may have been saved."
+        msg = "⏱️ auto_import_news_task hit soft time limit (10 min). Partial results may have been saved."
         logger.warning(msg)
         return msg
     except Exception as exc:

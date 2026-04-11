@@ -48,3 +48,29 @@ def send_async_email(self, subject, message, recipient_list, html_message=None):
     except Exception:
         logger.exception("Email task failed for %s recipients", len(recipient_list))
         raise
+
+from datetime import timedelta
+from django.utils import timezone
+from .models import ContactMessage
+
+@shared_task
+def cleanup_old_contact_messages():
+    """
+    Background worker task to delete ContactMessages (including job applications)
+    that have been resolved and are older than 60 days to prevent database bloat.
+    """
+    cutoff_time = timezone.now() - timedelta(days=60)
+    
+    old_resolved_messages = ContactMessage.objects.filter(
+        is_resolved=True,
+        created_at__lt=cutoff_time
+    )
+    
+    count = old_resolved_messages.count()
+    if count > 0:
+        logger.info(f"Cleanup Task: Deleting {count} resolved contact messages older than 60 days.")
+        old_resolved_messages.delete()
+    else:
+        logger.info("Cleanup Task: No stale contact messages found.")
+        
+    return f"Cleaned up {count} contact messages."

@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.contrib import messages
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.utils.html import format_html
 from django.utils.text import slugify
 from datetime import timedelta
 
@@ -16,7 +17,7 @@ from .models import Category, Author, Article, Tag, LiveUpdate
 class StatusFilter(admin.SimpleListFilter):
     """Filter by publication status — shows count for each option."""
     title = '📋 Status'
-    parameter_name = 'status'
+    parameter_name = 'article_status'   # Must NOT match model field name 'status'
 
     def lookups(self, request, model_admin):
         qs = model_admin.get_queryset(request)
@@ -25,16 +26,17 @@ class StatusFilter(admin.SimpleListFilter):
             for row in qs.values('status').annotate(c=Count('id'))
         }
         return [
-            ('all_drafts',     f'📝 Draft ({counts.get("draft", 0)})'),
-            ('all_published',  f'✅ Published ({counts.get("published", 0)})'),
+            ('draft',     f'📝 Draft ({counts.get("draft", 0)})'),
+            ('published', f'✅ Published ({counts.get("published", 0)})'),
         ]
 
     def queryset(self, request, queryset):
-        if self.value() == 'all_drafts':
+        if self.value() == 'draft':
             return queryset.filter(status='draft')
-        if self.value() == 'all_published':
+        if self.value() == 'published':
             return queryset.filter(status='published')
         return queryset
+
 
 
 class ImportTypeFilter(admin.SimpleListFilter):
@@ -282,7 +284,7 @@ class ArticleAdmin(admin.ModelAdmin):
     autocomplete_fields = ['author', 'category']
     show_full_result_count = True
 
-    actions = ['make_published', 'make_draft', 'regenerate_slug']
+    actions = ['make_published', 'make_draft', 'regenerate_slug', 'run_ai_import_now']
 
     # ── Fieldsets ─────────────────────────────────────────────────────────
     fieldsets = (
@@ -316,7 +318,6 @@ class ArticleAdmin(admin.ModelAdmin):
 
     @admin.display(description='Status', ordering='status')
     def colored_status(self, obj):
-        from django.utils.html import format_html
         if obj.status == 'published':
             return format_html(
                 '<span style="color:#27ae60;font-weight:bold;">✅ Published</span>'
@@ -327,11 +328,13 @@ class ArticleAdmin(admin.ModelAdmin):
 
     @admin.display(description='Type', ordering='is_imported')
     def import_badge(self, obj):
-        from django.utils.html import format_html
         if obj.is_imported:
+            # Show source name too for AI imports
+            source = obj.source_name or "GNews"
             return format_html(
                 '<span style="background:#2980b9;color:#fff;padding:2px 7px;'
-                'border-radius:4px;font-size:11px;">🤖 AI</span>'
+                'border-radius:4px;font-size:11px;" title="Source: {}">🤖 AI</span>',
+                source,
             )
         return format_html(
             '<span style="background:#8e44ad;color:#fff;padding:2px 7px;'
@@ -384,6 +387,58 @@ class ArticleAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(request, f'🔄 Slug regenerated for {count} article(s).')
 
+    @admin.action(description='🤖 Run AI News Import Now (GNews → Gemini → Draft)')
+    def run_ai_import_now(self, request, queryset):
+        """
+        Manually triggers the GNews → scrape → Gemini → draft pipeline.
+        Useful when admin wants to import news on demand without waiting
+        for the 30-minute Celery Beat schedule.
+        """
+        if not (request.user.role in ['admin', 'editor'] or request.user.is_superuser):
+            self.message_user(
+                request,
+                "⛔ Permission denied. Only Admins and Editors can trigger AI import.",
+                level=messages.ERROR,
+            )
+            return
+
+        import os
+        gnews_key = os.getenv("GNEWS_API_KEY")
+        gemini_key = os.getenv("GEMINI_API_KEY")
+
+        if not gnews_key:
+            self.message_user(
+                request,
+                "❌ GNEWS_API_KEY is not configured in the environment. Please set it in your .env file.",
+                level=messages.ERROR,
+            )
+            return
+
+        if not gemini_key:
+            self.message_user(
+                request,
+                "❌ GEMINI_API_KEY is not configured. AI rewriting is disabled.",
+                level=messages.ERROR,
+            )
+            return
+
+        try:
+            from news.tasks import auto_import_news_task
+            auto_import_news_task.delay()
+            self.message_user(
+                request,
+                "🤖 AI News Import has been queued in Celery! "
+                "New articles will appear as Drafts within 2–5 minutes. "
+                "Use the '🤖 AI Imported' filter to find them.",
+                level=messages.SUCCESS,
+            )
+        except Exception as exc:
+            self.message_user(
+                request,
+                f"❌ Could not queue AI import task: {exc}",
+                level=messages.ERROR,
+            )
+
     # ── Queryset (role-based) ──────────────────────────────────────────────
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -421,6 +476,17 @@ class ArticleAdmin(admin.ModelAdmin):
 
     # ── Changelist dashboard message ───────────────────────────────────────
     def changelist_view(self, request, extra_context=None):
+        # Show pending AI drafts notice to admins/editors
+        if request.user.role in ['admin', 'editor'] or request.user.is_superuser:
+            ai_drafts = Article.objects.filter(is_imported=True, status='draft').count()
+            if ai_drafts > 0:
+                messages.warning(
+                    request,
+                    f'📥 {ai_drafts} AI-imported article(s) are waiting for your review! '
+                    f'Please review and publish them. '
+                    f'[Filter: Article Type → 🤖 AI Imported + Status → 📝 Draft]'
+                )
+
         if request.user.role in ['author', 'reporter'] and hasattr(request.user, 'author_profile'):
             ap      = request.user.author_profile
             total   = Article.objects.filter(author=ap).count()

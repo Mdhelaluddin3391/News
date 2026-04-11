@@ -3,6 +3,7 @@ import logging
 import os
 from io import BytesIO
 import requests
+from celery.exceptions import SoftTimeLimitExceeded
 
 import tweepy
 from PIL import Image
@@ -192,11 +193,24 @@ def auto_import_news_task(self):
     Celery Beat task that runs every 30 minutes.
     Fetches top 5 trending headlines from GNews API, scrapes full text,
     rewrites via Gemini AI, and saves each as a draft Article.
+
+    Error Handling:
+    - GNEWS_API_KEY not set     → logs error, returns without crashing.
+    - GEMINI_API_KEY not set    → logged inside ai_utils; articles skipped.
+    - GNews API unreachable     → logged inside importer; task returns safe msg.
+    - Scraping failure          → logged inside importer; individual article skipped.
+    - SoftTimeLimitExceeded     → caught here, logs warning, returns safely.
     """
     gnews_key = os.getenv("GNEWS_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
 
     if not gnews_key:
-        msg = "❌ GNEWS_API_KEY is not set in the environment."
+        msg = "❌ GNEWS_API_KEY is not set in the environment. Please add it to your .env file."
+        logger.error(msg)
+        return msg
+
+    if not gemini_key:
+        msg = "❌ GEMINI_API_KEY is not set. AI rewriting is disabled — no articles will be imported."
         logger.error(msg)
         return msg
 
@@ -207,14 +221,24 @@ def auto_import_news_task(self):
         logger.exception(msg)
         return msg
 
-    logger.info("[auto_import] Fetching GNews top-headlines (max=5)…")
-    gnews_url = (
-        f"https://gnews.io/api/v4/top-headlines"
-        f"?category=general&lang=en&max=5&apikey={gnews_key}"
-    )
-    result = fetch_and_import_news(gnews_url, provider="gnews")
-    logger.info("[auto_import] Result: %s", result)
-    return result
+    try:
+        logger.info("[auto_import] Starting GNews top-headlines fetch (max=5)…")
+        gnews_url = (
+            f"https://gnews.io/api/v4/top-headlines"
+            f"?category=general&lang=en&max=5&apikey={gnews_key}"
+        )
+        result = fetch_and_import_news(gnews_url, provider="gnews")
+        logger.info("[auto_import] Completed. Result: %s", result)
+        return result
+
+    except SoftTimeLimitExceeded:
+        msg = "⏱️ auto_import_news_task hit soft time limit (5 min). Partial results may have been saved."
+        logger.warning(msg)
+        return msg
+    except Exception as exc:
+        msg = f"❌ Unexpected error in auto_import_news_task: {exc}"
+        logger.exception(msg)
+        raise  # Re-raise so Celery retry logic can handle it
 
 
 @shared_task(

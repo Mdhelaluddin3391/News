@@ -611,69 +611,153 @@ LOGGING = {
 }
 
 
-# Jazzmin Admin Settings
+# ─── Jazzmin Admin Settings ───────────────────────────────────────────────
 JAZZMIN_SETTINGS = {
-    "site_title": "Ferox Times Admin",
-    "site_header": "Ferox Times",
-    "site_brand": "Ferox Times Dashboard",
-    "welcome_sign": "Welcome to Ferox Times Admin Panel",
-    "copyright": "Ferox Times",
-    "search_model": ["news.Article", "users.User"],
-    "custom_css": "css/admin_custom.css",
+    # ── Branding ──────────────────────────────────────────────────────────
+    "site_title":   "Ferox Times | CMS",
+    "site_header":  "Ferox Times",
+    "site_brand":   "🗞️ Ferox Times",
+    "site_logo":    None,          # Add path to logo if you have one
+    "site_icon":    None,
+    "welcome_sign": "Welcome back! Manage your newsroom from here.",
+    "copyright":    "© Ferox Times Media",
+
+    # ── Global Search ─────────────────────────────────────────────────────
+    "search_model": ["news.Article", "users.User", "interactions.Comment"],
+
+    # ── Custom Theme CSS ──────────────────────────────────────────────────
+    "custom_css":  "css/admin_custom.css",
+    "custom_js":   None,
+    "use_google_fonts_cdn": True,
+
+    # ── Top Navigation Bar Links ──────────────────────────────────────────
     "topmenu_links": [
-        {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"name": "View Frontend Site", "url": FRONTEND_URL + "/", "new_window": True},
+        {"name": "🏠 Dashboard",     "url": "admin:index",       "permissions": ["auth.view_user"]},
+        {"name": "📰 Articles",      "url": "admin:news_article_changelist", "permissions": ["news.view_article"]},
+        {"name": "👥 Users",         "url": "admin:users_user_changelist",   "permissions": ["users.view_user"]},
+        {"name": "🌐 View Site",     "url": FRONTEND_URL + "/",  "new_window": True},
+        {"name": "💬 Comments",      "url": "admin:interactions_comment_changelist", "permissions": ["interactions.view_comment"]},
     ],
+
+    # ── User Menu (top right dropdown) ────────────────────────────────────
+    "usermenu_links": [
+        {"name": "👤 My Profile",        "url": "admin:users_user_change", "icon": "fas fa-user"},
+        {"name": "🌐 View Frontend",      "url": FRONTEND_URL + "/", "new_window": True, "icon": "fas fa-external-link-alt"},
+        {"name": "🔐 Change Password",    "url": "admin:password_change", "icon": "fas fa-key"},
+    ],
+
+    # ── Sidebar Icons ────────────────────────────────────────────────────
     "icons": {
-        "auth": "fas fa-users-cog",
-        "users.User": "fas fa-user",
-        "auth.Group": "fas fa-users",
-        "news.Article": "fas fa-newspaper",
-        "news.Category": "fas fa-list-alt",
-        "news.Author": "fas fa-user-edit",
-        "news.Tag": "fas fa-tags",
-        "news.LiveUpdate": "fas fa-broadcast-tower",
-        "interactions.Comment": "fas fa-comments",
-        "interactions.Poll": "fas fa-poll",
-        "interactions.Bookmark": "fas fa-bookmark",
+        # News
+        "news":                          "fas fa-newspaper",
+        "news.Article":                  "fas fa-file-alt",
+        "news.Category":                 "fas fa-folder-open",
+        "news.Author":                   "fas fa-user-edit",
+        "news.Tag":                      "fas fa-tags",
+        "news.LiveUpdate":               "fas fa-broadcast-tower",
+        # Users
+        "users":                         "fas fa-users-cog",
+        "users.User":                    "fas fa-user-shield",
+        # Auth
+        "auth":                          "fas fa-lock",
+        "auth.Group":                    "fas fa-layer-group",
+        # Interactions
+        "interactions":                  "fas fa-comments-alt",
+        "interactions.Comment":          "fas fa-comment-dots",
+        "interactions.CommentReport":    "fas fa-flag",
+        "interactions.Bookmark":         "fas fa-bookmark",
         "interactions.NewsletterSubscriber": "fas fa-envelope-open-text",
+        "interactions.Poll":             "fas fa-poll-h",
         "interactions.PushSubscription": "fas fa-bell",
-        "core.Advertisement": "fas fa-ad",
-        "core.ContactMessage": "fas fa-envelope",
+        # Core
+        "core":                          "fas fa-cogs",
+        "core.Advertisement":            "fas fa-rectangle-ad",
+        "core.AdvertisePage":            "fas fa-file-invoice",
+        "core.AdvertiseOption":          "fas fa-list-ul",
+        "core.ContactMessage":           "fas fa-envelope",
+        "core.SiteSetting":              "fas fa-sliders-h",
+        "core.JobPosting":               "fas fa-briefcase",
     },
-    "show_sidebar": True,
-    "navigation_expanded": True,
+
+    # ── Default Icon (fallback) ───────────────────────────────────────────
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+
+    # ── Sidebar Ordering ─────────────────────────────────────────────────
+    "order_with_respect_to": [
+        "news",
+        "news.Article", "news.Category", "news.Tag", "news.Author", "news.LiveUpdate",
+        "users",
+        "users.User",
+        "auth",
+        "auth.Group",
+        "interactions",
+        "interactions.Comment", "interactions.CommentReport",
+        "interactions.Poll",
+        "interactions.NewsletterSubscriber",
+        "interactions.Bookmark",
+        "interactions.PushSubscription",
+        "core",
+        "core.SiteSetting",
+        "core.Advertisement", "core.AdvertisePage", "core.AdvertiseOption",
+        "core.ContactMessage",
+        "core.JobPosting",
+    ],
+
+    # ── Sidebar Custom Menu Links ────────────────────────────────────────
+    "custom_links": {
+        "news": [
+            {
+                "name": "🤖 Run AI Import",
+                "url":  "admin:news_article_changelist",
+                "icon": "fas fa-robot",
+                "permissions": ["news.add_article"],
+            },
+        ],
+    },
+
+    # ── Change List Settings ──────────────────────────────────────────────
+    "changeform_format":         "horizontal_tabs",
+    "changeform_format_overrides": {
+        "news.article": "collapsible",
+        "users.user":   "collapsible",
+    },
+
+    # ── Other Settings ───────────────────────────────────────────────────
+    "show_sidebar":         True,
+    "navigation_expanded":  True,
     "related_modal_active": True,
+    "show_ui_builder":      False,
 }
 
 JAZZMIN_UI_TWEAKS = {
-    "navbar_small_text": False,
-    "footer_small_text": False,
-    "body_small_text": False,
-    "brand_small_text": False,
-    "brand_colour": "navbar-navy",
-    "navbar": "navbar-navy navbar-dark",
-    "accent": "accent-danger",
-    "sidebar": "sidebar-light-navy",
-    "no_navbar_border": False,
-    "navbar_fixed": True,
-    "layout_boxed": False,
-    "footer_fixed": False,
-    "sidebar_fixed": True,
-    "sidebar_nav_small_text": False,
-    "sidebar_disable_expand": False,
+    "navbar_small_text":        False,
+    "footer_small_text":        False,
+    "body_small_text":          False,
+    "brand_small_text":         False,
+    "brand_colour":             "navbar-navy",
+    "accent":                   "accent-danger",
+    "navbar":                   "navbar-navy navbar-dark",
+    "no_navbar_border":         False,
+    "navbar_fixed":             True,
+    "layout_boxed":             False,
+    "footer_fixed":             False,
+    "sidebar":                  "sidebar-light-navy",
+    "sidebar_fixed":            True,
+    "sidebar_nav_small_text":   False,
+    "sidebar_disable_expand":   False,
     "sidebar_nav_child_indent": True,
-    "sidebar_nav_compact_style": False,
+    "sidebar_nav_compact_style":False,
     "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": True,
-    "theme": "default",
-    "dark_mode_theme": "darkly",
+    "sidebar_nav_flat_style":   True,
+    "theme":                    "darkly",
+    "dark_mode_theme":          "darkly",
     "button_classes": {
-        "primary": "btn-primary",
-        "secondary": "btn-danger",
-        "info": "btn-info",
-        "warning": "btn-warning",
-        "danger": "btn-danger",
-        "success": "btn-success"
-    }
+        "primary":   "btn-primary",
+        "secondary": "btn-secondary",
+        "info":      "btn-info",
+        "warning":   "btn-warning",
+        "danger":    "btn-danger",
+        "success":   "btn-success",
+    },
 }

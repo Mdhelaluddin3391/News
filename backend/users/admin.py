@@ -19,6 +19,9 @@ from django.utils.html import format_html
 from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import timedelta
+from django.conf import settings
+from django.template.loader import render_to_string
+from core.tasks import send_async_email
 
 from .models import User
 
@@ -183,6 +186,7 @@ class CustomUserAdmin(admin.ModelAdmin):
     actions = [
         'make_active', 'make_inactive',
         'make_role_editor', 'make_role_reporter', 'make_role_author', 'make_role_subscriber',
+        'verify_as_activist',
         'mark_email_verified',
         'grant_staff_access', 'revoke_staff_access',
     ]
@@ -370,6 +374,44 @@ class CustomUserAdmin(admin.ModelAdmin):
             return
         count = queryset.update(role='author', is_staff=True)
         self.message_user(request, f'📝 {count} user(s) set to Author.')
+
+    @admin.action(description='🎓 Verify as Guest Writer / Activist (+ Email)')
+    def verify_as_activist(self, request, queryset):
+        if not (request.user.is_superuser or request.user.role == 'admin'):
+            self.message_user(request, '⛔ Only Admins can verify activists.', level=messages.ERROR)
+            return
+        
+        from news.models import Author
+        count = 0
+        for user in queryset:
+            user.role = 'author'
+            user.is_staff = True
+            user.is_email_verified = True
+            user.save(update_fields=['role', 'is_staff', 'is_email_verified'])
+            
+            # Ensure Author profile exists
+            Author.objects.get_or_create(
+                user=user,
+                defaults={'role': 'Guest Writer / Activist'}
+            )
+            
+            # Send welcome email
+            context = {
+                'user_name': user.name,
+                'frontend_url': settings.FRONTEND_URL
+            }
+            text_content = render_to_string('emails/activist_welcome.txt', context)
+            html_content = render_to_string('emails/activist_welcome.html', context)
+            
+            send_async_email.delay(
+                "Welcome to Ferox Times - Verified Guest Writer", 
+                text_content, 
+                [user.email], 
+                html_content
+            )
+            count += 1
+            
+        self.message_user(request, f'🎓 {count} user(s) verified as Activist/Writer and emails sent.')
 
     @admin.action(description='👤 Change role → Subscriber (revoke staff)')
     def make_role_subscriber(self, request, queryset):

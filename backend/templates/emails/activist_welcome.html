@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .header { text-align: center; border-bottom: 2px solid #d32f2f; padding-bottom: 20px; margin-bottom: 20px; }
+        .header h1 { color: #d32f2f; margin: 0; }
+        .badge { background-color: #10b981; color: white; padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; display: inline-block; margin-top: 10px; }
+        .content { font-size: 16px; }
+        .rules { background-color: #f1f5f9; padding: 15px; border-left: 4px solid #3b82f6; border-radius: 4px; margin: 20px 0; }
+        .rules h3 { margin-top: 0; color: #1e3a8a; }
+        .btn { display: inline-block; background-color: #d32f2f; color: #fff !important; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; margin: 20px 0; }
+        .footer { text-align: center; font-size: 14px; color: #777; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Ferox Times</h1>
+            <div class="badge">✅ Verified Guest Writer</div>
+        </div>
+        
+        <div class="content">
+            <p>Hi <strong>{{ user_name }}</strong>,</p>
+            <p>Your application has been approved! We are thrilled to welcome you as a verified Guest Writer / Activist for Ferox Times.</p>
+            
+            <p>As a verified writer, you now have access to the <strong>"Write Raw Article"</strong> dashboard directly from your profile.</p>
+            
+            <div class="rules">
+                <h3>How It Works</h3>
+                <ol style="margin-bottom: 0; padding-left: 20px;">
+                    <li><strong>Write Your Story:</strong> Use the text editor in your profile dashboard to draft your article.</li>
+                    <li><strong>Submit for Review:</strong> Once submitted, your article securely goes into our Editorial Queue as a Draft.</li>
+                    <li><strong>Editorial Process:</strong> Our expert editors and SEO team will review, format, and optimize your article before publishing it live to our audience.</li>
+                    <li><strong>Credit:</strong> You will remain the official Author of the piece on the live website.</li>
+                </ol>
+            </div>
+            
+            <div style="background-color: #fef2f2; padding: 15px; border-left: 4px solid #ef4444; border-radius: 4px; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #991b1b; font-size: 16px;">⚠️ Important Guidelines</h3>
+                <ul style="margin-bottom: 0; padding-left: 20px; font-size: 14px;">
+                    <li>Please ensure factual accuracy. We have a zero-tolerance policy for fake news.</li>
+                    <li>Maintain a professional and objective tone where possible.</li>
+                    <li>Avoid offensive language and personal attacks.</li>
+                    <li>Do not plagiarize.</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center;">
+                <p>Ready to start? Log in and head to your Profile to access the Writer Dashboard!</p>
+                <a href="{{ frontend_url }}/profile" class="btn">Go to Dashboard</a>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>The Ferox Times Editorial Team</p>
+            <p>&copy; 2026 Ferox Times. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

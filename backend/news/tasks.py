@@ -192,25 +192,25 @@ def auto_import_news_task(self):
     """
     Celery Beat task that runs every 30 minutes.
     Fetches top 5 trending headlines from GNews API, scrapes full text,
-    rewrites via Gemini AI, and saves each as a draft Article.
+    rewrites via Groq AI, and saves each as a draft Article.
 
     Error Handling:
     - GNEWS_API_KEY not set     → logs error, returns without crashing.
-    - GEMINI_API_KEY not set    → logged inside ai_utils; articles skipped.
+    - GROQ_API_KEY not set    → logged inside ai_utils; articles skipped.
     - GNews API unreachable     → logged inside importer; task returns safe msg.
     - Scraping failure          → logged inside importer; individual article skipped.
     - SoftTimeLimitExceeded     → caught here, logs warning, returns safely.
     """
     gnews_key = os.getenv("GNEWS_API_KEY")
-    gemini_key = os.getenv("GEMINI_API_KEY")
+    groq_key = os.getenv("GROQ_API_KEY")
 
     if not gnews_key:
         msg = "❌ GNEWS_API_KEY is not set in the environment. Please add it to your .env file."
         logger.error(msg)
         return msg
 
-    if not gemini_key:
-        msg = "❌ GEMINI_API_KEY is not set. AI rewriting is disabled — no articles will be imported."
+    if not groq_key:
+        msg = "❌ GROQ_API_KEY is not set. AI rewriting is disabled — no articles will be imported."
         logger.error(msg)
         return msg
 

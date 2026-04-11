@@ -3,7 +3,7 @@ importer.py — GNews API fetcher + newspaper3k scraper + AI importer pipeline.
 
 Pipeline per article:
   GNews API → source_url de-duplication → robots.txt check → newspaper3k scrape
-      → Gemini AI rewrite → Category/Tag get_or_create → Article(draft) save
+      → Groq AI rewrite → Category/Tag get_or_create → Article(draft) save
       → original_content cleared (legal compliance)
 
 Legal Protections:
@@ -13,13 +13,13 @@ Legal Protections:
   ✅ No content stored     — original_content cleared after AI rewrite.
   ✅ No images downloaded  — featured_image left blank. Frontend uses default-news.png.
   ✅ Source attribution    — source_name and source_url always stored.
-  ✅ AI rewrite mandatory  — If Gemini fails, article is NEVER saved.
+  ✅ AI rewrite mandatory  — If Groq fails, article is NEVER saved.
 
 Error Handling:
   ✅ GNews API failure     — Returns clear error, no articles saved.
   ✅ Scraping failure      — Article skipped with a warning log.
   ✅ Broken / short text   — Article skipped (< 100 chars of content).
-  ✅ Gemini failure        — Article skipped; never stored as raw copy.
+  ✅ Groq failure        — Article skipped; never stored as raw copy.
   ✅ robots.txt unreachable— Fail-open: we proceed politely.
   ✅ DB errors             — Each article saved independently; one failure
                              does not block the rest.
@@ -215,7 +215,7 @@ _PARSERS = {
 def fetch_and_import_news(api_url: str, provider: str) -> str:
     """
     Fetches top-5 headlines from `api_url`, checks robots.txt, scrapes full
-    text, rewrites via Gemini AI, saves each as a draft Article, then clears
+    text, rewrites via Groq AI, saves each as a draft Article, then clears
     the raw scraped content for copyright compliance.
 
     Returns a human-readable result string (used by the Celery task for logging).
@@ -338,15 +338,15 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
                 skipped_count += 1
                 continue
 
-            # ── Step 7: AI rewrite via Gemini ─────────────────────────────
+            # ── Step 7: AI rewrite via Groq ─────────────────────────────
             logger.info(
-                "[%d/%d] Sending to Gemini for AI rewrite: '%s' (%d chars of raw text)",
+                "[%d/%d] Sending to Groq for AI rewrite: '%s' (%d chars of raw text)",
                 idx, len(articles_data), title, len(raw_text),
             )
             ai_data = rewrite_article_with_ai(title, raw_text, source_name)
 
             if not ai_data:
-                reason = f"Gemini rewrite failed for '{title[:60]}'"
+                reason = f"Groq rewrite failed for '{title[:60]}'"
                 logger.warning(
                     "[%d/%d] %s — article skipped to prevent plagiarism.",
                     idx, len(articles_data), reason,

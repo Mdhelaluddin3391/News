@@ -1,17 +1,17 @@
 """
-ai_utils.py — Google Gemini AI rewriting utility for automated news import.
+ai_utils.py — Groq AI rewriting utility for automated news import.
 
 Flow:
   raw_text (scraped by newspaper3k)
       ↓
   rewrite_article_with_ai()
-      ↓ (Gemini 2.0 Flash, JSON mode)
+      ↓ (Groq LLM, JSON mode)
   dict with keys: title, meta_description, content, category, tags
 
 Key Features:
   ✅ Strict neutrality / impartiality enforcement
   ✅ Professional journalistic SEO rewriting
-  ✅ Robust fallback if Gemini returns partial data
+  ✅ Robust fallback if Groq returns partial data
   ✅ Multi-strategy JSON extraction
   ✅ Field-level validation + length capping
 """
@@ -22,29 +22,27 @@ import re
 import logging
 import time
 
-import google.generativeai as genai
+from groq import Groq
 
 logger = logging.getLogger(__name__)
 
-# ─── Initialise Gemini once at module load ─────────────────────────────────
-_GEMINI_KEY = os.getenv("GEMINI_API_KEY")
-if _GEMINI_KEY:
-    genai.configure(api_key=_GEMINI_KEY)
-else:
-    logger.warning("GEMINI_API_KEY is not set — AI rewriting will be disabled.")
+# ─── Initialise Groq once at module load ─────────────────────────────────
+_GROQ_KEY = os.getenv("GROQ_API_KEY")
+if not _GROQ_KEY:
+    logger.warning("GROQ_API_KEY is not set — AI rewriting will be disabled.")
 
-# Gemini model to use
-_MODEL_NAME = "gemini-2.0-flash"
+# Groq model to use
+_MODEL_NAME = "llama-3.3-70b-versatile"
 
 # ─── Prompt ────────────────────────────────────────────────────────────────
 def _build_prompt(original_title: str, source_name: str) -> str:
     """
-    Returns the instruction prompt sent to Gemini.
+    Returns the instruction prompt sent to Groq.
 
     Design decisions:
     • Strict IMPARTIALITY — even if the source article is heavily biased towards
       or against governments, political parties, corporations, or individuals,
-      Gemini must present BOTH sides and maintain journalistic neutrality.
+      the AI must present BOTH sides and maintain journalistic neutrality.
       This is the same standard used by BBC, Reuters, AP.
     • Response must be a single valid JSON object only.
     • Temperature 0.35 keeps output factual and creative but grounded.
@@ -209,7 +207,7 @@ def rewrite_article_with_ai(
     max_retries: int = 2,
 ) -> dict | None:
     """
-    Sends the raw scraped article text to Gemini and returns a dict
+    Sends the raw scraped article text to Groq and returns a dict
     containing the AI-rewritten, SEO-optimised, impartial article data.
 
     Parameters
@@ -217,7 +215,7 @@ def rewrite_article_with_ai(
     original_title : str   — The headline fetched from the news API.
     raw_text       : str   — Full scraped body text from newspaper3k.
     source_name    : str   — Publisher name (e.g. "BBC News"), used in the prompt.
-    max_retries    : int   — Number of times to retry on transient Gemini errors.
+    max_retries    : int   — Number of times to retry on transient Groq errors.
 
     Returns
     -------
@@ -225,8 +223,8 @@ def rewrite_article_with_ai(
         On success: {"title", "meta_description", "content", "category", "tags"}
         On any failure: None  (caller should skip the article gracefully)
     """
-    if not _GEMINI_KEY:
-        logger.error("Cannot call Gemini — GEMINI_API_KEY is not configured.")
+    if not _GROQ_KEY:
+        logger.error("Cannot call Groq — GROQ_API_KEY is not configured.")
         return None
 
     if not raw_text or len(raw_text.strip()) < 100:
@@ -237,32 +235,34 @@ def rewrite_article_with_ai(
         )
         return None
 
-    # Truncate to avoid exceeding context window / cost limits.
-    # Gemini 2.0 Flash supports large context, but 10000 chars is plenty for news.
+    # Truncate to avoid exceeding context window
     truncated_text = raw_text[:10000]
 
     instruction = _build_prompt(original_title, source_name)
     user_content = f"Raw Article Text to Rewrite:\n\n{truncated_text}"
 
     last_error = None
+    client = Groq(api_key=_GROQ_KEY)
+
     for attempt in range(1, max_retries + 1):
         try:
-            model = genai.GenerativeModel(_MODEL_NAME)
-            response = model.generate_content(
-                contents=[instruction, user_content],
-                generation_config=genai.GenerationConfig(
-                    response_mime_type="application/json",
-                    temperature=0.35,
-                    max_output_tokens=3000,
-                ),
+            response = client.chat.completions.create(
+                model=_MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": instruction},
+                    {"role": "user", "content": user_content}
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.35,
+                max_tokens=3000,
             )
 
-            raw_response_text = response.text
+            raw_response_text = response.choices[0].message.content
             data = _extract_json(raw_response_text)
 
             if data is None:
                 logger.error(
-                    "Could not extract JSON from Gemini response for '%s'. Raw: %s",
+                    "Could not extract JSON from Groq response for '%s'. Raw: %s",
                     original_title,
                     raw_response_text[:500],
                 )
@@ -272,7 +272,7 @@ def rewrite_article_with_ai(
 
             if not _validate_ai_response(data):
                 logger.error(
-                    "Gemini response for '%s' failed validation. Data: %s",
+                    "Groq response for '%s' failed validation. Data: %s",
                     original_title,
                     {k: str(v)[:100] for k, v in data.items()},
                 )
@@ -291,7 +291,7 @@ def rewrite_article_with_ai(
                 data["tags"] = ["News"]
 
             logger.info(
-                "✅ Gemini rewrite complete for '%s' → '%s' [%s] (attempt %d)",
+                "✅ Groq rewrite complete for '%s' → '%s' [%s] (attempt %d)",
                 original_title,
                 data["title"],
                 data["category"],
@@ -302,7 +302,7 @@ def rewrite_article_with_ai(
         except Exception as exc:
             last_error = str(exc)
             logger.warning(
-                "Gemini API attempt %d/%d failed for '%s': %s",
+                "Groq API attempt %d/%d failed for '%s': %s",
                 attempt,
                 max_retries,
                 original_title,
@@ -312,7 +312,7 @@ def rewrite_article_with_ai(
                 time.sleep(5 * attempt)
 
     logger.error(
-        "❌ All %d Gemini attempts failed for '%s'. Last error: %s",
+        "❌ All %d Groq attempts failed for '%s'. Last error: %s",
         max_retries,
         original_title,
         last_error,

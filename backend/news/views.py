@@ -166,7 +166,13 @@ class ArticleViewSet(viewsets.ModelViewSet):
             user=self.request.user,
             defaults={'role': self.request.user.get_role_display()},
         )
-        serializer.save(author=author_profile)
+        
+        # Security: Activist/Guest Writers (authors) cannot publish articles directly.
+        # Force status to draft if role is 'author' or 'reporter' unless they are staff/superuser.
+        if self.request.user.role in ['author', 'reporter'] and not self.request.user.is_superuser:
+            serializer.save(author=author_profile, status='draft', is_imported=False)
+        else:
+            serializer.save(author=author_profile)
 
     def get_object(self):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field

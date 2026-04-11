@@ -45,7 +45,8 @@ async function loadDynamicJobs() {
             optionsHtml += `<option value="${job.title}">${job.title}</option>`;
         });
 
-        // Niche ka "General" option wapas add karna
+        // Niche ka custom options wapas add karna
+        optionsHtml += '<option value="Guest Writer / Activist" style="font-weight:bold; color:var(--primary);">Guest Writer / Activist</option>';
         optionsHtml += '<option value="General / Other">General Application (Other)</option>';
 
         jobsContainer.innerHTML = jobsHtml;

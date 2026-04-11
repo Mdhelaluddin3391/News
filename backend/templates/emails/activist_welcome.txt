@@ -1,0 +1,24 @@
+Congratulations! You are now a Verified Guest Writer at Ferox Times.
+
+Hi {{ user_name }},
+
+Your application has been approved! We are thrilled to welcome you as a verified Guest Writer / Activist for Ferox Times.
+
+As a verified writer, you now have access to the "Write Raw Article" dashboard directly from your profile.
+
+Here is how the process works:
+1. Write Your Story: Use the text editor in your profile dashboard to draft your article. 
+2. Submit for Review: Once submitted, your article securely goes into our Editorial Queue as a Draft.
+3. Editorial Process: Our expert editors and SEO team will review, format, and optimize your article before publishing it live to our audience.
+4. Credit: You will remain the official Author of the piece on the live website.
+
+IMPORTANT RULES:
+- Please ensure factual accuracy. We have a zero-tolerance policy for fake news.
+- Maintain a professional and objective tone where possible.
+- Avoid offensive language and personal attacks.
+- Do not plagiarize.
+
+Ready to start? Log in and head to your Profile to access the Writer Dashboard!
+
+Best regards,
+The Ferox Times Editorial Team

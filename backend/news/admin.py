@@ -209,6 +209,29 @@ class ArticleAdminForm(forms.ModelForm):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+#  CUSTOM EXTENDED FILTERS
+# ═══════════════════════════════════════════════════════════════════════════
+
+class ActivistDraftFilter(admin.SimpleListFilter):
+    """Filter to quickly find articles submitted by Guest Writers (Authors) that need editorial review."""
+    title = '✍️ Activist / Guest Writer Drafts'
+    parameter_name = 'activist_drafts'
+
+    def lookups(self, request, model_admin):
+        return [
+            ('pending_review', '🚨 Pending Review (Drafts)'),
+            ('published', '✅ Published by Guests'),
+        ]
+
+    def queryset(self, request, queryset):
+        # Authors refer to the activist / guest writers
+        if self.value() == 'pending_review':
+            return queryset.filter(status='draft', author__user__role='author')
+        if self.value() == 'published':
+            return queryset.filter(status='published', author__user__role='author')
+        return queryset
+
+# ═══════════════════════════════════════════════════════════════════════════
 #  INLINES
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -263,6 +286,7 @@ class ArticleAdmin(admin.ModelAdmin):
     list_filter = (
         StatusFilter,       # 📋 Draft / Published   (with counts)
         ImportTypeFilter,   # 🤖 AI Imported / Manual (with counts)
+        ActivistDraftFilter,# ✍️ Pending Guest Writer Drafts
         PublishDateFilter,  # 📅 Today / This Week / Last 30 days …
         FlagsFilter,        # 🚩 Breaking / Trending / Featured …
         HasImageFilter,     # 🖼️  Has Image / No Image
@@ -387,10 +411,10 @@ class ArticleAdmin(admin.ModelAdmin):
             count += 1
         self.message_user(request, f'🔄 Slug regenerated for {count} article(s).')
 
-    @admin.action(description='🤖 Run AI News Import Now (GNews → Gemini → Draft)')
+    @admin.action(description='🤖 Run AI News Import Now (GNews → Groq → Draft)')
     def run_ai_import_now(self, request, queryset):
         """
-        Manually triggers the GNews → scrape → Gemini → draft pipeline.
+        Manually triggers the GNews → scrape → Groq → draft pipeline.
         Useful when admin wants to import news on demand without waiting
         for the 30-minute Celery Beat schedule.
         """
@@ -404,7 +428,7 @@ class ArticleAdmin(admin.ModelAdmin):
 
         import os
         gnews_key = os.getenv("GNEWS_API_KEY")
-        gemini_key = os.getenv("GEMINI_API_KEY")
+        groq_key = os.getenv("GROQ_API_KEY")
 
         if not gnews_key:
             self.message_user(
@@ -414,10 +438,10 @@ class ArticleAdmin(admin.ModelAdmin):
             )
             return
 
-        if not gemini_key:
+        if not groq_key:
             self.message_user(
                 request,
-                "❌ GEMINI_API_KEY is not configured. AI rewriting is disabled.",
+                "❌ GROQ_API_KEY is not configured. AI rewriting is disabled.",
                 level=messages.ERROR,
             )
             return

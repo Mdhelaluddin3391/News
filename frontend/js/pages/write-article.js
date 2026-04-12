@@ -6,7 +6,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const formContainer = document.querySelector('.writer-container');
 
     // Allow if user is staff/author OR if explicitly approved as an activist
-    const hasAccess = user && (['author', 'reporter', 'editor', 'admin'].includes(user.role) || user.is_activist_approved === true);
+    const hasAccess = user && (
+        (user.role && ['author', 'reporter', 'editor', 'admin'].includes(user.role)) || 
+        String(user.is_activist_approved) === 'true'
+    );
 
     if (!hasAccess) {
         formContainer.innerHTML = `

@@ -290,7 +290,7 @@ nav {
     transition: transform 0.3s ease;
     z-index: 2000;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2); /* Shadow right side pe */
-    overflow-y: auto;
+    overflow: hidden; 
     overscroll-behavior: contain;
 }
 
@@ -328,6 +328,7 @@ nav {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    
 }
 
 .mobile-search {
@@ -364,4 +365,66 @@ nav {
 #mobile-nav-categories {
     display: flex;
     flex-direction: column;
+    flex: 1;              /* Yeh screen ki bachi hui height ko cover kar lega */
+    overflow-y: auto;     /* Isse sirf categories ke andar vertical scrollbar aayega */
+    scrollbar-width: thin; /* Firefox ke liye patla scrollbar */
+    margin-bottom: 10px;  /* Niche auth links se thoda gap rakhne ke liye */
+}
+
+#mobile-nav-categories::-webkit-scrollbar {
+    display: none; /* Chrome, Safari ke liye hide karega */
+}
+#mobile-nav-categories {
+    -ms-overflow-style: none;  /* IE aur Edge ke liye */
+    scrollbar-width: none;  /* Firefox ke liye */
+}
+
+
+
+/* Bottom Actions Container */
+.mobile-bottom-actions {
+    padding: 15px;
+    margin-top: auto; /* Yeh magic property isko hamesha bottom par fixed rakhegi */
+    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Halka sa border categories se alag karne ke liye */
+    background: var(--primary); /* Menu ka theme color */
+}
+
+/* 2x2 Grid Layout */
+.action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Do barabar columns */
+    gap: 10px; /* Buttons ke beech ka space */
+}
+
+/* Buttons ki styling */
+.action-grid a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px; /* Icon aur text ke beech ka space */
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.15); /* Halka transparent background */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: background 0.3s ease;
+}
+
+.action-grid a:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Logout button ko thoda highlight karne ke liye (Poori line cover karega) */
+.action-grid a.btn-full-width {
+    grid-column: span 2; /* Ye button dono columns ki jagah le lega */
+    background: rgba(220, 53, 69, 0.2); /* Halka red */
+    border-color: rgba(220, 53, 69, 0.5);
+    color: #ffcccc;
+}
+
+.action-grid a.btn-full-width:hover {
+    background: rgba(220, 53, 69, 0.4);
 }

@@ -78,11 +78,15 @@
         <a href="/category/general">Loading...</a>
     </div>
 
-    <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px;">
-        <a href="/login" class="auth-link-item login-link">Login</a>
-        <a href="/register" class="auth-link-item register-link">Register</a>
-        <a href="/profile" class="auth-link-item profile-link" style="display:none;">Profile</a>
-        <a href="/saved" class="auth-link-item saved-link" style="display:none;">Saved</a>
-        <a href="#" id="logout-link-mobile" class="auth-link-item logout-link" style="display:none;">Logout</a>
+    <div class="mobile-bottom-actions">
+        <div class="action-grid">
+            <a href="/login" class="auth-link-item login-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+            <a href="/register" class="auth-link-item register-link"><i class="fas fa-user-plus"></i> Register</a>
+            
+            <a href="/profile" class="auth-link-item profile-link" style="display:none;"><i class="fas fa-user"></i> Profile</a>
+            <a href="/saved" class="auth-link-item saved-link" style="display:none;"><i class="fas fa-bookmark"></i> Saved</a>
+            
+            <a href="#" id="logout-link-mobile" class="auth-link-item logout-link btn-full-width" style="display:none;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
     </div>
 </div>

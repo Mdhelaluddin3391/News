@@ -339,6 +339,7 @@ async function unsaveArticle(articleId) {
     return false;
 }
 
+
 async function handleGoogleLogin(response) {
     const googleToken = response.credential;
 
@@ -349,11 +350,21 @@ async function handleGoogleLogin(response) {
             body: JSON.stringify({ token: googleToken })
         }, { retryOnAuthFailure: false });
 
-        const data = await res.json();
+        // ✅ NAYA FIX: Pehle check karein ki response JSON hai ya nahi
+        const contentType = res.headers.get("content-type");
+        let data = {};
+        if (contentType && contentType.includes("application/json")) {
+            data = await res.json();
+        } else {
+            console.error("Backend issue: Server ne JSON nahi bheja. Status:", res.status);
+            throw new Error("Server error! Backend se galat response aaya.");
+        }
 
         if (!res.ok) {
             if (typeof showToast === 'function') {
                 showToast(data.error || 'Google login failed.', 'error');
+            } else {
+                alert(data.error || 'Google login failed.');
             }
             return;
         }
@@ -365,16 +376,18 @@ async function handleGoogleLogin(response) {
         let redirect = urlParams.get('redirect') || '/';
         
         // ✅ SECURITY FIX: Prevent Open Redirect
-        // Check karte hain ki redirect ek safe local path hai
         if (!redirect.startsWith('/') || redirect.startsWith('//') || redirect.startsWith('\\\\')) {
             redirect = '/';
         }
         
         window.location.href = redirect;
     } catch (error) {
+        console.error("Google Login Error:", error);
         reportAuthError(error, { action: 'googleLogin' });
         if (typeof showToast === 'function') {
             showToast('Network error during Google Login. Please try again.', 'error');
+        } else {
+            alert('Google Login mein error aayi. Console check karein.');
         }
     }
 }

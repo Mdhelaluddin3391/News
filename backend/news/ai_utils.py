@@ -165,20 +165,24 @@ MANDATORY STRUCTURE:
    - Create urgency or intrigue that compels reading
    - NO heading on the opening paragraph (journalist convention)
 
-2. <h2>Key Developments</h2> — or a more specific, keyword-rich equivalent
+2. <h2>[Contextual, Keyword-Rich Heading about Main Events]</h2>
+   - MUST BE UNIQUE for every article. NEVER use generic terms like "Key Developments", "Introduction", or "Overview". Make it specific to the news event.
    - 2–3 paragraphs of core facts
    - Use <strong> for 1–2 critical figures or names per section
 
-3. <h2>Background / Context</h2> — or topic-specific equivalent
+3. <h2>[Contextual Heading explaining the Background/Why it matters]</h2>
+   - MUST BE UNIQUE. NEVER use generic terms like "Background", "Context", or "History". Write a proper journalistic subheading.
    - Explain WHY this matters
    - Historical context if relevant
    - Use <h3> for sub-sections if needed
 
-4. <h2>Reactions and Analysis</h2> — or topic-specific equivalent
+4. <h2>[Contextual Heading about Quotes/Reactions/Impact]</h2>
+   - MUST BE UNIQUE. NEVER use generic terms like "Reactions", "Analysis", or "Impact". 
    - Quotes, official responses, expert perspectives
    - Use <blockquote> for direct quotes when present in source
 
-5. <h2>What Happens Next</h2> — or "Outlook," "The Road Ahead," etc.
+5. <h2>[Contextual Heading about Future Outlook/Next Steps]</h2>
+   - MUST BE UNIQUE. NEVER use generic terms like "What Happens Next", "Conclusion", or "The Road Ahead".
    - Concrete next steps, deadlines, expected developments
    - End here — no recap or conclusion
 

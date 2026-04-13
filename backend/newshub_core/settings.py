@@ -524,6 +524,8 @@ CELERY_TASK_ROUTES = {
     'news.tasks.auto_post_article_task': {'queue': 'notifications'},
     'news.tasks.auto_import_news_task': {'queue': 'default'},
     'news.tasks.cleanup_expired_flags_task': {'queue': 'default'},
+    'news.tasks.auto_update_trending_task': {'queue': 'default'},
+    'news.tasks.auto_update_featured_task': {'queue': 'default'},
 }
 CELERY_BEAT_SCHEDULE = {
     'auto-import-news-every-30-mins': {
@@ -532,7 +534,17 @@ CELERY_BEAT_SCHEDULE = {
     },
     'cleanup-expired-flags-every-hour': {
         'task': 'news.tasks.cleanup_expired_flags_task',
-        'schedule': 60 * 60,
+        'schedule': 60 * 60,  # Every 1 hour
+    },
+    # ── AUTO TRENDING: Har 30 min mein views-based trending update ─────
+    'auto-update-trending-every-30-mins': {
+        'task': 'news.tasks.auto_update_trending_task',
+        'schedule': 60 * 30,  # Every 30 minutes
+    },
+    # ── AUTO FEATURED: Har ghante latest article featured ─────────────
+    'auto-update-featured-every-hour': {
+        'task': 'news.tasks.auto_update_featured_task',
+        'schedule': 60 * 60,  # Every 1 hour
     },
 }
 

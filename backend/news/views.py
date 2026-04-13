@@ -17,6 +17,8 @@ from django.db import connection
 from django.db.models import F, Q
 from rest_framework.throttling import AnonRateThrottle
 from django.shortcuts import render
+from functools import reduce
+from operator import and_
 
 class ArticleViewThrottle(AnonRateThrottle):
     rate = '10/day'
@@ -43,30 +45,46 @@ class ArticleFilter(filters.FilterSet):
         return queryset
 
     def filter_trending(self, queryset, name, value):
+        """
+        Trending Logic:
+        - is_trending=True → Admin override ya Celery auto-flagged (100+ views in 3 days)
+        - is_trending=True articles hamesha show hote hain (admin override protection)
+        - View-threshold wale fresh articles bhi trending mein aa sakte hain agar flag set nahi hua
+        """
         if value:
             time_threshold = timezone.now() - timedelta(days=3)
             return queryset.filter(
-                Q(is_trending=True) | 
-                Q(published_at__gte=time_threshold, views__gte=50)
-            )
+                Q(is_trending=True) |
+                Q(published_at__gte=time_threshold, views__gte=100)
+            ).order_by('-views', '-published_at')  # Most views first
         return queryset
 
     def filter_featured(self, queryset, name, value):
+        """
+        Featured Logic:
+        - is_featured=True (admin override OR auto-flagged by Celery task) → always show
+        - Last 48 hours ke published articles bhi featured mein aate hain (rolling window)
+        """
         if value:
-            time_threshold = timezone.now() - timedelta(days=2)
+            time_threshold = timezone.now() - timedelta(hours=48)  # 2-day rolling window
             return queryset.filter(
-                Q(is_featured=True) | 
+                Q(is_featured=True) |
                 Q(published_at__gte=time_threshold)
-            )
+            ).order_by('-published_at')  # Newest first in featured
         return queryset
 
     def filter_top_story(self, queryset, name, value):
+        """
+        Top Story Logic:
+        - is_top_story=True (pure manual admin setting) → hamesha dikhega
+        - Last 7 din mein 200+ views wale articles bhi top story mein aate hain
+        """
         if value:
             time_threshold = timezone.now() - timedelta(days=7)
             return queryset.filter(
                 Q(is_top_story=True) |
-                Q(published_at__gte=time_threshold, views__gte=100)
-            )
+                Q(published_at__gte=time_threshold, views__gte=200)
+            ).order_by('-views', '-published_at')
         return queryset
 
     def filter_web_story(self, queryset, name, value):
@@ -107,39 +125,53 @@ class ArticleViewSet(viewsets.ModelViewSet):
         search_term = (self.request.query_params.get('search') or '').strip()
         
         if search_term:
+            words = search_term.split()
+            
             if connection.vendor != 'postgresql':
-                return (
-                    queryset.filter(
-                        Q(title__icontains=search_term)
-                        | Q(description__icontains=search_term)
-                        | Q(content__icontains=search_term)
-                        | Q(category__name__icontains=search_term)
-                        | Q(tags__name__icontains=search_term)
-                        | Q(author__user__name__icontains=search_term)
-                        | Q(author__slug__icontains=search_term)
+                q_objects = []
+                for word in words:
+                    q_objects.append(
+                        Q(title__icontains=word)
+                        | Q(description__icontains=word)
+                        | Q(content__icontains=word)
+                        | Q(category__name__icontains=word)
+                        | Q(tags__name__icontains=word)
+                        | Q(author__user__name__icontains=word)
+                        | Q(author__slug__icontains=word)
                     )
-                    .order_by('-published_at')
-                    .distinct()
-                )
+                query = reduce(and_, q_objects)
+                return queryset.filter(query).order_by('-published_at').distinct()
+
+            pg_query_string = " & ".join(f"{word}:*" for word in words)
+            search_query_raw = SearchQuery(pg_query_string, search_type='raw', config='english')
+            search_query_web = SearchQuery(search_term, search_type='websearch', config='english')
 
             search_vector = (
                 SearchVector('title', weight='A', config='english')
                 + SearchVector('tags__name', weight='A', config='english') 
                 + SearchVector('category__name', weight='B', config='english')
-                + SearchVector('description', weight='B', config='english')
-                + SearchVector('author__slug', weight='C', config='english')
-                + SearchVector('author__user__name', weight='C', config='english')
-                + SearchVector('content', weight='C', config='english') 
+                + SearchVector('author__user__name', weight='B', config='english')
+                + SearchVector('description', weight='C', config='english')
+                + SearchVector('content', weight='D', config='english') 
             )
-            search_query = SearchQuery(search_term, search_type='websearch', config='english')
             
+            icontains_q_objects = []
+            for word in words:
+                icontains_q_objects.append(
+                    Q(title__icontains=word)
+                    | Q(tags__name__icontains=word)
+                    | Q(author__user__name__icontains=word)
+                    | Q(category__name__icontains=word)
+                )
+            icontains_query = reduce(and_, icontains_q_objects)
+
             return (
                 queryset
                 .annotate(
                     search=search_vector, 
-                    rank=SearchRank(search_vector, search_query)
+                    rank=SearchRank(search_vector, search_query_raw)
                 )
-                .filter(search=search_query)
+                .filter(Q(search=search_query_raw) | Q(search=search_query_web) | icontains_query)
                 .order_by('-rank', '-published_at')
                 .distinct()
             )

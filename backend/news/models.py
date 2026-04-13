@@ -83,6 +83,22 @@ class Article(BaseModel):
     
     featured_image = models.ImageField(upload_to='articles/images/', blank=True, null=True)
     
+    # ── Writer Evidence / Supporting Document ──
+    # Ye field sirf verified writers ke submissions ke liye hai.
+    # Editorial team is document ko review karta hai — yeh publicly visible nahi hota.
+    supporting_document = models.FileField(
+        upload_to='articles/evidence/',
+        blank=True,
+        null=True,
+        verbose_name="Evidence",
+        help_text="Writer ka supporting evidence document (PDF, image, video, etc.) — sirf editorial team ke liye"
+    )
+    writer_notes = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Writer ki taraf se editorial team ke liye additional notes (e.g. source context, confidentiality notice)"
+    )
+    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     published_at = models.DateTimeField(blank=True, null=True)
     tags = models.ManyToManyField(Tag, related_name='articles', blank=True)

@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editorial Guidelines - Ferox Times</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <meta name="robots" content="index, follow">
+    <meta name="description" content="Read Ferox Times Editorial Guidelines before submitting articles. Understand our content policies, legal responsibilities, and documentation requirements.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components/top-bar.css">
+    <link rel="stylesheet" href="css/components/header.css">
+    <link rel="stylesheet" href="css/components/toast.css">
+    <link rel="stylesheet" href="css/components/footer.css">
+    <link rel="stylesheet" href="css/pages/pages.css">
+    <style>
+        .eg-hero {
+            background: linear-gradient(135deg, #1e1e2e 0%, #c0392b 100%);
+            color: white;
+            padding: 60px 0 40px;
+            text-align: center;
+        }
+        .eg-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            margin: 0 0 12px 0;
+        }
+        .eg-hero p {
+            font-size: 1.1rem;
+            opacity: 0.85;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .eg-hero .last-updated {
+            margin-top: 16px;
+            font-size: 0.85rem;
+            opacity: 0.65;
+        }
+
+        .eg-container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 0 20px 60px;
+        }
+
+        /* Quick Nav */
+        .eg-toc {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 5px solid var(--primary, #c0392b);
+            border-radius: 10px;
+            padding: 24px 28px;
+            margin-bottom: 40px;
+        }
+        .eg-toc h3 {
+            margin: 0 0 14px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+        }
+        .eg-toc ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .eg-toc li {
+            margin: 6px 0;
+        }
+        .eg-toc a {
+            color: var(--primary, #c0392b);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .eg-toc a:hover { text-decoration: underline; }
+
+        /* Sections */
+        .eg-section {
+            margin-bottom: 48px;
+        }
+        .eg-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.7rem;
+            color: #1e293b;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .eg-section h2 i {
+            color: var(--primary, #c0392b);
+            font-size: 1.3rem;
+        }
+        .eg-section h3 {
+            font-size: 1.1rem;
+            color: #1e293b;
+            margin: 20px 0 8px;
+        }
+        .eg-section p, .eg-section li {
+            color: #475569;
+            line-height: 1.8;
+            font-size: 0.97rem;
+        }
+        .eg-section ul, .eg-section ol {
+            padding-left: 22px;
+            margin-bottom: 14px;
+        }
+        .eg-section li { margin: 6px 0; }
+
+        /* Alert boxes */
+        .eg-alert {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            padding: 18px 20px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+        }
+        .eg-alert i { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+        .eg-alert p { margin: 0; font-size: 0.95rem; }
+        .eg-alert strong { display: block; margin-bottom: 4px; }
+
+        .eg-alert--warning { background: #fef3c7; border-left: 4px solid #f59e0b; }
+        .eg-alert--warning i { color: #d97706; }
+        .eg-alert--danger  { background: #fee2e2; border-left: 4px solid #ef4444; }
+        .eg-alert--danger i  { color: #dc2626; }
+        .eg-alert--info    { background: #eff6ff; border-left: 4px solid #3b82f6; }
+        .eg-alert--info i    { color: #2563eb; }
+        .eg-alert--success { background: #d1fae5; border-left: 4px solid #10b981; }
+        .eg-alert--success i { color: #059669; }
+
+        /* Document requirement box */
+        .eg-doc-box {
+            background: linear-gradient(135deg, #1e1e2e, #2d2d44);
+            color: white;
+            border-radius: 12px;
+            padding: 28px;
+            margin: 24px 0;
+        }
+        .eg-doc-box h3 {
+            color: #fbbf24;
+            margin: 0 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .eg-doc-box p, .eg-doc-box li { color: #cbd5e1; }
+        .eg-doc-box ul { padding-left: 20px; }
+        .eg-doc-box li::marker { color: #fbbf24; }
+
+        /* Category grid */
+        .eg-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .eg-cat-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px;
+        }
+        .eg-cat-card h4 {
+            margin: 0 0 8px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .eg-cat-card h4 i { color: var(--primary, #c0392b); }
+        .eg-cat-card p { margin: 0; font-size: 0.9rem; color: #64748b; }
+
+        /* Penalty table */
+        .eg-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.93rem;
+        }
+        .eg-table th {
+            background: #1e293b;
+            color: white;
+            padding: 12px 16px;
+            text-align: left;
+        }
+        .eg-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #475569;
+        }
+        .eg-table tr:nth-child(even) td { background: #f8fafc; }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .badge--red   { background: #fee2e2; color: #dc2626; }
+        .badge--yellow{ background: #fef3c7; color: #d97706; }
+        .badge--green { background: #d1fae5; color: #059669; }
+
+        /* Agree CTA */
+        .eg-cta {
+            text-align: center;
+            padding: 40px 30px;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border-radius: 16px;
+            margin-top: 50px;
+            border: 2px solid #86efac;
+        }
+        .eg-cta h2 { color: #065f46; margin-bottom: 10px; }
+        .eg-cta p { color: #047857; margin-bottom: 20px; }
+        .eg-cta a {
+            background: #059669;
+            color: white;
+            padding: 14px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+        .eg-cta a:hover { background: #047857; }
+
+        @media (max-width: 600px) {
+            .eg-hero h1 { font-size: 1.9rem; }
+            .eg-section h2 { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <!-- Hero -->
+    <div class="eg-hero">
+        <div class="container">
+            <h1><i class="fas fa-gavel" style="margin-right:12px;"></i>Editorial Guidelines</h1>
+            <p>Every article published on Ferox Times must meet these standards. Reading and agreeing to these guidelines is <strong>mandatory</strong> before submitting any content.</p>
+            <div class="last-updated"><i class="fas fa-calendar-alt" style="margin-right:6px;"></i> Last Updated: April 2025 &nbsp;|&nbsp; Version 2.0</div>
+        </div>
+    </div>
+
+    <main class="eg-container">
+
+        <!-- Quick Nav -->
+        <div class="eg-toc">
+            <h3><i class="fas fa-list" style="margin-right:8px;"></i>Table of Contents</h3>
+            <ol>
+                <li><a href="#overview">Overview & Purpose</a></li>
+                <li><a href="#who-can-write">Who Can Submit Articles</a></li>
+                <li><a href="#document-requirement">Mandatory Document/Evidence Requirement</a></li>
+                <li><a href="#content-standards">Content Standards & Quality</a></li>
+                <li><a href="#sensitive-content">Sensitive, Investigative & Controversial Content</a></li>
+                <li><a href="#legal-disclaimer">Legal Disclaimer & Liability</a></li>
+                <li><a href="#editorial-process">Editorial Review Process</a></li>
+                <li><a href="#prohibited">Prohibited Content</a></li>
+                <li><a href="#penalties">Violations & Consequences</a></li>
+                <li><a href="#contact">Contact the Editorial Team</a></li>
+            </ol>
+        </div>
+
+        <!-- 1 Overview -->
+        <div class="eg-section" id="overview">
+            <h2><i class="fas fa-info-circle"></i> 1. Overview & Purpose</h2>
+            <p>Ferox Times is an independent digital news platform committed to factual, responsible, and ethical journalism. These Editorial Guidelines exist to:</p>
+            <ul>
+                <li>Protect writers, our platform, and the public from legal, reputational, and safety risks.</li>
+                <li>Maintain journalistic integrity and accuracy in every published article.</li>
+                <li>Ensure all claims — especially sensitive or investigative ones — are backed by verifiable evidence.</li>
+                <li>Create a clear framework of shared responsibility between the writer and Ferox Times.</li>
+            </ul>
+            <div class="eg-alert eg-alert--info">
+                <i class="fas fa-info-circle"></i>
+                <p><strong>Important:</strong> By clicking "Submit for Editorial Review", you confirm that you have read, understood, and agreed to every point in these Editorial Guidelines. This agreement is legally binding.</p>
+            </div>
+        </div>
+
+        <!-- 2 Who Can Write -->
+        <div class="eg-section" id="who-can-write">
+            <h2><i class="fas fa-user-check"></i> 2. Who Can Submit Articles</h2>
+            <p>Article submission is restricted to verified contributors only. The following roles may submit:</p>
+            <div class="eg-categories">
+                <div class="eg-cat-card">
+                    <h4><i class="fas fa-pen-nib"></i> Author / Reporter</h4>
+                    <p>Approved independent writers. Articles go to editorial review before publishing.</p>
+                </div>
+                <div class="eg-cat-card">
+                    <h4><i class="fas fa-edit"></i> Editor</h4>
+                    <p>Senior staff who can publish directly after self-review.</p>
+                </div>
+                <div class="eg-cat-card">
+                    <h4><i class="fas fa-user-tie"></i> Activist (Approved)</h4>
+                    <p>Community voices approved by the editorial team. Subject to stricter review.</p>
+                </div>
+                <div class="eg-cat-card">
+                    <h4><i class="fas fa-shield-alt"></i> Admin</h4>
+                    <p>Platform administrators with full publishing access.</p>
+                </div>
+            </div>
+            <p style="margin-top:16px;">If you are not in one of the above categories, please <a href="/profile" style="color:var(--primary);">apply to become a verified writer</a> from your profile.</p>
+        </div>
+
+        <!-- 3 Document Requirement -->
+        <div class="eg-section" id="document-requirement">
+            <h2><i class="fas fa-file-alt"></i> 3. Mandatory Evidence / Document Requirement</h2>
+
+            <div class="eg-alert eg-alert--warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p><strong>This is Mandatory — No Exceptions.</strong> Every article submission must be accompanied by at least one supporting document or piece of evidence. Articles submitted without evidence will be automatically rejected.</p>
+            </div>
+
+            <div class="eg-doc-box">
+                <h3><i class="fas fa-folder-open"></i> What Counts as Valid Evidence?</h3>
+                <p>Your uploaded document must directly support the claims made in your article. Accepted forms of evidence include:</p>
+                <ul>
+                    <li><strong>Official Reports:</strong> Government documents, court filings, police reports, regulatory decisions</li>
+                    <li><strong>Data & Research:</strong> Academic papers, survey data, statistics from credible institutions</li>
+                    <li><strong>Correspondence:</strong> Official emails, letters, RTI replies, press releases (with context)</li>
+                    <li><strong>Witness Statements:</strong> Signed and dated affidavits or declarations</li>
+                    <li><strong>Media Records:</strong> Verified photographs, audio recordings, or video footage with source and date information</li>
+                    <li><strong>Financial Records:</strong> Audited financial statements, public disclosures (for financial investigations)</li>
+                    <li><strong>Screenshots / Archives:</strong> Screenshots of online content with URL and timestamp clearly visible</li>
+                </ul>
+            </div>
+
+            <h3>What Is NOT Acceptable as Evidence</h3>
+            <ul>
+                <li>Your own personal opinion or belief</li>
+                <li>Unverified social media posts without archived/source links</li>
+                <li>Anonymous tips without any corroborating material</li>
+                <li>Content from known misinformation sources</li>
+                <li>Personal identity documents (Aadhar, Passport, etc.) — we do not require identity documents</li>
+            </ul>
+
+            <div class="eg-alert eg-alert--danger">
+                <i class="fas fa-shield-alt"></i>
+                <p><strong>Legal Protection Notice:</strong> In the event of a legal dispute, defamation claim, or government inquiry regarding your article, the evidence you submit becomes the primary basis of our defence — and yours. Without it, neither Ferox Times nor you can legally protect the article's claims.</p>
+            </div>
+
+            <h3>Confidential Sources</h3>
+            <p>If your evidence involves a confidential source, you must still upload a document. You may redact personally identifying information from the document, but must include enough context to verify the claim. Write a brief note in the article submission form explaining the source's nature and why full disclosure is not possible.</p>
+
+            <h3>File Requirements</h3>
+            <ul>
+                <li>Accepted formats: <strong>PDF, JPG, PNG, DOCX, MP4, MP3, ZIP</strong></li>
+                <li>Maximum file size: <strong>20 MB</strong></li>
+                <li>All documents are stored securely and are never publicly visible</li>
+                <li>Documents are accessible only to the editorial team and, if legally required, authorized authorities</li>
+            </ul>
+        </div>
+
+        <!-- 4 Content Standards -->
+        <div class="eg-section" id="content-standards">
+            <h2><i class="fas fa-star"></i> 4. Content Standards & Quality</h2>
+            <h3>Accuracy</h3>
+            <p>All factual claims must be verifiable. If you are not 100% certain of a fact, do not state it as fact. Use qualifying language such as "reportedly," "according to sources," or "alleged."</p>
+
+            <h3>Fairness</h3>
+            <p>When a story involves criticism or allegations against a person or organization, you must make a reasonable attempt to seek their response before submission. Note this attempt — and the response (or lack thereof) — in your article or submission notes.</p>
+
+            <h3>Attribution</h3>
+            <ul>
+                <li>Always attribute quotes directly and accurately.</li>
+                <li>Do not fabricate or paraphrase quotes in a way that changes their meaning.</li>
+                <li>Clearly indicate when a quote is from a second-hand source.</li>
+            </ul>
+
+            <h3>Originality</h3>
+            <p>All submitted content must be original. Plagiarism — including copying from other publications without attribution, or self-plagiarism from previously published work — is a serious violation. Our editorial team runs plagiarism checks on all submissions.</p>
+
+            <h3>Minimum Length</h3>
+            <p>Articles must be a minimum of <strong>300 words</strong> for standard news pieces and <strong>600 words</strong> for investigative or opinion pieces. Very short submissions will be returned for expansion.</p>
+        </div>
+
+        <!-- 5 Sensitive Content -->
+        <div class="eg-section" id="sensitive-content">
+            <h2><i class="fas fa-radiation"></i> 5. Sensitive, Investigative & Controversial Content</h2>
+
+            <p>Ferox Times supports responsible investigative journalism. We believe the public has a right to know — but that right must be exercised responsibly. If your article falls into any of the following categories, <strong>stricter evidence and review standards apply</strong>:</p>
+
+            <div class="eg-categories">
+                <div class="eg-cat-card">
+                    <h4><i class="fas fa-landmark"></i> Political Content</h4>
+                    <p>Articles about politicians, political parties, elections, or government policy. Must be factual and non-partisan.</p>
+                </div>
+                <div class="eg-cat-card">
+                    <h4><i class="fas fa-balance-scale"></i> Legal/Court Matters</h4>
+                    <p>Ongoing court cases require careful framing. Do not report an accused as guilty before conviction.</p>
+                </div>
+                <div class="eg-cat-card">
+                    <h4><i class="fas fa-building"></i> Corporate Investigations</h4>
+                    <p>Allegations against companies or executives require financial records, official filings, or corroborated witness accounts.</p>
+                </div>
+                <div class="eg-cat-card">
+                    <h4><i class="fas fa-user-secret"></i> Leaked / Whistleblower Info</h4>
+                    <p>Leaked documents must be verified for authenticity. The public interest value must clearly outweigh any harm caused by publication.</p>
+                </div>
+                <div class="eg-cat-card">
+                    <h4><i class="fas fa-users"></i> Community / Religious Content</h4>
+                    <p>Must not incite communal tension, hatred, or target any group based on religion, caste, or ethnicity.</p>
+                </div>
+                <div class="eg-cat-card">
+                    <h4><i class="fas fa-child"></i> Content Involving Minors</h4>
+                    <p>Names, faces, and identifying details of minors must be concealed unless they or their guardians have explicitly consented.</p>
+                </div>
+            </div>
+
+            <div class="eg-alert eg-alert--warning" style="margin-top: 20px;">
+                <i class="fas fa-gavel"></i>
+                <p><strong>WikiLeaks Principle — Understanding the Balance:</strong> Ferox Times supports the principle that information of genuine public interest should be reported, even when powerful entities prefer it not be. However, publication does not come without limits. We will report on leaked or sensitive information only when: (a) authenticity is verified, (b) the public benefit clearly outweighs the risk of harm, (c) names of individuals whose safety may be endangered are protected, and (d) we have legal review for high-risk stories.</p>
+            </div>
+        </div>
+
+        <!-- 6 Legal Disclaimer -->
+        <div class="eg-section" id="legal-disclaimer">
+            <h2><i class="fas fa-file-contract"></i> 6. Legal Disclaimer & Liability</h2>
+
+            <div class="eg-alert eg-alert--danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p><strong>Writer's Legal Responsibility:</strong> By submitting an article, you accept full legal responsibility for the accuracy and legality of its content. If a legal action (defamation, copyright infringement, sedition, contempt of court, etc.) arises from your article, you agree to cooperate fully with Ferox Times' legal team and, if required, bear the costs of any legal defence related to your content.</p>
+            </div>
+
+            <h3>Platform Liability</h3>
+            <p>Ferox Times operates as an intermediary platform under applicable Information Technology laws. Our liability is limited when:</p>
+            <ul>
+                <li>The content was submitted by an independent verified writer (not our staff journalist)</li>
+                <li>The article was published in good faith based on the evidence provided</li>
+                <li>We promptly act on valid legal takedown requests</li>
+            </ul>
+            <p>However, Ferox Times <strong>may share the liability</strong> if we knowingly published false or harmful content, or failed to conduct basic editorial due diligence.</p>
+
+            <h3>Editorial Review Does Not Transfer All Responsibility</h3>
+            <p>Our editorial team performs SEO optimization, formatting, and a basic accuracy check — but is not a full legal or investigative review. The editorial review does <strong>not</strong> transfer the writer's legal responsibility to Ferox Times.</p>
+
+            <h3>Right to Refuse or Modify</h3>
+            <p>Ferox Times reserves the right to:</p>
+            <ul>
+                <li>Refuse to publish any article without providing a reason</li>
+                <li>Modify headlines, descriptions, or SEO elements without changing the substance</li>
+                <li>Add editor's notes, corrections, or clarifications to published articles</li>
+                <li>Unpublish any article at any time if legal or accuracy concerns arise</li>
+            </ul>
+        </div>
+
+        <!-- 7 Editorial Process -->
+        <div class="eg-section" id="editorial-process">
+            <h2><i class="fas fa-tasks"></i> 7. Editorial Review Process</h2>
+            <p>After you submit your article, it goes through the following stages:</p>
+            <ol>
+                <li><strong>Initial Check (automated):</strong> Length, format, and document upload verification.</li>
+                <li><strong>Evidence Review:</strong> An editor reviews your uploaded document(s) to confirm they support the article's claims.</li>
+                <li><strong>Content Review:</strong> Checking for accuracy, fairness, plagiarism, and policy compliance.</li>
+                <li><strong>SEO & Formatting:</strong> Our team optimizes the headline, adds meta description, formats paragraphs, and adds relevant tags and images.</li>
+                <li><strong>Legal Check (if applicable):</strong> High-sensitivity articles may be referred to our legal counsel before publication.</li>
+                <li><strong>Publication or Return:</strong> Article is published, or returned to you with specific feedback for revision.</li>
+            </ol>
+            <div class="eg-alert eg-alert--success">
+                <i class="fas fa-clock"></i>
+                <p><strong>Timeline:</strong> Standard articles are usually reviewed within 24–72 hours. Investigative or sensitive articles may take longer due to additional verification steps.</p>
+            </div>
+        </div>
+
+        <!-- 8 Prohibited -->
+        <div class="eg-section" id="prohibited">
+            <h2><i class="fas fa-ban"></i> 8. Prohibited Content</h2>
+            <p>The following types of content will <strong>never</strong> be published on Ferox Times, regardless of the evidence provided:</p>
+            <ul>
+                <li><strong>Hate Speech:</strong> Content that dehumanizes, threatens, or incites violence against any group based on race, religion, gender, caste, nationality, sexual orientation, or disability.</li>
+                <li><strong>Child Exploitation:</strong> Any content involving the sexual or physical exploitation of minors.</li>
+                <li><strong>Doxxing:</strong> Publishing private personal information (home addresses, phone numbers, etc.) of individuals without their consent.</li>
+                <li><strong>Fabricated Content:</strong> Deliberately false news, fake quotes, or manipulated images/videos presented as real.</li>
+                <li><strong>Incitement to Violence:</strong> Content that directly calls for or encourages violence against any individual or group.</li>
+                <li><strong>Sedition / National Security Threats:</strong> Content that could directly compromise national security or is classified as seditious under applicable law.</li>
+                <li><strong>Commercial Disguised as Editorial:</strong> Sponsored or paid content presented as independent journalism without disclosure.</li>
+                <li><strong>Graphic Violence / Gore:</strong> Disturbing images or descriptions without clear editorial justification and appropriate warnings.</li>
+            </ul>
+        </div>
+
+        <!-- 9 Penalties -->
+        <div class="eg-section" id="penalties">
+            <h2><i class="fas fa-exclamation-triangle"></i> 9. Violations & Consequences</h2>
+            <table class="eg-table">
+                <thead>
+                    <tr>
+                        <th>Violation</th>
+                        <th>Severity</th>
+                        <th>Consequence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Minor inaccuracy (correctable)</td>
+                        <td><span class="badge badge--green">Low</span></td>
+                        <td>Article returned for revision with feedback</td>
+                    </tr>
+                    <tr>
+                        <td>Missing or weak evidence document</td>
+                        <td><span class="badge badge--yellow">Medium</span></td>
+                        <td>Article rejected; resubmission allowed with proper evidence</td>
+                    </tr>
+                    <tr>
+                        <td>Plagiarism</td>
+                        <td><span class="badge badge--yellow">Medium</span></td>
+                        <td>Immediate rejection; 30-day submission ban</td>
+                    </tr>
+                    <tr>
+                        <td>Fabricated content / fake quotes</td>
+                        <td><span class="badge badge--red">High</span></td>
+                        <td>Permanent account ban; legal action if harm caused</td>
+                    </tr>
+                    <tr>
+                        <td>Hate speech / incitement</td>
+                        <td><span class="badge badge--red">High</span></td>
+                        <td>Immediate permanent ban; reported to authorities if required</td>
+                    </tr>
+                    <tr>
+                        <td>Publishing confidential data unlawfully</td>
+                        <td><span class="badge badge--red">High</span></td>
+                        <td>Account suspended; legal proceedings initiated</td>
+                    </tr>
+                    <tr>
+                        <td>Repeated minor violations (3+)</td>
+                        <td><span class="badge badge--yellow">Medium</span></td>
+                        <td>Writer status downgraded or revoked</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 10 Contact -->
+        <div class="eg-section" id="contact">
+            <h2><i class="fas fa-envelope"></i> 10. Contact the Editorial Team</h2>
+            <p>If you have any questions about these guidelines before submitting, or if you want to discuss a sensitive story with us before writing it, please reach out:</p>
+            <ul>
+                <li><strong>Editorial Queries:</strong> <a href="mailto:editorial@feroxtimes.com" style="color:var(--primary);">editorial@feroxtimes.com</a></li>
+                <li><strong>Legal Concerns:</strong> <a href="mailto:legal@feroxtimes.com" style="color:var(--primary);">legal@feroxtimes.com</a></li>
+                <li><strong>Tip / Leak Securely:</strong> Use our <a href="/contact" style="color:var(--primary);">secure contact form</a></li>
+            </ul>
+            <div class="eg-alert eg-alert--info">
+                <i class="fas fa-lightbulb"></i>
+                <p>If you are working on a sensitive investigative story, we <strong>strongly encourage</strong> you to contact us <em>before</em> you even start writing. Our editors can advise you on legal considerations, safer evidence handling, and how to frame the story responsibly.</p>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="eg-cta">
+            <h2><i class="fas fa-check-circle" style="margin-right:8px;"></i> Ready to Submit?</h2>
+            <p>By proceeding to the write article page, you confirm that you have read and agreed to these Editorial Guidelines.</p>
+            <a href="/write-article"><i class="fas fa-pen" style="margin-right:8px;"></i> Go to Write Article</a>
+        </div>
+
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/components/index-ui.js"></script>
+    <script src="js/components/loadComponents.js"></script>
+</body>
+</html>

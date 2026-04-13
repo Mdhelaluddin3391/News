@@ -255,26 +255,51 @@ function setupSearchAutocomplete(inputId, suggestionsId) {
                 const topMatches = articles.slice(0, 5);
                 let html = '';
                 
+                const highlightWords = (text, queryStr) => {
+                    if (!text) return '';
+                    let safeText = typeof window.escapeHtml === 'function' ? window.escapeHtml(text) : String(text);
+                    const words = queryStr.split(/\\s+/).filter(w => w.length > 0);
+                    words.forEach(word => {
+                        const escapedWord = word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');
+                        const regex = new RegExp(`(${escapedWord})`, 'gi');
+                        safeText = safeText.replace(regex, '<span class="suggestion-highlight" style="background:#ffeeba; color:#000;">$1</span>');
+                    });
+                    return safeText;
+                };
+
                 topMatches.forEach(article => {
-                    // Title mein query ko highlight karna (Case Insensitive)
-                    const regex = new RegExp(`(${query})`, 'gi');
-                    const safeTitle = typeof window.escapeHtml === 'function'
-                        ? window.escapeHtml(article.title || 'Untitled')
-                        : (article.title || 'Untitled');
-                    const highlightedTitle = safeTitle.replace(regex, '<span class="suggestion-highlight">$1</span>');
+                    const highlightedTitle = highlightWords(article.title || 'Untitled', query);
+                    const safeCategoryName = highlightWords(article.category ? article.category.name : 'News', query);
                     const imgUrl = article.featured_image || 'images/default-news.png';
                     const containClass = imgUrl.includes('default-news.png') ? 'img-contain' : '';
-                    const safeCategoryName = typeof window.escapeHtml === 'function'
-                        ? window.escapeHtml(article.category ? article.category.name : 'News')
-                        : (article.category ? article.category.name : 'News');
                     
+                    let extraMatchesHtml = '';
+                    
+                    // Highlight Author Match
+                    const authorName = article.author ? (article.author.name || article.author.user?.name || '') : 'Staff';
+                    if (authorName && authorName.toLowerCase().includes(query.split(' ')[0].toLowerCase())) {
+                        extraMatchesHtml += `<span style="margin-right:8px;"><i class="fas fa-user" style="font-size:0.7rem;"></i> By ${highlightWords(authorName, query)}</span>`;
+                    }
+                    
+                    // Highlight Tags Match
+                    if (article.tags && article.tags.length > 0) {
+                        const matchedTags = article.tags.filter(t => query.split(' ').some(w => t.name.toLowerCase().includes(w.toLowerCase())));
+                        if (matchedTags.length > 0) {
+                           const tagsStr = matchedTags.map(t => `#${highlightWords(t.name, query)}`).join(' ');
+                           extraMatchesHtml += `<span><i class="fas fa-hashtag" style="font-size:0.7rem;"></i> ${tagsStr}</span>`;
+                        }
+                    }
+
                     // ✅ SEO FIX: Clean URL for autocomplete article click
                     html += `
                         <a href="/article/${article.slug}" class="suggestion-item">
                             <img src="${imgUrl}" class="${containClass}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                             <div style="flex: 1; min-width: 0;">
                                 <div class="suggestion-title">${highlightedTitle}</div>
-                                <div style="font-size: 0.75rem; color: var(--gray);">${safeCategoryName}</div>
+                                <div style="font-size: 0.75rem; color: var(--gray); display:flex; align-items:center; flex-wrap:wrap;">
+                                    <span style="font-weight:bold; margin-right:8px;">${safeCategoryName}</span>
+                                    ${extraMatchesHtml}
+                                </div>
                             </div>
                         </a>
                     `;

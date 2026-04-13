@@ -101,6 +101,7 @@ function renderCategories(categories) {
 
 function renderBreakingTicker(articles) {
     const container = document.getElementById('breaking-ticker-content');
+    const breakingStrip = document.querySelector('.breaking');
     if (!container) return;
 
     if (articles && articles.length > 0) {
@@ -110,8 +111,15 @@ function renderBreakingTicker(articles) {
         ).join(' &nbsp;&bull;&nbsp; '); 
         
         container.innerHTML = html;
+        if (breakingStrip) {
+            breakingStrip.style.display = 'block'; // Show the strip if there is news
+        }
     } else {
-        container.innerHTML = 'Welcome to Ferox Times!';
+        // Hide the whole breaking news strip if there's no news
+        if (breakingStrip) {
+            breakingStrip.style.display = 'none';
+        }
+        container.innerHTML = '';
     }
 }
 
@@ -311,16 +319,44 @@ function setupScrollObserver() {
         }
     }, {
         root: null,
-        // ── FIX 5: rootMargin 200px → 600px
-        // Fast scroll par browser ko 600px pehle hi next category load shuru kar dena chahiye.
-        // 200px bahut kam tha — API call async hai aur complete hone mein time lagta hai.
+        // 600px pehle hi trigger karo taaki fast scroll mein bhi miss na ho
         rootMargin: '600px',
         threshold: 0
-        // threshold: 0 = sentinel ka koi bhi pixel visible hote hi trigger karo
-        // (0.1 tha pehle — yani 10% visible hone tak wait karta tha — fast scroll mein miss hota tha)
     });
 
     observer.observe(sentinel);
+
+    // ── SIDEBAR BUG FIX ──
+    // Pehli baar page load hone ke baad sidebar ki height ki wajah se
+    // sentinel viewport mein already aa chuka hota hai, lekin observer
+    // tabhi register hua hota hai — isliye pehla scroll miss hota tha.
+    // Ab hum DOM settle hone ke baad manually check karte hain:
+    // agar sentinel already viewport ke andar ya 600px ke qareeb hai,
+    // toh forcefully aur categories load karo.
+    setTimeout(() => {
+        checkAndFillIfNeeded();
+    }, 300);
+}
+
+// ── Sentinel ki position check karo aur agar page fill nahi hua toh load karo ──
+async function checkAndFillIfNeeded() {
+    if (currentCategoryIndex >= allCategoriesList.length) return;
+
+    const sentinel = document.getElementById('scroll-sentinel');
+    if (!sentinel) return;
+
+    const rect = sentinel.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+
+    // Agar sentinel viewport se 800px ke andar hai (yani sidebar ki wajah se
+    // page itna lamba nahi hua), toh aur categories load karo
+    if (rect.top < viewportHeight + 800) {
+        await loadNextCategories(1);
+        // Load karne ke baad phir check karo (recursive) taaki page puri tarah bhar jaye
+        setTimeout(() => {
+            checkAndFillIfNeeded();
+        }, 200);
+    }
 }
 
 

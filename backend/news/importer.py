@@ -35,7 +35,7 @@ import requests
 from django.utils.html import strip_tags
 from django.contrib.auth import get_user_model
 
-from news.models import Article, Category, Tag
+from news.models import Article, Author, Category, Tag
 from newspaper import Article as WebArticle
 
 from .ai_utils import rewrite_article_with_ai
@@ -367,7 +367,7 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
             if cat_created:
                 logger.info("Created new category: '%s'", category_name)
 
-            # ── Step 8.5: Resolve Virtual Reporter (AI User) ────────────────
+            # ── Step 8.5: Resolve Virtual Reporter (AI User + Author profile) ───
             User = get_user_model()
             ai_user, user_created = User.objects.get_or_create(
                 email="ai_desk@feroxtimes.com",
@@ -384,6 +384,19 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
                 ai_user.save()
                 logger.info("Created default AI Reporter user: '%s'", ai_user.email)
 
+            # Ensure an Author profile exists for the AI user.
+            # Article.author requires an Author instance, not a User instance.
+            ai_author, author_created = Author.objects.get_or_create(
+                user=ai_user,
+                defaults={
+                    "role": "AI Reporter",
+                }
+            )
+            if author_created:
+                logger.info(
+                    "Created Author profile for AI user: '%s'", ai_user.email
+                )
+
             # ── Step 9: Build the Article object ──────────────────────────
             ai_content  = ai_data.get("content", "")
             description = _clean_text(ai_content, max_length=250)
@@ -397,7 +410,7 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
                 description      = description,
                 content          = ai_content,
                 category         = category_obj,
-                author           = ai_user,
+                author           = ai_author,  # Author instance (not User)
 
                 # Original source tracking fields
                 original_title   = title[:500],

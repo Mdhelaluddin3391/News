@@ -8,6 +8,7 @@ from django.utils.text import slugify
 from datetime import timedelta
 
 from .models import Category, Author, Article, Tag, LiveUpdate
+from django.utils.timezone import now as timezone_now
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -201,11 +202,29 @@ class ArticleAdminForm(forms.ModelForm):
         exclude = ('tags',)
 
     def __init__(self, *args, **kwargs):
+        self._request = kwargs.pop('request', None)  # Custom: request inject
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.fields['tags_input'].initial = ', '.join(
                 [tag.name for tag in self.instance.tags.all()]
             )
+
+    def clean_is_breaking(self):
+        """
+        Security: Sirf Admin/Superuser is_breaking=True set kar sakta hai.
+        Agar editor ya koi aur True karne ki koshish kare, raise ValidationError.
+        """
+        value = self.cleaned_data.get('is_breaking', False)
+        request = self._request
+        if value and request:
+            user = request.user
+            is_admin = user.is_superuser or getattr(user, 'role', '') == 'admin'
+            if not is_admin:
+                raise forms.ValidationError(
+                    "⛔ Sirf Admin is_breaking flag set kar sakta hai. "
+                    "Editor aur Reporter ye flag set nahi kar sakte."
+                )
+        return value
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -308,13 +327,20 @@ class ArticleAdmin(admin.ModelAdmin):
     autocomplete_fields = ['author', 'category']
     show_full_result_count = True
 
-    actions = ['make_published', 'make_draft', 'regenerate_slug', 'run_ai_import_now']
+    actions = [
+        'make_published', 'make_draft', 'regenerate_slug', 'run_ai_import_now',
+        'admin_force_trending', 'admin_force_featured', 'admin_remove_special_flags',
+    ]
 
     # ── Fieldsets ─────────────────────────────────────────────────────────
     fieldsets = (
         ('📝 Article Content', {
             'fields': ('title', 'slug', 'category', 'author',
                        'description', 'content', 'featured_image', 'tags_input')
+        }),
+        ('📄 Writer Evidence & Notes', {
+            'fields': ('supporting_document', 'writer_notes'),
+            'description': 'Editorial team reviews these to verify writer claims. Not publicly visible.',
         }),
         ('🤖 AI Import & Source Data', {
             'fields': ('is_imported', 'source_name', 'source_url',
@@ -388,8 +414,17 @@ class ArticleAdmin(admin.ModelAdmin):
     @admin.action(description='✅ Publish selected articles')
     def make_published(self, request, queryset):
         if request.user.role in ['admin', 'editor'] or request.user.is_superuser:
-            count = queryset.update(status='published')
-            self.message_user(request, f'✅ {count} article(s) published.')
+            updated = 0
+            # Remove status__in filter because it's redundant and blocks some edges
+            for article in queryset.all():
+                article.status = 'published'
+                # Auto published_at agar set nahi hai
+                if not article.published_at:
+                    article.published_at = timezone_now()
+                # Use standard save() so custom overrides in models.py execute correctly
+                article.save()
+                updated += 1
+            self.message_user(request, f'✅ {updated} article(s) published.')
         else:
             self.message_user(request, "Permission denied.", level='error')
 
@@ -463,6 +498,39 @@ class ArticleAdmin(admin.ModelAdmin):
                 level=messages.ERROR,
             )
 
+    # ─────────────── Admin-Only Flag Override Actions ────────────────
+
+    @admin.action(description='🔥 Force TRENDING on selected (Admin Override)')
+    def admin_force_trending(self, request, queryset):
+        """Admin se manually kisi bhi article ko force trending mein daal sakte hain."""
+        if not (request.user.role == 'admin' or request.user.is_superuser):
+            self.message_user(request, "⛔ Sirf Admin ye action kar sakta hai.", level=messages.ERROR)
+            return
+        count = queryset.update(is_trending=True)
+        self.message_user(request, f"🔥 {count} article(s) force-marked as Trending. (Admin Override)")
+
+    @admin.action(description='⭐ Force FEATURED on selected (Admin Override)')
+    def admin_force_featured(self, request, queryset):
+        """Admin se manually kisi bhi article ko force featured mein daal sakte hain."""
+        if not (request.user.role == 'admin' or request.user.is_superuser):
+            self.message_user(request, "⛔ Sirf Admin ye action kar sakta hai.", level=messages.ERROR)
+            return
+        count = queryset.update(is_featured=True)
+        self.message_user(request, f"⭐ {count} article(s) force-marked as Featured. (Admin Override)")
+
+    @admin.action(description='🧹 Remove ALL special flags from selected (Trending/Featured/Breaking)')
+    def admin_remove_special_flags(self, request, queryset):
+        """Ek saath sabhi special flags (trending, featured, breaking) clear kar do."""
+        if not (request.user.role == 'admin' or request.user.is_superuser):
+            self.message_user(request, "⛔ Sirf Admin ye action kar sakta hai.", level=messages.ERROR)
+            return
+        count = queryset.update(is_trending=False, is_featured=False, is_breaking=False)
+        self.message_user(
+            request,
+            f"🧹 {count} article(s) ke sabhi special flags (Trending/Featured/Breaking) clear ho gaye.",
+            level=messages.WARNING,
+        )
+
     # ── Queryset (role-based) ──────────────────────────────────────────────
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -472,20 +540,42 @@ class ArticleAdmin(admin.ModelAdmin):
             return qs.filter(author=request.user.author_profile)
         return qs.none()
 
-    # ── Readonly fields ────────────────────────────────────────────────────
+    # ── Readonly fields ─────────────────────────────────────────────
     def get_readonly_fields(self, request, obj=None):
         base = ('views', 'newsletter_sent', 'push_sent', 'web_story_created_at')
-        if request.user.role in ['author', 'reporter'] and not request.user.is_superuser:
-            return base + ('author', 'is_featured', 'is_trending',
-                           'is_breaking', 'is_editors_pick', 'is_top_story')
-        return base
 
-    # ── Save model ─────────────────────────────────────────────────────────
+        user = request.user
+        is_admin = user.is_superuser or getattr(user, 'role', '') == 'admin'
+        is_editor = getattr(user, 'role', '') == 'editor'
+
+        if is_admin:
+            # Admin sab kuch edit kar sakta hai, sirf system trackers readonly hain
+            return base
+
+        if is_editor:
+            # Editor is_breaking set NAHI kar sakta — wo admin-only flag hai
+            return base + ('is_breaking',)
+
+        # Author / Reporter: sabhi flags readonly hain
+        return base + ('author', 'is_featured', 'is_trending',
+                       'is_breaking', 'is_editors_pick', 'is_top_story')
+
+    # ── Save model ───────────────────────────────────────────────
     def save_model(self, request, obj, form, change):
         if getattr(obj, 'author', None) is None and hasattr(request.user, 'author_profile'):
             obj.author = request.user.author_profile
         if not obj.slug:
             obj.slug = ''   # blank → Article.save() will regenerate from title
+        # Extra guard: editor ne kisi tarah is_breaking True kar diya?
+        # Force it back to the original value if they are not admin.
+        if change and form.instance.pk:
+            user = request.user
+            is_admin = user.is_superuser or getattr(user, 'role', '') == 'admin'
+            if not is_admin:
+                # Previous value se compare karo
+                original = Article.objects.filter(pk=form.instance.pk).values('is_breaking').first()
+                if original and not is_admin:
+                    obj.is_breaking = original['is_breaking']
         super().save_model(request, obj, form, change)
 
     # ── List editable (inline status toggle) ──────────────────────────────
@@ -493,6 +583,23 @@ class ArticleAdmin(admin.ModelAdmin):
         if request.user.role in ['admin', 'editor'] or request.user.is_superuser:
             return ('is_editors_pick', 'is_live')
         return ()
+
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        ArticleAdminForm ko request inject karo taaki clean_is_breaking
+        mein user ka role check ho sake.
+        """
+        Form = super().get_form(request, obj, **kwargs)
+
+        # Closure: request bind karo factory method se create hone wala form class mein
+        original_init = Form.__init__
+
+        def patched_init(self_form, *args, **kw):
+            kw['request'] = request
+            original_init(self_form, *args, **kw)
+
+        Form.__init__ = patched_init
+        return Form
 
     def get_changelist_instance(self, request):
         self.list_editable = self.get_list_editable(request)

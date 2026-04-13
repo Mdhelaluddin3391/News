@@ -9,7 +9,13 @@ from channels.layers import get_channel_layer
 from core.tasks import send_async_email
 from interactions.models import NewsletterSubscriber
 from news.models import Article, LiveUpdate
-from news.tasks import auto_post_article_task, process_article_image, send_push_notifications_task
+from news.tasks import (
+    auto_post_article_task,
+    process_article_image,
+    send_push_notifications_task,
+    auto_update_featured_task,
+    auto_update_trending_task,
+)
 
 
 @receiver(post_save, sender=Article)
@@ -66,6 +72,12 @@ def handle_article_publish(sender, instance, **_kwargs):
     ):
         transaction.on_commit(lambda: auto_post_article_task.delay(instance.id))
 
+    # ── Auto-update featured & trending instantly on publish ──────────────
+    # Celery Beat wala 30-min/1-hour wait nahi karna padega.
+    # Jaise hi article publish hoga, yeh tasks queue mein chali jayengi.
+    if instance.status == 'published':
+        transaction.on_commit(lambda: auto_update_featured_task.delay())
+        transaction.on_commit(lambda: auto_update_trending_task.delay())
 
 @receiver(post_save, sender=Article)
 def trigger_image_processing(sender, instance, **_kwargs):

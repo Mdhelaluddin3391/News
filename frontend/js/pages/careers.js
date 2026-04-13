@@ -4,6 +4,7 @@ const JOBS_API_URL = `${CONFIG.API_BASE_URL}/jobs/active/`;
 async function loadDynamicJobs() {
     const jobsContainer = document.getElementById('dynamic-jobs-container');
     const roleSelect = document.getElementById('applied-role');
+    let optionsHtml = '<option value="">-- Select a Role --</option>';
     
     if (!jobsContainer) return;
 

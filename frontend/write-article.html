@@ -65,11 +65,36 @@
                     <small style="color:#64748b; margin-top: 5px; display:inline-block;">Write the raw facts, quotes, and content. Our editorial team will format and SEO-optimize it before publishing.</small>
                 </div>
 
+                <div class="form-group">
+                    <label for="supporting-doc">Supporting Evidence <span style="color:red">*</span></label>
+                    <div id="doc-upload-area" style="border: 2px dashed #cbd5e1; border-radius: 10px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.3s; background: #f8fafc;">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 2.2rem; color: #94a3b8; margin-bottom: 10px; display:block;"></i>
+                        <p style="margin: 0 0 6px; color: #475569; font-weight: 500;">Drop your file here or <span style="color: var(--primary); text-decoration: underline;">click to browse</span></p>
+                        <p style="margin: 0; font-size: 0.82rem; color: #94a3b8;">Accepted: PDF, JPG, PNG, DOCX, MP4, MP3, ZIP &nbsp;|&nbsp; Max 20 MB</p>
+                        <input type="file" id="supporting-doc" accept=".pdf,.jpg,.jpeg,.png,.docx,.doc,.mp4,.mp3,.zip" style="display:none;" required>
+                        <div id="doc-preview" style="margin-top: 14px; display:none;">
+                            <span id="doc-filename" style="background: #e0f2fe; color: #0369a1; padding: 6px 14px; border-radius: 20px; font-size: 0.88rem; font-weight: 600;"></span>
+                            <button type="button" id="doc-remove" style="background:none; border:none; color:#ef4444; margin-left:8px; cursor:pointer; font-size:0.85rem;"><i class="fas fa-times"></i> Remove</button>
+                        </div>
+                    </div>
+                    <small style="color: #64748b; margin-top: 6px; display:block;">
+                        <i class="fas fa-lock" style="color: #10b981;"></i> This document is stored securely and is <strong>never publicly visible</strong>. It is only reviewed by our editorial team.
+                        <a href="/editorial-guidelines#document-requirement" target="_blank" style="color: var(--primary);">What counts as valid evidence?</a>
+                    </small>
+                </div>
+
+                <div class="form-group" style="margin-top: 18px;">
+                    <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-weight:400; color:#475569;">
+                        <input type="checkbox" id="guidelines-agree" checked style="width:17px; height:17px; accent-color: var(--primary); flex-shrink:0; margin-top:3px;">
+                        <span>I have read and agree to the <a href="/editorial-guidelines" target="_blank" style="color:var(--primary); font-weight:600;">Editorial Guidelines</a>. I confirm that all information in my article is accurate to the best of my knowledge, and that my supporting document is genuine evidence related to my article's claims. I accept full legal responsibility for the content I am submitting.</span>
+                    </label>
+                </div>
+
                 <button type="submit" id="submit-btn" class="btn-submit">
                     <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Submit for Editorial Review
                 </button>
                 <div class="submit-notice">
-                    By submitting, you agree to our Editorial Guidelines. All submissions are saved as Drafts.
+                    By submitting, you agree to our <a href="/editorial-guidelines" target="_blank" style="color:var(--primary);">Editorial Guidelines</a>. All submissions are saved as Drafts and reviewed before publishing.
                 </div>
             </form>
         </div>

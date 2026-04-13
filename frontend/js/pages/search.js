@@ -41,12 +41,17 @@ function renderSearchArticles(articles, query) {
         return;
     }
 
-    const highlightText = (text, searchWord) => {
-        const safeText = typeof window.escapeHtml === 'function' ? window.escapeHtml(text) : String(text);
-        if (!searchWord || !text) return safeText;
-        const escapedWord = searchWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(${escapedWord})`, 'gi');
-        return safeText.replace(regex, '<mark class="highlight-text" style="background-color: #ffeeba; color: #000; padding: 0 2px; border-radius: 3px;">$1</mark>');
+    const highlightText = (text, queryStr) => {
+        if (!text) return '';
+        let safeText = typeof window.escapeHtml === 'function' ? window.escapeHtml(text) : String(text);
+        if (!queryStr) return safeText;
+        const words = queryStr.split(/\s+/).filter(w => w.length > 0);
+        words.forEach(word => {
+            const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escapedWord})`, 'gi');
+            safeText = safeText.replace(regex, '<mark class="highlight-text" style="background-color: #ffeeba; color: #000; padding: 0 2px; border-radius: 3px;">$1</mark>');
+        });
+        return safeText;
     };
 
     const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
@@ -70,6 +75,10 @@ function renderSearchArticles(articles, query) {
         
         const source = article.category ? article.category.name : 'News';
         const date = article.published_at ? formatSearchDate(article.published_at) : 'Unknown date';
+        
+        const authorName = article.author ? (article.author.name || article.author.user?.name || '') : 'Staff';
+        const highlightedAuthor = highlightText(authorName, query);
+        
         const articleId = article.id || '';
         const isSaved = user && typeof isArticleSaved === 'function' ? isArticleSaved(articleId) : false;
         
@@ -95,7 +104,10 @@ function renderSearchArticles(articles, query) {
                     <img src="${imageUrl}" alt="${safeTitleAttr}" class="article-image ${containClass}" loading="lazy" style="height: 200px; object-fit: cover;" onerror="this.onerror=null; this.src='/images/default-news.png'; this.classList.add('img-contain');">
                 </a>
                 <div class="article-content" style="flex: 1; display: flex; flex-direction: column;">
-                    <span class="article-source" style="font-size: 0.8rem; color: var(--primary); text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">${highlightText(source, query)}</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <span class="article-source" style="font-size: 0.8rem; color: var(--primary); text-transform: uppercase; font-weight: bold;">${highlightText(source, query)}</span>
+                        ${authorName ? `<span style="font-size: 0.8rem; color: #555;"><i class="fas fa-user" style="margin-right:4px;"></i>${highlightedAuthor}</span>` : ''}
+                    </div>
                     <h3 class="article-title" style="margin-bottom: 10px;">
                         <a href="/article/${article.slug}" style="text-decoration: none; color: inherit;">${title}</a>
                     </h3>

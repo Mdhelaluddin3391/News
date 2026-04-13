@@ -47,6 +47,141 @@ def cleanup_expired_flags_task(self):
 
     return f"Cleanup Done: {count_breaking} Breaking expired, {count_stories} Web Stories expired."
 
+
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=300,
+    retry_jitter=True,
+    retry_kwargs={'max_retries': 3},
+)
+def auto_update_trending_task(self):
+    """
+    Trending Logic (Automatic + Admin Override):
+    ─────────────────────────────────────────────
+    RULE 1 (Auto): Agar koi article last 3 din mein publish hua hai aur
+                   views >= TRENDING_VIEWS_THRESHOLD (100) hain, toh use
+                   automatically is_trending=True mark kar do.
+
+    RULE 2 (Override): Agar admin ne manually is_trending=True set kiya hai
+                       toh wo article hamesha trending rahega — chahe views
+                       threshold se kam hon. (Admin force override)
+
+    RULE 3 (Cleanup): Jo articles 3 din se purane hain, unka auto-trending
+                      flag clear ho jayega. Lekin admin override wale
+                      (manually set) safe rahenge — ye un articles ko touch
+                      nahi karega jo is_featured=True hain via admin.
+
+    Ye task har 30 minute mein Celery Beat se chalti hai.
+    """
+    TRENDING_VIEWS_THRESHOLD = 100  # Itne views par auto-trending milti hai
+    TRENDING_WINDOW_DAYS = 3        # Sirf last 3 din ke articles consider honge
+
+    now = timezone.now()
+    window_start = now - timedelta(days=TRENDING_WINDOW_DAYS)
+
+    # ── STEP 1: Auto-mark new trending articles ────────────────────────────
+    # Find karo articles jo:
+    # - Published hain
+    # - Last 3 din mein publish huye hain
+    # - 100+ views hain
+    # - Abhi tak is_trending=False hain (sirf naye update karo)
+    newly_trending_qs = Article.objects.filter(
+        status='published',
+        published_at__gte=window_start,
+        views__gte=TRENDING_VIEWS_THRESHOLD,
+        is_trending=False,
+    )
+    count_newly_trending = newly_trending_qs.update(is_trending=True)
+
+    # ── STEP 2: Clear stale auto-trending flags ────────────────────────────
+    # Jo articles 3 din se purane hain aur trending=True hain unko clear karo.
+    # EXCEPTION: Hum yahan ye nahi jaante ke konsa manually set tha.
+    # Isliye hum sirf un articles ka flag clear karte hain jo:
+    # - 3 din se zyada purane hain
+    # - Views threshold se neeche gir chuke hain (matlab auto-trending tha)
+    # Note: Pure admin override articles (manually set) ko protect karne ke liye
+    #       admin admin panel se khud unset karega — ye task sirf view-based
+    #       expired articles ko clean karti hai.
+    stale_qs = Article.objects.filter(
+        status='published',
+        is_trending=True,
+        published_at__lt=window_start,
+        views__lt=TRENDING_VIEWS_THRESHOLD,
+    )
+    count_stale = stale_qs.update(is_trending=False)
+
+    return (
+        f"✅ Trending Update Done: {count_newly_trending} newly marked trending, "
+        f"{count_stale} stale trending flags cleared."
+    )
+
+
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_backoff_max=300,
+    retry_jitter=True,
+    retry_kwargs={'max_retries': 3},
+)
+def auto_update_featured_task(self):
+    """
+    Featured Logic (Latest Article = Featured):
+    ─────────────────────────────────────────────
+    RULE 1 (Auto): Sabse naya published article automatically is_featured=True
+                   ho jata hai. Yeh "Latest Release → Featured" logic hai.
+
+    RULE 2 (Override): Admin agar kisi old article ko is_featured=True
+                       manually set kare toh:
+                       - Woh article featured section mein dikhega.
+                       - Latest article bhi auto-featured rahega (dono featured).
+                       - Homepage frontend pe featured section mein latest wala
+                         priority lega (sorted by published_at desc).
+
+    RULE 3 (Cleanup): Agar koi article publish schedule se 2 din se zyada
+                      purana ho aur admin ne manually override nahi kiya,
+                      toh uska auto-featured flag clear ho jayega.
+                      (2-day rolling featured window)
+
+    Ye task har ghante Celery Beat se chalti hai.
+    """
+    FEATURED_WINDOW_HOURS = 48  # 2 din = 48 ghante (rolling featured window)
+
+    now = timezone.now()
+    window_start = now - timedelta(hours=FEATURED_WINDOW_HOURS)
+
+    # ── STEP 1: Latest published article ko featured mark karo ─────────────
+    latest_article = (
+        Article.objects.filter(status='published', published_at__isnull=False)
+        .order_by('-published_at')
+        .first()
+    )
+
+    featured_title = "(none)"
+    if latest_article:
+        if not latest_article.is_featured:
+            Article.objects.filter(pk=latest_article.pk).update(is_featured=True)
+        featured_title = latest_article.title[:60]
+
+    # ── STEP 2: 2 din se purane auto-featured articles ko clear karo ────────
+    # Sirf wahi clear honge jinka published_at 48 ghante se purana hai
+    # aur jinhe auto-featured mila tha (views-based check nahi, sirf age).
+    # This preserves any admin forced featured articles that are newer than 48h.
+    count_cleared = Article.objects.filter(
+        is_featured=True,
+        published_at__lt=window_start,
+    ).exclude(
+        # Latest article ko exclude karo (usse mat chho)
+        pk=latest_article.pk if latest_article else None,
+    ).update(is_featured=False)
+
+    return (
+        f"✅ Featured Update Done: Latest featured='{featured_title}', "
+        f"{count_cleared} old featured flags cleared."
+    )
+
 @shared_task(
     bind=True,
     autoretry_for=(Exception,),

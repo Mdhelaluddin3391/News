@@ -84,15 +84,34 @@ nav {
     gap: 20px;
 }
 
+.nav-links-wrapper {
+    position: relative;
+    flex: 1;
+    margin-right: 20px;
+    display: flex;
+    overflow: hidden;
+}
+
+.nav-links-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 45px;
+    background: linear-gradient(to left, var(--primary) 10%, transparent);
+    pointer-events: none;
+    z-index: 2;
+}
+
 .nav-links {
     display: flex;
     list-style: none;
     overflow-x: auto;
     white-space: nowrap;
-    flex: 1;
-    margin-right: 20px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    width: 100%;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
 }
 
 .nav-links li a {
@@ -122,12 +141,11 @@ nav {
 }
 
 .nav-links::-webkit-scrollbar {
-    height: 1px;
+    display: none; /* Chrome, Safari, and Opera */
 }
 
 .nav-links::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
+    display: none;
 }
 
 /* ==================== Search & Auth (Navigation) ==================== */

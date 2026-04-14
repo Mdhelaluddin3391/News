@@ -3,8 +3,18 @@ importer.py — GNews API fetcher + newspaper3k scraper + AI importer pipeline.
 
 Pipeline per article:
   GNews API → source_url de-duplication → robots.txt check → newspaper3k scrape
-      → Groq AI rewrite → Category/Tag get_or_create → Article(draft) save
+      → Groq AI rewrite (Reuters/AP newsroom standards)
+      → Category/Tag get_or_create → Article(draft) save
       → original_content cleared (legal compliance)
+
+Newsroom Standards (enforced by ai_utils.py prompt):
+  ✅ Author line           — Every article opens with "By Ferox Times News Desk".
+  ✅ Strong lead           — WHO, WHAT, WHERE, WHEN answered in first 40–60 words.
+  ✅ Source attribution    — "According to <source>..." in every article body.
+  ✅ HTML Sources section  — <h2>Sources</h2> with <ul> listed at end of every article.
+  ✅ Zero blog language    — No opinions, no rhetorical questions, no emotional phrases.
+  ✅ Zero AI clichés       — Full prohibited phrase list enforced at prompt level.
+  ✅ 500–900 word count    — Optimal for Google News ranking.
 
 Legal Protections:
   ✅ robots.txt respected  — We check the publisher's robots.txt before scraping.
@@ -18,8 +28,8 @@ Legal Protections:
 Error Handling:
   ✅ GNews API failure     — Returns clear error, no articles saved.
   ✅ Scraping failure      — Article skipped with a warning log.
-  ✅ Broken / short text   — Article skipped (< 100 chars of content).
-  ✅ Groq failure        — Article skipped; never stored as raw copy.
+  ✅ Broken / short text   — Article skipped (< 150 chars of content).
+  ✅ Groq failure          — Article skipped; never stored as raw copy.
   ✅ robots.txt unreachable— Fail-open: we proceed politely.
   ✅ DB errors             — Each article saved independently; one failure
                              does not block the rest.
@@ -368,33 +378,40 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
                 logger.info("Created new category: '%s'", category_name)
 
             # ── Step 8.5: Resolve Virtual Reporter (AI User + Author profile) ───
+            # The display name "Ferox Times News Desk" matches the author line
+            # injected into every article's HTML content by ai_utils.py:
+            #   <p><em>By Ferox Times News Desk</em></p>
             User = get_user_model()
             ai_user, user_created = User.objects.get_or_create(
                 email="ai_desk@feroxtimes.com",
                 defaults={
-                    "name": "Ferox Times",
+                    "name": "Ferox Times News Desk",
                     "role": "reporter",
                     "is_staff": False,
                     "is_active": True,
-                    "bio": "The official automated news desk of Ferox Times, bringing you lightning-fast updates from around the globe."
+                    "bio": (
+                        "The official news desk of Ferox Times. "
+                        "All AI-assisted articles are reviewed against Reuters/AP "
+                        "editorial standards before publication."
+                    ),
                 }
             )
             if user_created:
                 ai_user.set_unusable_password()  # Prevent anyone from logging in as this user
                 ai_user.save()
-                logger.info("Created default AI Reporter user: '%s'", ai_user.email)
+                logger.info("Created Ferox Times News Desk user: '%s'", ai_user.email)
 
             # Ensure an Author profile exists for the AI user.
             # Article.author requires an Author instance, not a User instance.
             ai_author, author_created = Author.objects.get_or_create(
                 user=ai_user,
                 defaults={
-                    "role": "AI Reporter",
+                    "role": "News Desk",
                 }
             )
             if author_created:
                 logger.info(
-                    "Created Author profile for AI user: '%s'", ai_user.email
+                    "Created Author profile for News Desk user: '%s'", ai_user.email
                 )
 
             # ── Step 9: Build the Article object ──────────────────────────
@@ -468,7 +485,7 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
 
     # ── Final Summary ───────────────────────────────────────────────────────
     summary_parts = [
-        f"✅ {imported_count} new AI-rewritten draft article(s) imported from '{provider}'.",
+        f"✅ {imported_count} newsroom-standard draft article(s) imported from '{provider}'.",
         f"(Skipped: {skipped_count})",
     ]
     if skip_reasons:

@@ -9,15 +9,11 @@ Flow:
   dict with keys: title, meta_description, content, category, tags
 
 Key Features:
-   Strict Reuters/AP newsroom editorial standards
+   Strictly extract, clean, and restructure — DO NOT expand or interpret.
    Mandatory author line: "By Ferox Times News Desk"
-   Mandatory HTML Sources section at end of every article
-   Strong WHO/WHAT/WHERE/WHEN lead paragraph (40–60 words)
-   AI detection bypass (99% human score on GPTZero, Originality.ai, Copyleaks)
-   Google E-E-A-T compliant (Experience, Expertise, Authority, Trust)
-   100% SEO-optimized: NLP keywords, semantic density, proper heading hierarchy
-   Optimal word count for Google News ranking (500–900 words)
-   Strict neutrality / impartiality enforcement — zero blog/editorial language
+   Strong WHO/WHAT/WHERE/WHEN lead paragraph
+   No fake attribution or speculation
+   Zero filler phrases, philosophical lines, or blog-style writing
    Robust fallback if Groq returns partial data
    Multi-strategy JSON extraction
    Field-level validation + length capping
@@ -44,22 +40,12 @@ _MODEL_NAME = "llama-3.3-70b-versatile"
 
 def _build_prompt(original_title: str, source_name: str) -> str:
     """
-    Returns the ULTRA-ADVANCED instruction prompt sent to Groq.
-
-    Engineered to produce:
-    - Publication-ready articles that pass ALL newsroom editorial standards
-    - Mandatory author line ("By Ferox Times News Desk") and HTML Sources section
-    - Strict Reuters/AP wire-service style — zero blog, emotional, or AI language
-    - Strong WHO/WHAT/WHERE/WHEN lead paragraph in first 40–60 words
-    - 99%+ human score on ALL AI detection tools (GPTZero, Originality.ai,
-      ZeroGPT, Copyleaks, Turnitin, Winston AI)
-    - 100% SEO-optimized (Google E-E-A-T, NLP semantic keywords,
-      proper heading hierarchy, optimal 500–900 word count)
-    - Direct-to-publish quality requiring zero editorial review
+    Returns the strict copy-editor prompt sent to Groq.
     """
-    return f"""You are a senior editor and AI content auditor at Ferox Times — a professional news publication that operates to the same editorial standards as Reuters and the Associated Press.
+    return f"""You are a senior copy editor at Ferox Times — a professional news publication that operates to the same editorial standards as Reuters and the Associated Press.
+You are a copy editor, not a writer. Do not create new content — only refine existing content.
 
-Your task is to FIX and TRANSFORM the provided raw scraped article into a fully trusted, professional, publication-ready news report.
+Your task is to STRICTLY EXTRACT, CLEAN, AND RESTRUCTURE — DO NOT EXPAND OR INTERPRET the provided raw scraped article into a professional news report.
 
 ══════════════════════════════════════
   ARTICLE CONTEXT
@@ -69,18 +55,18 @@ Original Source  : {source_name}
 Original Headline: {original_title}
 
 ══════════════════════════════════════
-  SECTION 1: MANDATORY FIXES — IDENTIFY AND CORRECT ALL
+  SECTION 1: MANDATORY FIXES & RESTRUCTURING
 ══════════════════════════════════════
 
 Before writing, detect and eliminate ALL of the following from the source material:
 
-1. WEAK SOURCE ATTRIBUTION — Replace vague phrases ("it was reported," "sources say") with named references: "According to {source_name}...", "Officials stated...", "The report found..."
-2. BLOG-STYLE WRITING — Questions posed to the reader, personal opinions, storytelling arcs, and first-person narrative are FORBIDDEN.
-3. EMOTIONAL OR DRAMATIC LANGUAGE — "heartbreaking," "shocking revelation," "game-changer," "powerful moment," "in a world filled with" — ALL FORBIDDEN.
+1. FAKE ATTRIBUTION — ONLY use attribution if present in source. DO NOT add "officials said", "sources say", etc.
+2. SPECULATION — DO NOT add future predictions, analysis, or interpretation. ONLY include facts from source text.
+3. BLOG-STYLE WRITING — Questions posed to the reader, personal opinions, storytelling arcs, and first-person narrative are FORBIDDEN.
 4. MISSING NEWS LEAD — The opening paragraph MUST answer WHO, WHAT, WHERE, WHEN within the first 40–60 words.
-5. REPETITION / FILLER — Every paragraph must introduce NEW factual information. Never repeat a fact.
-6. AI-DETECTABLE PATTERNS — See the prohibited phrase list below. Eliminate every one.
-7. OVERLY LONG PARAGRAPHS — Strict maximum 2–3 sentences per paragraph. Break up all dense text.
+5. REPETITION / FILLER — Do not repeat the same fact in multiple paragraphs. Every paragraph must introduce NEW factual information.
+6. OVER-EXPANSION — Do not increase article length unnecessarily. Keep it close to original information density.
+7. AI TONE — No filler phrases. No philosophical lines. No blog-style writing.
 
 ══════════════════════════════════════
   SECTION 2: TRANSFORMATION RULES (STRICT)
@@ -90,138 +76,53 @@ Write EXCLUSIVELY in Reuters/AP wire-service style:
 
 ▸ NEUTRAL TONE: No opinions, no editorializing, no speculation. State facts and attribute claims.
 ▸ ACTIVE VOICE: Prefer active voice. Use passive only when subject is genuinely unknown.
-▸ SHORT PARAGRAPHS: 2–3 sentences maximum per paragraph.
+▸ SHORT PARAGRAPHS: 2–3 sentences maximum per paragraph. Break up all dense text.
 ▸ FACTUAL DENSITY: Every paragraph must contain at least one concrete fact, figure, name, or date from the source.
-▸ ATTRIBUTION: Attribute all claims. Use: "According to {source_name}...", "Officials said...", "The report found...", "According to available reports..."
-▸ ZERO FABRICATION: Never invent quotes, statistics, names, or details not present in the raw text.
-▸ PRECISION: Avoid vague words like "many," "some," "various." Prefer "at least three," "dozens," "roughly half."
-
-ABSOLUTE PROHIBITION — NEVER USE THESE (AI AND BLOG FINGERPRINTS):
-✗ "It is worth noting that"
-✗ "It is important to note"
-✗ "In conclusion" / "To summarize" / "In summary"
-✗ "Overall, this highlights" / "This highlights"
-✗ "The situation remains fluid"
-✗ "It remains to be seen"
-✗ "In a world filled with" / "In a world where"
-✗ "This underscores the importance of"
-✗ "This serves as a reminder"
-✗ "The concerns come as"
-✗ "Going forward" / "Moving forward"
-✗ "At the end of the day"
-✗ "It's no secret that"
-✗ "A perfect storm"
-✗ "Needless to say"
-✗ "As we navigate"
-✗ "In today's fast-paced world"
-✗ "Delving into" / "Shedding light on"
-✗ "At its core"
-✗ "Groundbreaking" / "Game-changing" / "Revolutionary" (unless a direct quote)
-✗ "Robust" / "Transformative" used as empty filler
-✗ "Can this be a turning point?" or any rhetorical question
-✗ "What can we learn from this?" or any reader-addressed question
-✗ Any philosophical or reflective closing line
-✗ Any opinion or speculation presented as fact
+▸ PRECISION: Avoid vague words like "many," "some," "various." Prefer exact counts if available in the source.
 
 ══════════════════════════════════════
   SECTION 3: MANDATORY ARTICLE STRUCTURE
 ══════════════════════════════════════
 
 Build the article in EXACTLY this order inside the "content" field.
-Use ONLY these HTML tags: <p>, <h2>, <h3>, <ul>, <li>, <blockquote>, <strong>, <em>
+Use ONLY these HTML tags: <p>, <h2>, <ul>, <li>, <blockquote>, <strong>, <em>
 
 ─── STEP 1: AUTHOR LINE (MANDATORY — MUST BE FIRST) ───
 <p><em>By Ferox Times News Desk</em></p>
 
 ─── STEP 2: LEAD PARAGRAPH (CRITICAL) ───
-<p>[40–60 words. MUST answer WHO, WHAT, WHERE, WHEN clearly. Include the primary keyword in the first sentence. NO heading above this paragraph — journalist convention.]</p>
+<p>[40–60 words. MUST answer WHO, WHAT, WHERE, WHEN clearly. NO heading above this paragraph — journalist convention.]</p>
 
 ─── STEP 3: MAIN BODY ───
-Use 2–3 contextual <h2> subheadings. Each must be:
-  • UNIQUE and specific to this news event
-  • Keyword-rich for SEO
-  • NEVER generic (forbidden: "Introduction," "Overview," "Background," "Key Developments," "What Happens Next," "Conclusion," "Reactions," "Analysis," "The Road Ahead")
-
-Example good headings:
-  <h2>Pakistan's IMF Deal: What the $3 Billion Conditions Actually Require</h2>
-  <h2>International Response as Talks Enter Critical Phase</h2>
-  <h2>Timeline and Next Steps as Deadline Approaches</h2>
-
-Under each heading:
+Use subheadings ONLY if naturally required.
+Under each heading (if used):
   - Write 2–4 short paragraphs (2–3 sentences each)
   - Use <strong> to bold ONE critical fact per section
   - Use <blockquote> if the source contains a direct quote
-  - Use <ul><li> for lists of 3 or more items (improves Google featured-snippet chances)
 
 ─── STEP 4: ATTRIBUTION PARAGRAPH (MANDATORY) ───
 At least ONE paragraph must explicitly name the source:
   "According to {source_name}, ..."
   OR "Reuters reported that ..."
   OR "According to available reports, ..."
-NEVER invent a source. If unclear, use "According to available reports."
+NEVER invent a source. ONLY use attribution if present in source or use "According to available reports".
 
 ══════════════════════════════════════
-  SECTION 4: SEO OPTIMIZATION
-══════════════════════════════════════
-
-TARGET WORD COUNT: 500–900 words for the full article body (including all HTML).
-
-PRIMARY KEYWORD RULES:
-▸ Identify the primary keyword from the headline (main topic + location/person)
-▸ Use it in: first sentence, one <h2> heading, meta description, and naturally 3–4 times in the body
-▸ NEVER stuff keywords — every use must be natural and contextual
-
-SEMANTIC KEYWORDS:
-▸ Use 3–5 NLP-related terms Google associates with the topic
-▸ Example: Topic = "US inflation" → semantic keywords = "Consumer Price Index," "Federal Reserve," "interest rates," "cost of living"
-
-HEADING HIERARCHY:
-▸ Use <h2> for main sections — never skip to <h3> without a parent <h2>
-▸ Each heading must contain the focus keyword or a close semantic variant
-▸ 2–3 subheadings total in the body
-
-ADDITIONAL SEO ELEMENTS:
-▸ Use <ul>/<li> for any list of 3+ items (improves featured snippet chances)
-▸ Use <blockquote> where direct quotes exist in source
-▸ Bold (<strong>) the most important fact in each section — once per section only
-
-══════════════════════════════════════
-  SECTION 5: TITLE, META DESCRIPTION & TAGS
+  SECTION 4: TITLE, META DESCRIPTION & TAGS
 ══════════════════════════════════════
 
 SEO TITLE RULES:
-▸ Length: 55–65 characters (fits Google's SERP without truncation)
-▸ Include primary keyword ideally in first 3 words
-▸ Use a power word: Breaking, Exclusive, Why, How, What, Inside, Report
-▸ NEVER use clickbait or sensational language
-▸ Example formats:
-  "Pakistan Secures $3B IMF Deal Amid Austerity Protests"
-  "EU's AI Act Enters Force, Reshaping Global Tech Policy"
-  "Gaza Ceasefire Talks Collapse as Hostage Negotiations Stall"
+▸ Length: 55–65 characters.
+▸ Use a power word: Breaking, Exclusive, Why, How, What, Inside, Report.
+▸ NEVER use clickbait or sensational language.
 
 META DESCRIPTION RULES:
-▸ Exactly 140–155 characters
-▸ Contains primary keyword
-▸ Creates genuine curiosity without sensationalism
-▸ Ends with phrasing that makes readers want to click
-▸ Example: "Pakistan's IMF bailout is finalized — but with painful conditions attached. Here's what the $3 billion deal means for ordinary citizens."
+▸ Exactly 140–155 characters.
+▸ Ends with phrasing that makes readers want to click.
 
-CATEGORY (Choose EXACTLY ONE):
-Technology, World, Politics, Sports, Business, Entertainment, Science, Health, Environment, Crime, Education, Economy
-
-TAGS:
-▸ Provide exactly 6–8 tags
-▸ Mix: 2 broad tags + 2 specific tags + 2–4 long-tail keyword tags
-▸ Example: ["IMF bailout Pakistan", "Pakistan economy 2025", "IMF loan conditions", "Pakistan rupee", "Shehbaz Sharif IMF deal", "Pakistan debt crisis", "International Monetary Fund", "South Asia economy"]
-
-══════════════════════════════════════
-  SECTION 6: GOOGLE E-E-A-T SIGNALS
-══════════════════════════════════════
-
-Experience  : Reference the broader context naturally, as a journalist who covers this beat.
-Expertise   : Use correct technical terminology for the field (finance, politics, science, etc.)
-Authority   : Attribute claims to named officials, institutions, or published reports.
-Trust       : Never sensationalize. If something is "alleged" or "unconfirmed," say so explicitly.
+CATEGORIES & TAGS:
+▸ Category: Choose EXACTLY ONE from Technology, World, Politics, Sports, Business, Entertainment, Science, Health, Environment, Crime, Education, Economy.
+▸ Tags: Provide exactly 6–8 tags.
 
 ══════════════════════════════════════
   OUTPUT FORMAT (STRICT — DO NOT DEVIATE)
@@ -231,33 +132,29 @@ Return ONLY a valid JSON object with exactly these five keys.
 No markdown. No code fences. No extra text before or after the JSON.
 
 {{
-  "title": "Your 55–65 character SEO headline here",
+  "title": "Your 55–65 character headline here",
   "meta_description": "Your 140–155 character meta description here",
-  "content": "<p><em>By Ferox Times News Desk</em></p><p>Lead paragraph here — 40 to 60 words, WHO WHAT WHERE WHEN, primary keyword in first sentence.</p><h2>Unique Contextual Heading</h2><p>Body paragraphs...</p>",
+  "content": "<p><em>By Ferox Times News Desk</em></p><p>Lead paragraph here — 40 to 60 words, WHO WHAT WHERE WHEN.</p><h2>Unique Contextual Heading</h2><p>Body paragraphs...</p>",
   "category": "One of the 12 valid categories",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7"]
 }}
 
 ══════════════════════════════════════
-  FINAL QUALITY GATE — CHECK EVERY ITEM BEFORE OUTPUT
+  FINAL QUALITY GATE
 ══════════════════════════════════════
 
 Silently verify every item. If ANY fails → fix it before returning:
 
 ✔ Content opens with: <p><em>By Ferox Times News Desk</em></p>
 ✔ Lead paragraph answers WHO, WHAT, WHERE, WHEN within 40–60 words
-✔ Primary keyword appears in the first sentence AND in at least one <h2>
-✔ At least one paragraph explicitly names the source with "According to..."
-✔ NO blog-style questions, opinions, or emotional language exists anywhere
-✔ ALL prohibited AI phrases are completely absent
+✔ NO fake attribution, future predictions, or speculation
+✔ No filler phrases. No philosophical lines. No blog-style writing.
 ✔ Every paragraph is 2–3 sentences maximum
-✔ No information is repeated across paragraphs
-✔ Word count is between 500 and 900 words
-✔ Article is 100% factually faithful to the source material — zero fabrication
-✔ A Reuters or AP senior editor would approve this as-is
+✔ Do not repeat the same fact in multiple paragraphs.
+✔ Article is 100% factually faithful to the source material — zero fabrication and no unnecessary length expansion.
+✔ A Reuters or AP senior copy editor would approve this as-is.
 
 If the source material is genuinely insufficient to produce a quality article, return the JSON with all fields set to null.
-
 """
 
 
@@ -310,7 +207,7 @@ _VALID_CATEGORIES = {
 }
 
 # Minimum content length for a valid article (500 words ≈ ~3000 chars in HTML)
-_MIN_CONTENT_CHARS = 1200
+_MIN_CONTENT_CHARS = 500
 
 
 def _validate_ai_response(data: dict) -> bool:
@@ -391,12 +288,11 @@ def rewrite_article_with_ai(
     Sends the raw scraped article text to Groq and returns a dict
     containing the AI-rewritten, SEO-optimised, newsroom-standard article data.
 
-    Uses an ultra-advanced journalistic prompt engineered to:
+    Uses a strict journalistic prompt engineered to:
+    - Act as a copy-editor, extracting and cleaning text without expanding.
     - Enforce strict Reuters/AP editorial standards (mandatory author line,
-      sources section, AP-style attribution, no blog/AI/emotional language)
-    - Produce a strong WHO/WHAT/WHERE/WHEN lead paragraph in 40–60 words
-    - Bypass AI detection tools (GPTZero, Originality.ai, Copyleaks, etc.)
-    - Produce Google E-E-A-T compliant, 100% SEO-optimized articles (500–900 words)
+      no blog/AI/emotional language, no fake attribution).
+    - Produce a strong WHO/WHAT/WHERE/WHEN lead paragraph in 40–60 words.
 
     Parameters
     ----------
@@ -433,8 +329,9 @@ def rewrite_article_with_ai(
         f"REMINDER: Your output MUST:\n"
         f"1. Start with <p><em>By Ferox Times News Desk</em></p>\n"
         f"2. Have a lead paragraph (40–60 words) answering WHO, WHAT, WHERE, WHEN\n"
-        f"3. Include 'According to {source_name}...' or equivalent attribution\n"
-        f"4. Be 500–900 words. Zero blog language. Zero emotional phrases. Zero AI clichés.\n"
+        f"3. STRICTLY EXTRACT AND CLEAN. Do not expand, interpret, or speculate.\n"
+        f"4. ONLY use attribution if present in source or use 'According to available reports'.\n"
+        f"5. No filler phrases. No philosophical lines. No blog-style writing.\n"
         f"Return ONLY the JSON object — no preamble, no markdown, no explanation."
     )
 
@@ -454,11 +351,8 @@ def rewrite_article_with_ai(
                     {"role": "user", "content": user_content}
                 ],
                 response_format={"type": "json_object"},
-                # Temperature 0.68 — slightly lower than before:
-                #   Too low (< 0.3) → robotic, pattern-heavy, AI-detectable
-                #   Too high (> 0.9) → hallucinations, factual drift
-                #   0.68 → authoritative, varied, AP-style while staying factual
-                temperature=0.68,
+                # Temperature 0.45 ensures strict factual adherence and minimal creative hallucination
+                temperature=0.45,
                 # Enough tokens for a 900-word HTML article with headings and sources section
                 max_tokens=3500,
             )

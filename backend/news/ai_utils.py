@@ -160,13 +160,6 @@ At least ONE paragraph must explicitly name the source:
   OR "According to available reports, ..."
 NEVER invent a source. If unclear, use "According to available reports."
 
-─── STEP 5: SOURCES SECTION (MANDATORY — MUST BE LAST) ───
-<h2>Sources</h2>
-<ul>
-<li>{source_name}</li>
-<li>[Any additional news agency referenced in the article, e.g. Reuters, AP, AFP, Vatican News]</li>
-</ul>
-
 ══════════════════════════════════════
   SECTION 4: SEO OPTIMIZATION
 ══════════════════════════════════════
@@ -185,7 +178,7 @@ SEMANTIC KEYWORDS:
 HEADING HIERARCHY:
 ▸ Use <h2> for main sections — never skip to <h3> without a parent <h2>
 ▸ Each heading must contain the focus keyword or a close semantic variant
-▸ 2–3 subheadings total in the body (the "Sources" heading does not count)
+▸ 2–3 subheadings total in the body
 
 ADDITIONAL SEO ELEMENTS:
 ▸ Use <ul>/<li> for any list of 3+ items (improves featured snippet chances)
@@ -240,7 +233,7 @@ No markdown. No code fences. No extra text before or after the JSON.
 {{
   "title": "Your 55–65 character SEO headline here",
   "meta_description": "Your 140–155 character meta description here",
-  "content": "<p><em>By Ferox Times News Desk</em></p><p>Lead paragraph here — 40 to 60 words, WHO WHAT WHERE WHEN, primary keyword in first sentence.</p><h2>Unique Contextual Heading One</h2><p>Body paragraph...</p><h2>Sources</h2><ul><li>{source_name}</li></ul>",
+  "content": "<p><em>By Ferox Times News Desk</em></p><p>Lead paragraph here — 40 to 60 words, WHO WHAT WHERE WHEN, primary keyword in first sentence.</p><h2>Unique Contextual Heading</h2><p>Body paragraphs...</p>",
   "category": "One of the 12 valid categories",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7"]
 }}
@@ -259,7 +252,6 @@ Silently verify every item. If ANY fails → fix it before returning:
 ✔ ALL prohibited AI phrases are completely absent
 ✔ Every paragraph is 2–3 sentences maximum
 ✔ No information is repeated across paragraphs
-✔ Article ends with <h2>Sources</h2> and a <ul> listing all sources
 ✔ Word count is between 500 and 900 words
 ✔ Article is 100% factually faithful to the source material — zero fabrication
 ✔ A Reuters or AP senior editor would approve this as-is
@@ -364,13 +356,6 @@ def _validate_ai_response(data: dict) -> bool:
         )
         data["content"] = "<p><em>By Ferox Times News Desk</em></p>" + content
 
-    # Newsroom standard: sources section must be present
-    if "<h2>Sources</h2>" not in content and "<h2>sources</h2>" not in content.lower():
-        logger.warning(
-            "AI response is missing mandatory <h2>Sources</h2> section. "
-            "This article may fail editorial review."
-        )
-        # Do not hard-fail — log and continue; article may still be usable
 
     meta = str(data.get("meta_description", "")).strip()
     if len(meta) < 50:
@@ -449,8 +434,7 @@ def rewrite_article_with_ai(
         f"1. Start with <p><em>By Ferox Times News Desk</em></p>\n"
         f"2. Have a lead paragraph (40–60 words) answering WHO, WHAT, WHERE, WHEN\n"
         f"3. Include 'According to {source_name}...' or equivalent attribution\n"
-        f"4. End with <h2>Sources</h2><ul><li>{source_name}</li></ul>\n"
-        f"5. Be 500–900 words. Zero blog language. Zero emotional phrases. Zero AI clichés.\n"
+        f"4. Be 500–900 words. Zero blog language. Zero emotional phrases. Zero AI clichés.\n"
         f"Return ONLY the JSON object — no preamble, no markdown, no explanation."
     )
 

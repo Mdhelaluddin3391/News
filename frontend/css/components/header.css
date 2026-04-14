@@ -299,15 +299,15 @@ nav {
     left: 0;
     transform: translateX(-100%);
     width: min(86vw, 360px);
-    height: 100vh;
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh; /* FIX: Handles dynamic browser URL bars smoothly */
     background: var(--primary);
     display: flex;
     flex-direction: column;
     padding-top: 80px;
-    padding-bottom: 20px;
     transition: transform 0.3s ease;
     z-index: 2000;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2); /* Shadow right side pe */
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
     overflow: hidden; 
     overscroll-behavior: contain;
 }
@@ -353,6 +353,7 @@ nav {
     padding: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
+    flex-shrink: 0; /* FIX: Prevents search bar from shrinking */
 }
 
 .mobile-search form {
@@ -383,28 +384,32 @@ nav {
 #mobile-nav-categories {
     display: flex;
     flex-direction: column;
-    flex: 1;              /* Yeh screen ki bachi hui height ko cover kar lega */
-    overflow-y: auto;     /* Isse sirf categories ke andar vertical scrollbar aayega */
-    scrollbar-width: thin; /* Firefox ke liye patla scrollbar */
-    margin-bottom: 10px;  /* Niche auth links se thoda gap rakhne ke liye */
+    flex: 1 1 auto; /* FIX: Allows container to calculate scrolling height properly */
+    overflow-y: auto;     
+    -webkit-overflow-scrolling: touch; /* FIX: Smooth scrolling on iPhones/iPads */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    padding-bottom: 10px;  
 }
 
 #mobile-nav-categories::-webkit-scrollbar {
-    display: none; /* Chrome, Safari ke liye hide karega */
+    display: none; /* Chrome, Safari */
 }
+
 #mobile-nav-categories {
     -ms-overflow-style: none;  /* IE aur Edge ke liye */
     scrollbar-width: none;  /* Firefox ke liye */
 }
 
 
-
-/* Bottom Actions Container */
 .mobile-bottom-actions {
     padding: 15px;
-    margin-top: auto; /* Yeh magic property isko hamesha bottom par fixed rakhegi */
-    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Halka sa border categories se alag karne ke liye */
-    background: var(--primary); /* Menu ka theme color */
+    /* FIX: Prevents hiding behind iPhone home indicator */
+    padding-bottom: max(15px, env(safe-area-inset-bottom)); 
+    margin-top: auto; 
+    border-top: 1px solid rgba(255, 255, 255, 0.1); 
+    background: var(--primary); 
+    flex-shrink: 0; /* FIX: Ensures this section never shrinks */
 }
 
 /* 2x2 Grid Layout */

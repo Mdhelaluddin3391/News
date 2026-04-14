@@ -298,6 +298,7 @@ class ArticleAdmin(admin.ModelAdmin):
         'title', 'colored_status', 'import_badge',
         'category', 'author',
         'published_at', 'views',
+        'frontend_url_link',
         'is_breaking', 'is_editors_pick', 'is_live',
     )
 
@@ -359,12 +360,33 @@ class ArticleAdmin(admin.ModelAdmin):
             'description': 'Article "Published" status mein save karne par auto-post hoga.',
         }),
         ('🔒 System Trackers (Read Only)', {
-            'fields': ('newsletter_sent', 'push_sent', 'web_story_created_at'),
+            'fields': ('frontend_link', 'newsletter_sent', 'push_sent', 'web_story_created_at'),
             'classes': ('collapse',),
         }),
     )
 
     # ── Custom list_display columns ────────────────────────────────────────
+
+    @admin.display(description='🌐 Link')
+    def frontend_url_link(self, obj):
+        import os
+        base_url = os.getenv('FRONTEND_URL', 'http://localhost').rstrip('/')
+        if not obj.slug:
+            return "-"
+        url = f"{base_url}/article/{obj.slug}"
+        return format_html(
+            '<a href="{}" target="_blank" style="background:#3498db; color:white; padding:3px 8px; border-radius:3px; text-decoration:none; font-size:11px;">Copy / View</a>',
+            url
+        )
+
+    @admin.display(description='🌐 Frontend URL')
+    def frontend_link(self, obj):
+        if not obj.slug:
+            return "-"
+        import os
+        base_url = os.getenv('FRONTEND_URL', 'http://localhost').rstrip('/')
+        url = f"{base_url}/article/{obj.slug}"
+        return format_html('<a href="{0}" target="_blank">{0}</a>', url)
 
     @admin.display(description='Status', ordering='status')
     def colored_status(self, obj):
@@ -542,7 +564,7 @@ class ArticleAdmin(admin.ModelAdmin):
 
     # ── Readonly fields ─────────────────────────────────────────────
     def get_readonly_fields(self, request, obj=None):
-        base = ('views', 'newsletter_sent', 'push_sent', 'web_story_created_at')
+        base = ('frontend_link', 'views', 'newsletter_sent', 'push_sent', 'web_story_created_at')
 
         user = request.user
         is_admin = user.is_superuser or getattr(user, 'role', '') == 'admin'

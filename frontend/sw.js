@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const SHELL_CACHE = `ferox-times-shell-${CACHE_VERSION}`;
 const PAGE_CACHE = `ferox-times-pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `ferox-times-assets-${CACHE_VERSION}`;
@@ -176,10 +176,21 @@ async function staleWhileRevalidate(request, cacheName) {
     const cache = await caches.open(cacheName);
     const cachedResponse = await cache.match(request);
 
+    // Network request background me fire karein
     const networkPromise = fetch(request)
-        .then((response) => putInCache(cacheName, request, response))
-        .catch(() => cachedResponse);
+        .then((response) => {
+            // Sirf valid responses ko hi cache me dalein
+            if (response && response.status === 200 && response.type !== 'error') {
+                cache.put(request, response.clone());
+            }
+            return response;
+        })
+        .catch((error) => {
+            console.warn('Network request failed for staleWhileRevalidate', error);
+            return cachedResponse; // Agar network fail ho, toh purana cache bhej dein
+        });
 
+    // Pehle purana cache return karein (fast load), warna network ka wait karein
     return cachedResponse || networkPromise;
 }
 

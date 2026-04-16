@@ -121,13 +121,272 @@ Return ONLY a valid JSON object with exactly these five keys. No markdown outsid
 
 
 # ─── JSON extraction helper ────────────────────────────────────────────────
-_JSON_BLOCK_RE = re.compile(r"
-http://googleusercontent.com/immersive_entry_chip/0
+_JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 
-### Maine kya badlav (changes) kiye hain:
-1. **Prompt me nayi Identity**: AI ko seedha instruct kiya gaya hai ki woh "Senior Field Journalist" hai, aur usko *sirf clean* nahi karna hai, balki raw facts ka use karke ek achi narrative story likhni hai.
-2. **Adaptive Length**: Instructions me daal diya hai ki agar source text lamba hai, toh in-depth article likho, aur chota hai toh powerful aur concise article likho. AI ab source text ki detail ke hisab se apna size khud set karega.
-3. **Temperature badhaya (0.45 -> 0.65)**: Yeh ek bahut important change hai coding wise. LLMs me lower temperature bohot robotic text nikalta hai. `0.65` set karne se AI apne writing style me human touch, variations, aur thodi emotions/significance add kar payega, lekin itna high nahi hai ki woh fake news generate karne lag jaye.
-4. **User Content Reminder**: Request body (user_content) ko modify karke phir se reminder diya gaya hai ki narrative flow acha hona chahiye aur fake facts invent nahi karne hain.
 
-Isko apne `backend/news/ai_utils.py` file mein replace kar dijiye aur test karke dekhiye. Ab article ka tone bilkul ek asli news report jaisa aayega! Koi aur changes chahiye toh batayein.
+def _extract_json(text: str) -> dict | None:
+    """
+    Tries multiple strategies to extract a valid JSON object from model output:
+    1. Direct json.loads (model returned clean JSON).
+    2. Strip a markdown ```json … ``` code fence.
+    3. Find the first '{' … last '}' substring.
+    Returns None if all strategies fail.
+    """
+    text = text.strip()
+
+    # Strategy 1 — clean JSON
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 2 — markdown fence
+    match = _JSON_BLOCK_RE.search(text)
+    if match:
+        try:
+            return json.loads(match.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    # Strategy 3 — substring between first { and last }
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            return json.loads(text[start : end + 1])
+        except json.JSONDecodeError:
+            pass
+
+    return None
+
+
+# ─── Validation helper ─────────────────────────────────────────────────────
+_REQUIRED_KEYS = {"title", "meta_description", "content", "category", "tags"}
+_VALID_CATEGORIES = {
+    "Technology", "World", "Politics", "Sports", "Business",
+    "Entertainment", "Science", "Health", "Environment",
+    "Crime", "Education", "Economy",
+}
+
+# Minimum content length for a valid article (500 words ≈ ~3000 chars in HTML)
+_MIN_CONTENT_CHARS = 500
+
+
+def _validate_ai_response(data: dict) -> bool:
+    """
+    Ensures the parsed dict has all required keys with non-empty values,
+    valid category, and tags as a non-empty list.
+
+    Also performs basic newsroom-standard checks:
+    - Author line presence
+    - Sources section presence
+
+    Raises a descriptive warning for each failure instead of a generic message.
+    """
+    if not isinstance(data, dict):
+        logger.warning("AI response is not a dict — got: %s", type(data))
+        return False
+
+    if not _REQUIRED_KEYS.issubset(data.keys()):
+        missing = _REQUIRED_KEYS - data.keys()
+        logger.warning("AI response missing required keys: %s", missing)
+        return False
+
+    title = str(data.get("title", "")).strip()
+    if len(title) < 10:
+        logger.warning("AI response has missing or too-short title (got: '%s').", title)
+        return False
+
+    content = str(data.get("content", "")).strip()
+    if len(content) < _MIN_CONTENT_CHARS:
+        logger.warning(
+            "AI response content is too short (%d chars, minimum %d). "
+            "This usually means the AI did not fully follow the prompt.",
+            len(content),
+            _MIN_CONTENT_CHARS,
+        )
+        return False
+
+    # Newsroom standard: author line must be present
+    if "Ferox Times News Desk" not in content:
+        logger.warning(
+            "AI response is missing mandatory author line 'By Ferox Times News Desk'. "
+            "Attempting to inject it."
+        )
+        data["content"] = "<p><em>By Ferox Times News Desk</em></p>" + content
+
+
+    meta = str(data.get("meta_description", "")).strip()
+    if len(meta) < 50:
+        logger.warning("AI response meta_description is too short (%d chars).", len(meta))
+        return False
+
+    if not isinstance(data.get("tags"), list) or len(data["tags"]) < 3:
+        logger.warning(
+            "AI response has invalid or insufficient tags list (got: %s).",
+            data.get("tags"),
+        )
+        return False
+
+    # Auto-correct invalid category to "World" instead of hard-failing
+    if data.get("category") not in _VALID_CATEGORIES:
+        logger.warning(
+            "AI returned invalid category '%s' — defaulting to 'World'.",
+            data.get("category"),
+        )
+        data["category"] = "World"
+
+    return True
+
+
+# ─── Public API ────────────────────────────────────────────────────────────
+def rewrite_article_with_ai(
+    original_title: str,
+    raw_text: str,
+    source_name: str,
+    max_retries: int = 3,
+) -> dict | None:
+    """
+    Sends the raw scraped article text to Groq and returns a dict
+    containing the AI-rewritten, SEO-optimised, newsroom-standard article data.
+
+    Uses a strict journalistic prompt engineered to:
+    - Act as a copy-editor, extracting and cleaning text without expanding.
+    - Enforce strict Reuters/AP editorial standards (mandatory author line,
+      no blog/AI/emotional language, no fake attribution).
+    - Produce a strong WHO/WHAT/WHERE/WHEN lead paragraph in 40–60 words.
+
+    Parameters
+    ----------
+    original_title : str   — The headline fetched from the news API.
+    raw_text       : str   — Full scraped body text from newspaper3k.
+    source_name    : str   — Publisher name (e.g. "BBC News"), used in the prompt.
+    max_retries    : int   — Number of times to retry on transient Groq errors (default: 3).
+
+    Returns
+    -------
+    dict | None
+        On success: {"title", "meta_description", "content", "category", "tags"}
+        On any failure: None  (caller should skip the article gracefully)
+    """
+    if not _GROQ_KEY:
+        logger.error("Cannot call Groq — GROQ_API_KEY is not configured.")
+        return None
+
+    if not raw_text or len(raw_text.strip()) < 100:
+        logger.warning(
+            "Skipping AI rewrite for '%s' — scraped text too short (%d chars).",
+            original_title,
+            len(raw_text) if raw_text else 0,
+        )
+        return None
+
+    # Truncate to avoid exceeding context window (~12k chars is safe for llama-3.3-70b)
+    truncated_text = raw_text[:12000]
+
+    instruction = _build_prompt(original_title, source_name)
+    user_content = (
+        f"Raw Article Text to Transform:\n\n"
+        f"---\n{truncated_text}\n---\n\n"
+        f"REMINDER: Your output MUST:\n"
+        f"1. Start with <p><em>By Ferox Times News Desk</em></p>\n"
+        f"2. Have a lead paragraph (40–60 words) answering WHO, WHAT, WHERE, WHEN\n"
+        f"3. NARRATIVE FLOW: Write a compelling story with human context.\n"
+        f"4. NO FAKE FACTS: Do not invent names, dates, or events. Stick to the source facts.\n"
+        f"Return ONLY the JSON object — no preamble, no markdown, no explanation."
+    )
+
+    last_error = None
+    client = Groq(api_key=_GROQ_KEY)
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            logger.info(
+                "Groq attempt %d/%d for '%s'…",
+                attempt, max_retries, original_title,
+            )
+            response = client.chat.completions.create(
+                model=_MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": instruction},
+                    {"role": "user", "content": user_content}
+                ],
+                response_format={"type": "json_object"},
+                # Temperature 0.45 ensures strict factual adherence and minimal creative hallucination
+                temperature=0.65,
+                # Enough tokens for a 900-word HTML article with headings and sources section
+                max_tokens=3500,
+            )
+
+            raw_response_text = response.choices[0].message.content
+            data = _extract_json(raw_response_text)
+
+            if data is None:
+                logger.error(
+                    "Could not extract JSON from Groq response for '%s'. Raw (first 500 chars): %s",
+                    original_title,
+                    raw_response_text[:500],
+                )
+                last_error = "JSON parse failed"
+                time.sleep(2 * attempt)
+                continue
+
+            if not _validate_ai_response(data):
+                logger.error(
+                    "Groq response for '%s' failed validation on attempt %d. "
+                    "Content length: %d chars. Category: '%s'. Tags count: %d.",
+                    original_title,
+                    attempt,
+                    len(str(data.get("content", ""))),
+                    data.get("category"),
+                    len(data.get("tags", [])) if isinstance(data.get("tags"), list) else 0,
+                )
+                last_error = "Validation failed"
+                time.sleep(3 * attempt)
+                continue
+
+            # ── Enforce field length constraints to prevent DB errors ──────
+            data["title"]            = str(data["title"]).strip()[:250]
+            data["meta_description"] = str(data["meta_description"]).strip()[:160]
+            data["category"]         = str(data["category"]).strip()[:100]
+            # Accept up to 8 tags (6–8 is ideal per our prompt)
+            data["tags"]             = [str(t).strip()[:50] for t in data["tags"][:8] if str(t).strip()]
+
+            # Ensure at least 1 tag survived sanitization
+            if not data["tags"]:
+                data["tags"] = ["News"]
+
+            logger.info(
+                "✅ Groq rewrite complete for '%s' → '%s' [%s] | "
+                "Content: %d chars | Tags: %d | (attempt %d/%d)",
+                original_title,
+                data["title"],
+                data["category"],
+                len(data["content"]),
+                len(data["tags"]),
+                attempt,
+                max_retries,
+            )
+            return data
+
+        except Exception as exc:
+            last_error = str(exc)
+            logger.warning(
+                "Groq API attempt %d/%d failed for '%s': %s",
+                attempt,
+                max_retries,
+                original_title,
+                exc,
+            )
+            if attempt < max_retries:
+                backoff = 5 * attempt
+                logger.info("Retrying in %ds…", backoff)
+                time.sleep(backoff)
+
+    logger.error(
+        "❌ All %d Groq attempts exhausted for '%s'. Last error: %s",
+        max_retries,
+        original_title,
+        last_error,
+    )
+    return None

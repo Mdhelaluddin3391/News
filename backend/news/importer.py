@@ -193,6 +193,41 @@ def _scrape_full_text(url: str) -> str:
     return raw_text.strip()
 
 
+def _search_and_scrape_context(title: str, primary_url: str) -> str:
+    """
+    Searches DuckDuckGo for the article title to gather multi-source context.
+    Fetches the top 2-3 results, scrapes their text, and concatenates it.
+    """
+    context = ""
+    try:
+        from duckduckgo_search import DDGS
+        with DDGS() as ddgs:
+            results = list(ddgs.text(title, max_results=3))
+            
+        for res in results:
+            url = res.get("href")
+            if not url or url == primary_url:
+                continue
+            
+            logger.info("  [Multi-Source] Scraping context from: %s", url)
+            # Skip if explicitly disallowed, fail-open applies
+            if not _is_scraping_allowed(url):
+                continue
+            
+            time.sleep(_SCRAPE_DELAY_SECONDS) # Polite delay
+            bg_text = _scrape_full_text(url)
+            
+            if bg_text and len(bg_text.strip()) > _MIN_TEXT_LENGTH:
+                # Truncate each bg source to avoid massive payloads
+                truncated_bg = _clean_text(bg_text, max_length=4000)
+                context += f"\n\n--- Background Source: {res.get('title', url)} ---\n{truncated_bg}\n"
+                
+    except Exception as exc:
+        logger.warning("[Multi-Source] Search Context gathering failed for '%s': %s", title, exc)
+        
+    return context.strip()
+
+
 def _is_duplicate(source_url: str, original_title: str) -> bool:
     """
     Returns True if an article with the same source URL or original title
@@ -210,7 +245,7 @@ def _parse_gnews_item(item: dict) -> dict:
     return {
         "title":       item.get("title", "").strip(),
         "source_url":  item.get("url", "").strip(),
-        "source_name": item.get("source", {}).get("name", "GNews"),
+        "source_name": "Ferox Times",
         # NOTE: 'image' field from GNews is intentionally ignored.
         # Downloading third-party images without a license is copyright infringement.
     }
@@ -348,6 +383,13 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
                 skip_reasons.append(reason)
                 skipped_count += 1
                 continue
+
+            # ── Step 6.5: Aggregate multi-source context via Web Search ───
+            logger.info("[%d/%d] Fetching background search context via DDGS...", idx, len(articles_data))
+            bg_context = _search_and_scrape_context(title, source_url)
+            if bg_context:
+                raw_text += f"\n\n══════════════════════════════════════\nADDITIONAL BACKGROUND CONTEXT:\n{bg_context}"
+                logger.info("[%d/%d] Appended %d chars of multi-source background context.", idx, len(articles_data), len(bg_context))
 
             # ── Step 7: AI rewrite via Groq ─────────────────────────────
             logger.info(

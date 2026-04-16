@@ -326,7 +326,7 @@ def send_push_notifications_task(self, article_id):
 def auto_import_news_task(self):
     """
     Celery Beat task that runs every 30 minutes.
-    Fetches top 5 trending headlines from GNews API, scrapes full text,
+    Fetches top 3 trending headlines from GNews API, scrapes full text,
     rewrites via Groq AI, and saves each as a draft Article.
 
     Error Handling:
@@ -357,10 +357,10 @@ def auto_import_news_task(self):
         return msg
 
     try:
-        logger.info("[auto_import] Starting GNews top-headlines fetch (max=5)…")
+        logger.info("[auto_import] Starting GNews top-headlines fetch (max=3)…")
         gnews_url = (
             f"https://gnews.io/api/v4/top-headlines"
-            f"?category=general&lang=en&max=5&apikey={gnews_key}"
+            f"?category=general&lang=en&max=3&apikey={gnews_key}"
         )
         result = fetch_and_import_news(gnews_url, provider="gnews")
         logger.info("[auto_import] Completed. Result: %s", result)

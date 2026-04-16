@@ -73,9 +73,14 @@ function renderArticle(article) {
     const title = article.title || 'Untitled';
     const sourceName = article.source_name || 'Ferox Times';
     const safeSourceName = typeof window.escapeHtml === 'function' ? window.escapeHtml(sourceName) : sourceName;
-    const sourceHTML = article.source_url 
-        ? `<a href="${article.source_url}" target="_blank" rel="noopener noreferrer" class="source-link" style="color: inherit; text-decoration: underline;">${safeSourceName}</a>`
-        : safeSourceName;
+    const cleanPageUrl = `${window.location.origin}/article/${article.slug}`;
+    
+    // Check if user set a custom external source or left the default Ferox Times
+    const isFeroxSource = sourceName.toLowerCase().includes('ferox');
+    const sourceHref = (article.source_url && !isFeroxSource) ? article.source_url : cleanPageUrl;
+    const targetAttr = (!isFeroxSource) ? 'target="_blank" rel="noopener noreferrer"' : '';
+    
+    const sourceHTML = `<a href="${sourceHref}" ${targetAttr} class="source-link" style="color: inherit; text-decoration: underline;">${safeSourceName}</a>`;
     const date = article.published_at ? formatArticleDate(article.published_at) : 'Unknown date';
     const description = article.description || '';
     let content = article.content || article.description || '';
@@ -83,6 +88,8 @@ function renderArticle(article) {
     const categoryName = article.category ? article.category.name : 'News';
     const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(title) : title;
     const safeDescription = typeof window.escapeHtml === 'function' ? window.escapeHtml(description) : description;
+    const authorName = article.author ? article.author.name : 'Ferox Times News Desk';
+    const authorSlug = article.author?.username || article.author?.slug;
 
     // ======== IN-ARTICLE AD INJECTION LOGIC ========
     const inArticleAdHTML = `<div id="ad-in_article" class="ad-container" style="display: none; margin: 25px 0; text-align: center;"></div>`;
@@ -114,17 +121,12 @@ function renderArticle(article) {
         tagsHTML += '</div>';
     }
 
-    // ✅ SEO FIX: Build clean canonical URL
-    const cleanPageUrl = `${window.location.origin}/article/${article.slug}`;
-
     if (typeof updateSEOMetaTags === 'function') {
         const seoDescription = description.length > 150 ? description.substring(0, 150) + '...' : description;
         updateSEOMetaTags(title, seoDescription, imageUrl, cleanPageUrl, seoKeywords, 'article');
     }
 
     if (typeof injectSchema === 'function') {
-        const authorName = article.author ? article.author.name : 'Ferox Times Staff';
-        const authorSlug = article.author?.username || article.author?.slug;
         // ✅ SEO FIX: Use clean URL for author schema
         const authorUrl = authorSlug ? `${window.location.origin}/author/${authorSlug}` : window.location.origin;
 
@@ -245,6 +247,7 @@ function renderArticle(article) {
                 ${liveBadgeHTML}
             <h1 class="detail-title">${safeTitle}</h1>
             <div class="detail-meta" style="margin-bottom: 1rem; border-bottom: none;">
+                <span class="detail-author"><i class="fas fa-user-edit" style="color: #64748b;"></i> ${typeof window.escapeHtml === 'function' ? window.escapeHtml(authorName) : authorName}</span>
                 <span class="detail-source">${sourceHTML}</span>
                 <span class="detail-date">${date}</span>
                 <span><i class="far fa-eye"></i> ${article.views || 0} views</span>

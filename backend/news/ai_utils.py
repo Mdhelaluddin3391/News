@@ -10,8 +10,7 @@ Flow:
 
 Key Features:
    Transforms raw data into high-quality, human-like journalism.
-   Adapts length based on source material.
-   Mandatory author line: "By Ferox Times News Desk"
+   Adapts length based on source material to produce a well-rounded article.
    Strong narrative flow with human context and significance.
    Strict adherence to factual accuracy (no fake facts).
 """
@@ -55,9 +54,9 @@ Original Headline: {original_title}
   SECTION 1: WRITING STYLE & TONE (ULTRA-PROFESSIONAL)
 ══════════════════════════════════════
 
-▸ TONE: Write in the objective, authoritative, and crisp tone of a top-tier news agency (like Reuters or Associated Press). Avoid all fluff, sensationalism, and conversational language.
+▸ TONE: Write in the objective, authoritative, and crisp tone of Ferox Times (like Reuters or Associated Press). Avoid all fluff, sensationalism, and conversational language.
 ▸ BAN AI CLICHÉS: NEVER use robotic transition words or phrases such as "Moreover," "Furthermore," "In conclusion," "It is important to note," "Delves into," "A testament to," "Tapestry," "Landscape," or "In today's ever-evolving world."
-▸ ADAPTIVE LENGTH: Synthesize the primary and background sources. If the combined text is rich, write a comprehensive, deeply contextualized long-form article. If short, write a powerful, dense report.
+▸ COMPREHENSIVE COVERAGE: Deeply synthesize the primary text and DuckDuckGo background search results. Write a complete, well-rounded article. It should neither be artificially short nor padded. If the context is rich, write a comprehensive long-form piece. Act like a true, accurate journalist.
 ▸ NARRATIVE FLOW: Present facts logically. Ground the story with context. Explain WHY this event is happening, not just WHAT happened.
 ▸ ATTRIBUTION: Attribute claims professionally using varied phrases like "statements indicated," "data released showed," rather than just "According to...".
 
@@ -68,22 +67,19 @@ Original Headline: {original_title}
 Build the article in EXACTLY this order inside the "content" field.
 Use ONLY these HTML tags: <p>, <h2>, <ul>, <li>, <blockquote>, <strong>, <em>
 
-─── STEP 1: AUTHOR LINE (MANDATORY — MUST BE FIRST) ───
-<p><em>By Ferox Times News Desk</em></p>
-
-─── STEP 2: THE LEAD (HOOK) ───
+─── STEP 1: THE LEAD (HOOK) ───
 A hard-hitting opening paragraph (40–60 words) that immediately answers WHO, WHAT, WHERE, and WHEN without any preamble.
 
-─── STEP 3: THE BODY & CONTEXT ───
+─── STEP 2: THE BODY & CONTEXT ───
 - Keep paragraphs short (2–4 sentences) for high readability.
 - Use <h2> for subheadings to break up major themes (use contextual, professional headings, avoid generic ones like "Background").
 - Formulate the narrative by weaving together the primary event and any background context provided.
 
-─── STEP 4: QUOTES & REALITY LAYER ───
+─── STEP 3: QUOTES & REALITY LAYER ───
 - Extract and highlight real quotes using <blockquote> if available in the text.
 - Ground the report in reality by explaining the tangible impact on people, markets, or policies.
 
-─── STEP 5: THE CLOSING ───
+─── STEP 4: THE CLOSING ───
 End with a sharp, forward-looking observation regarding the broader implications or next steps. DO NOT summarize the article. DO NOT use words like "Ultimately" or "In summary".
 
 ══════════════════════════════════════
@@ -112,7 +108,7 @@ Return ONLY a valid JSON object with exactly these five keys. No markdown outsid
 {{
   "title": "Your natural, strong headline here",
   "meta_description": "Your compelling meta description here",
-  "content": "<p><em>By Ferox Times News Desk</em></p><p>Strong hook paragraph...</p><h2>Contextual Heading</h2><p>Body paragraphs...</p>",
+  "content": "<p>Strong hook paragraph...</p><h2>Contextual Heading</h2><p>Body paragraphs...</p>",
   "category": "One of the 12 valid categories",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]
 }}
@@ -177,8 +173,7 @@ def _validate_ai_response(data: dict) -> bool:
     valid category, and tags as a non-empty list.
 
     Also performs basic newsroom-standard checks:
-    - Author line presence
-    - Sources section presence
+    - Content length checks
 
     Raises a descriptive warning for each failure instead of a generic message.
     """
@@ -205,15 +200,6 @@ def _validate_ai_response(data: dict) -> bool:
             _MIN_CONTENT_CHARS,
         )
         return False
-
-    # Newsroom standard: author line must be present
-    if "Ferox Times News Desk" not in content:
-        logger.warning(
-            "AI response is missing mandatory author line 'By Ferox Times News Desk'. "
-            "Attempting to inject it."
-        )
-        data["content"] = "<p><em>By Ferox Times News Desk</em></p>" + content
-
 
     meta = str(data.get("meta_description", "")).strip()
     if len(meta) < 50:
@@ -250,9 +236,8 @@ def rewrite_article_with_ai(
     containing the AI-rewritten, SEO-optimised, newsroom-standard article data.
 
     Uses a strict journalistic prompt engineered to:
-    - Act as a copy-editor, extracting and cleaning text without expanding.
-    - Enforce strict Reuters/AP editorial standards (mandatory author line,
-      no blog/AI/emotional language, no fake attribution).
+    - Act as a copy-editor, extracting and cleaning text without expanding artificially.
+    - Enforce strict Reuters/AP editorial standards (no blog/AI/emotional language, no fake attribution).
     - Produce a strong WHO/WHAT/WHERE/WHEN lead paragraph in 40–60 words.
 
     Parameters
@@ -288,10 +273,9 @@ def rewrite_article_with_ai(
         f"Raw Article Text to Transform:\n\n"
         f"---\n{truncated_text}\n---\n\n"
         f"REMINDER: Your output MUST:\n"
-        f"1. Start with <p><em>By Ferox Times News Desk</em></p>\n"
-        f"2. Have a lead paragraph (40–60 words) answering WHO, WHAT, WHERE, WHEN\n"
-        f"3. NARRATIVE FLOW: Write a compelling story with human context.\n"
-        f"4. NO FAKE FACTS: Do not invent names, dates, or events. Stick to the source facts.\n"
+        f"1. Have a lead paragraph (40–60 words) answering WHO, WHAT, WHERE, WHEN\n"
+        f"2. NARRATIVE FLOW: Write a compelling story with human context.\n"
+        f"3. NO FAKE FACTS: Do not invent names, dates, or events. Stick to the source facts.\n"
         f"Return ONLY the JSON object — no preamble, no markdown, no explanation."
     )
 

@@ -88,7 +88,7 @@ function renderArticle(article) {
     const categoryName = article.category ? article.category.name : 'News';
     const safeTitle = typeof window.escapeHtml === 'function' ? window.escapeHtml(title) : title;
     const safeDescription = typeof window.escapeHtml === 'function' ? window.escapeHtml(description) : description;
-    const authorName = article.author ? article.author.name : 'Ferox Times News Desk';
+    const authorName = article.author ? article.author.name : 'Ferox Times';
     const authorSlug = article.author?.username || article.author?.slug;
 
     // ======== IN-ARTICLE AD INJECTION LOGIC ========

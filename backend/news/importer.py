@@ -8,7 +8,7 @@ Pipeline per article:
       → original_content cleared (legal compliance)
 
 Newsroom Standards (enforced by ai_utils.py prompt):
-  ✅ Author line           — Every article opens with "By Ferox Times News Desk".
+  ✅ Author line           — Every article opens with "By Ferox Times".
   ✅ Strong lead           — WHO, WHAT, WHERE, WHEN answered in first 40–60 words.
   ✅ Source attribution    — "According to <source>..." in every article body.
   ✅ HTML Sources section  — <h2>Sources</h2> with <ul> listed at end of every article.
@@ -420,14 +420,13 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
                 logger.info("Created new category: '%s'", category_name)
 
             # ── Step 8.5: Resolve Virtual Reporter (AI User + Author profile) ───
-            # The display name "Ferox Times News Desk" matches the author line
+            # The display name "Ferox Times" matches the author line
             # injected into every article's HTML content by ai_utils.py:
-            #   <p><em>By Ferox Times News Desk</em></p>
             User = get_user_model()
             ai_user, user_created = User.objects.get_or_create(
                 email="ai_desk@feroxtimes.com",
                 defaults={
-                    "name": "Ferox Times News Desk",
+                    "name": "Ferox Times",
                     "role": "reporter",
                     "is_staff": False,
                     "is_active": True,
@@ -441,19 +440,19 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
             if user_created:
                 ai_user.set_unusable_password()  # Prevent anyone from logging in as this user
                 ai_user.save()
-                logger.info("Created Ferox Times News Desk user: '%s'", ai_user.email)
+                logger.info("Created Ferox Times user: '%s'", ai_user.email)
 
             # Ensure an Author profile exists for the AI user.
             # Article.author requires an Author instance, not a User instance.
             ai_author, author_created = Author.objects.get_or_create(
                 user=ai_user,
                 defaults={
-                    "role": "News Desk",
+                    "role": "Reporter",
                 }
             )
             if author_created:
                 logger.info(
-                    "Created Author profile for News Desk user: '%s'", ai_user.email
+                    "Created Author profile for Ferox Times user: '%s'", ai_user.email
                 )
 
             # ── Step 9: Build the Article object ──────────────────────────

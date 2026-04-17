@@ -435,7 +435,6 @@ def auto_post_article_task(self, article_id):
             data={
                 "chat_id": settings.TELEGRAM_CHANNEL_ID,
                 "text": message,
-                "parse_mode": "HTML",
             },
             timeout=15,
         )

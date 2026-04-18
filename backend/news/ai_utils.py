@@ -37,83 +37,65 @@ _MODEL_NAME = "llama-3.3-70b-versatile"
 
 def _build_prompt(original_title: str, source_name: str) -> str:
     """
-    Returns the journalistic prompt sent to Groq.
+    Returns the master journalistic prompt for the Auto-Import pipeline.
+    Engineered to produce AP/Reuters-standard news articles.
     """
-    return f"""You are a Senior Field Journalist and Editorial Writer at Ferox Times.
-Your task is NOT just to clean or summarize. Your task is to transform raw source material into a high-quality, human-like, SEO-optimized news article that feels like it was written by a real journalist on the ground.
+    return (
+        "You are a veteran Senior Correspondent at Ferox Times, a global news publication.\n"
+        "held to the same editorial standards as Reuters, AP, and the BBC.\n\n"
+        f"SOURCE: {source_name}\n"
+        f"HEADLINE: {original_title}\n\n"
+        "You have been given raw source text and DuckDuckGo background research.\n"
+        "Write a COMPLETE, ORIGINAL, PUBLICATION-READY news article.\n\n"
+        "EDITORIAL RULES (non-negotiable):\n"
+        "- Write in third person. Never use you/we/our.\n"
+        "- Every sentence must carry new information. No padding.\n"
+        "- Vary sentence length: short for impact, longer for causality.\n"
+        "- First word of the article must be a proper noun or number, never A/The/In.\n"
+        "- BANNED PHRASES: Moreover, Furthermore, Additionally, In conclusion, To summarize,\n"
+        "  It is important to note, Needless to say, Delves into, A testament to,\n"
+        "  Tapestry, Landscape, Ecosystem, Groundbreaking, Game-changing, Cutting-edge,\n"
+        "  Robust, Shed light on, Pave the way, Paradigm shift, Holistic, Synergy,\n"
+        "  In today's world, In the modern era, Ever-evolving, Unprecedented (unless citing the precedent).\n"
+        "- ATTRIBUTION: Rotate phrases: officials said, data showed, the filing indicated,\n"
+        "  statements confirmed, the announcement read, records showed, sources said.\n\n"
+        "ARTICLE STRUCTURE (7 blocks, minimum 650 words of readable content):\n"
+        "Use ONLY these HTML tags: <p> <h2> <h3> <ul> <li> <blockquote> <strong> <em>\n\n"
+        "BLOCK 1 - THE LEAD (no heading): 45-65 words. WHO+WHAT+WHERE+WHEN+WHY NOW.\n"
+        "  First word = proper noun or number. No dependent clauses before main clause.\n\n"
+        "BLOCK 2 - NUT GRAF (no heading): 1-2 sentences. The so-what for an uninformed reader.\n\n"
+        "BLOCK 3 - THE DEVELOPMENT (no heading): 3-4 paragraphs. Logical factual narrative.\n"
+        "  Each paragraph = one complete idea. Use <strong> max once for the single most critical figure.\n\n"
+        "BLOCK 4 - CONTEXT AND HISTORY (mandatory <h2>, specific heading): 2-3 paragraphs.\n"
+        "  Place event in historical/legal/economic context. Heading must be story-specific.\n\n"
+        "BLOCK 5 - HUMAN STAKES AND IMPACT (mandatory <h2>, specific heading): Who is affected and how?\n"
+        "  Use concrete numbers. Real quotes in <blockquote> if available.\n\n"
+        "BLOCK 6 - OFFICIAL RESPONSES (mandatory <h2>, specific heading): Key stakeholder positions.\n"
+        "  Include at least one countervailing perspective if relevant.\n\n"
+        "BLOCK 7 - ROAD AHEAD (mandatory <h2>, specific heading): 2 paragraphs.\n"
+        "  Grounded in upcoming events, dates, hearings, or deadlines from the research.\n"
+        "  Final sentence: one sharp factual observation about the broader implication.\n\n"
+        "SEO METADATA:\n"
+        "- TITLE: 58-68 characters. Specific: include a name, number, or place. No clickbait.\n"
+        "  Good: Pakistan Raises Interest Rate to 22 Percent Amid IMF Pressure\n"
+        "  Bad: Shocking Decision Rocks Pakistan Economy\n"
+        "- META DESCRIPTION: 148-160 characters. Extends headline with second key fact. Active voice.\n"
+        "- CATEGORY: Exactly one of: Technology, World, Politics, Sports, Business,\n"
+        "  Entertainment, Science, Health, Environment, Crime, Education, Economy\n"
+        "- TAGS: Exactly 7 tags, title-cased, max 4 words each.\n"
+        "  2 broad topic tags, 2 named entity tags, 2 issue/event tags, 1 type tag.\n"
+        "  Type tag must be one of: Breaking News, Analysis, Report, Feature, Investigation\n\n"
+        "OUTPUT: Return ONLY a valid JSON object with exactly these five keys.\n"
+        "No markdown fences. No preamble. No explanation. Pure JSON only.\n\n"
+        "{{\n"
+        '  \"title\": \"Specific fact-based headline 58-68 chars\",\n'
+        '  \"meta_description\": \"Expanded detail, active voice, 148-160 chars.\",\n'
+        '  \"content\": \"<p>Lead...</p><h2>Context Heading</h2><p>...</p>\",\n'
+        '  \"category\": \"One valid category\",\n'
+        '  \"tags\": [\"Broad Topic\", \"Named Entity\", \"Named Entity 2\", \"Issue\", \"Event\", \"Second Issue\", \"Report\"]\n'
+        "}}"
+    )
 
-The provided raw text is ONLY for your knowledge base. Do not just blindly summarize it. Use the facts within it to write a compelling news story.
-
-══════════════════════════════════════
-  ARTICLE CONTEXT
-══════════════════════════════════════
-
-Original Source  : {source_name}
-Original Headline: {original_title}
-
-══════════════════════════════════════
-  SECTION 1: WRITING STYLE & TONE (ULTRA-PROFESSIONAL)
-══════════════════════════════════════
-
-▸ TONE: Write in the objective, authoritative, and crisp tone of Ferox Times (like Reuters or Associated Press). Avoid all fluff, sensationalism, and conversational language.
-▸ BAN AI CLICHÉS: NEVER use robotic transition words or phrases such as "Moreover," "Furthermore," "In conclusion," "It is important to note," "Delves into," "A testament to," "Tapestry," "Landscape," or "In today's ever-evolving world."
-▸ COMPREHENSIVE COVERAGE: Deeply synthesize the primary text and DuckDuckGo background search results. Write a complete, well-rounded article. It should neither be artificially short nor padded. If the context is rich, write a comprehensive long-form piece. Act like a true, accurate journalist.
-▸ NARRATIVE FLOW: Present facts logically. Ground the story with context. Explain WHY this event is happening, not just WHAT happened.
-▸ ATTRIBUTION: Attribute claims professionally using varied phrases like "statements indicated," "data released showed," rather than just "According to...".
-
-══════════════════════════════════════
-  SECTION 2: ARTICLE STRUCTURE
-══════════════════════════════════════
-
-Build the article in EXACTLY this order inside the "content" field.
-Use ONLY these HTML tags: <p>, <h2>, <ul>, <li>, <blockquote>, <strong>, <em>
-
-─── STEP 1: THE LEAD (HOOK) ───
-A hard-hitting opening paragraph (40–60 words) that immediately answers WHO, WHAT, WHERE, and WHEN without any preamble.
-
-─── STEP 2: THE BODY & CONTEXT ───
-- Keep paragraphs short (2–4 sentences) for high readability.
-- Use <h2> for subheadings to break up major themes (use contextual, professional headings, avoid generic ones like "Background").
-- Formulate the narrative by weaving together the primary event and any background context provided.
-
-─── STEP 3: QUOTES & REALITY LAYER ───
-- Extract and highlight real quotes using <blockquote> if available in the text.
-- Ground the report in reality by explaining the tangible impact on people, markets, or policies.
-
-─── STEP 4: THE CLOSING ───
-End with a sharp, forward-looking observation regarding the broader implications or next steps. DO NOT summarize the article. DO NOT use words like "Ultimately" or "In summary".
-
-══════════════════════════════════════
-  SECTION 3: STRICT RULES
-══════════════════════════════════════
-
-▸ NO FAKE FACTS: Rely entirely on the provided knowledge base (primary + background text). Do not hallucinate dates, names, or figures.
-▸ NO OPINIONS: You are an impartial reporter.
-▸ NO BLOG FORMATTING: Do not ask rhetorical questions to the reader. Do not use 'we' or 'you'.
-
-══════════════════════════════════════
-  SECTION 4: SEO METADATA
-══════════════════════════════════════
-
-▸ TITLE: 55–65 characters. Strong, natural headline (not robotic).
-▸ META DESCRIPTION: 140–155 characters. Compelling and makes readers want to click.
-▸ CATEGORY: Choose EXACTLY ONE: Technology, World, Politics, Sports, Business, Entertainment, Science, Health, Environment, Crime, Education, Economy.
-▸ TAGS: Provide exactly 6–8 meaningful, specific tags.
-
-══════════════════════════════════════
-  OUTPUT FORMAT (STRICT — DO NOT DEVIATE)
-══════════════════════════════════════
-
-Return ONLY a valid JSON object with exactly these five keys. No markdown outside the JSON, no extra text.
-
-{{
-  "title": "Your natural, strong headline here",
-  "meta_description": "Your compelling meta description here",
-  "content": "<p>Strong hook paragraph...</p><h2>Contextual Heading</h2><p>Body paragraphs...</p>",
-  "category": "One of the 12 valid categories",
-  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]
-}}
-"""
 
 
 # ─── JSON extraction helper ────────────────────────────────────────────────
@@ -164,8 +146,8 @@ _VALID_CATEGORIES = {
     "Crime", "Education", "Economy",
 }
 
-# Minimum content length for a valid article (500 words ≈ ~3000 chars in HTML)
-_MIN_CONTENT_CHARS = 500
+# Minimum content length for a valid article (650 words ≈ ~4000 chars in HTML)
+_MIN_CONTENT_CHARS = 2000
 
 
 def _validate_ai_response(data: dict) -> bool:
@@ -203,8 +185,8 @@ def _validate_ai_response(data: dict) -> bool:
         return False
 
     meta = str(data.get("meta_description", "")).strip()
-    if len(meta) < 50:
-        logger.warning("AI response meta_description is too short (%d chars).", len(meta))
+    if len(meta) < 100:
+        logger.warning("AI response meta_description is too short (%d chars, SEO needs >=100).", len(meta))
         return False
 
     if not isinstance(data.get("tags"), list) or len(data["tags"]) < 3:
@@ -297,9 +279,9 @@ def rewrite_article_with_ai(
                 ],
                 response_format={"type": "json_object"},
                 # Temperature 0.45 ensures strict factual adherence and minimal creative hallucination
-                temperature=0.65,
+                temperature=0.40,  # Low temp = factual accuracy
                 # Enough tokens for a 900-word HTML article with headings and sources section
-                max_tokens=3500,
+                max_tokens=4500,   # Enough for 7-block structure
             )
 
             raw_response_text = response.choices[0].message.content
@@ -387,102 +369,95 @@ def _build_writer_prompt(
     language: str,
 ) -> str:
     """
-    Builds the Groq system prompt for the Admin AI Article Writer.
-    This is different from the auto-import prompt — it takes a human-written
-    description and creates a fresh, original article from internet research.
+    Builds the ultra-professional Groq prompt for the Admin AI Article Writer.
+    Takes an editor brief and returns a publication-ready news article.
     """
-    tone_instructions = {
-        "neutral":       "Authoritative, objective, and factual — standard AP/Reuters news tone.",
-        "breaking":      "Urgent and high-impact. Lead with the most critical fact. Use short, punchy sentences.",
-        "analysis":      "Deep, explanatory, and context-rich. Explain the 'why' behind events. Include expert context.",
-        "feature":       "Narrative-driven, immersive storytelling with human interest angles.",
-        "opinion":       "First-person analytical perspective. Present a clear, well-reasoned argument.",
-    }.get(tone, "Authoritative, objective, and factual — standard AP/Reuters news tone.")
+    tone_map = {
+        "neutral":  "Standard news report: objective, factual, third-person. No emotion.",
+        "breaking": "Breaking news urgent register: short sentences, present tense, critical fact FIRST.",
+        "analysis": "In-depth analytical piece: explain causes and consequences. Use expert framing.",
+        "feature":  "Long-form feature: narrative arc, vivid scenes grounded in facts.",
+        "opinion":  "Signed editorial: evidence-backed argument. First-person allowed ONLY in this mode.",
+    }
+    tone_instruction = tone_map.get(tone, tone_map["neutral"])
 
-    lang_note = ""
+    lang_block = ""
     if language == "urdu":
-        lang_note = "IMPORTANT: Write the ENTIRE article — title, meta_description, AND content — in Urdu (Roman or script as appropriate). JSON keys must remain in English."
+        lang_block = (
+            "LANGUAGE: Write the ENTIRE article (title, meta_description, AND content) "
+            "in Urdu script. JSON keys must remain in English. "
+            "Apply the same journalistic standards in Urdu register."
+        )
     elif language == "both":
-        lang_note = "Write the content in BOTH English and Urdu. First the full English version, then the Urdu translation below it."
+        lang_block = (
+            "LANGUAGE: Write the full article TWICE inside content. "
+            "First: complete English version. Then <hr>. Then: complete Urdu translation. "
+            "Title and meta_description in English only."
+        )
 
-    return f"""You are a Senior Journalist and Editorial Writer at Ferox Times.
-
-A senior editor has given you this assignment brief:
-"{description}"
-
-You have been provided with internet research (from DuckDuckGo) as a knowledge base.
-Your task is to write a COMPLETE, ORIGINAL, high-quality news article based ONLY on facts found in the knowledge base.
-
-══════════════════════════════════════
-  ASSIGNMENT SETTINGS
-══════════════════════════════════════
-
-Category  : {category}
-Tone Style: {tone_instructions}
-{lang_note}
-
-══════════════════════════════════════
-  SECTION 1: WRITING RULES
-══════════════════════════════════════
-
-▸ TONE: {tone_instructions}
-▸ BAN AI CLICHÉS: NEVER use "Moreover," "Furthermore," "In conclusion," "It is important to note," "Delves into," "A testament to," "Tapestry," "Landscape," or "In today's ever-evolving world."
-▸ COMPREHENSIVE: Write a complete, well-structured article of at least 600 words. Synthesize all provided research.
-▸ NARRATIVE FLOW: Present facts logically. Ground the story with context. Explain WHY this matters.
-▸ ATTRIBUTION: Attribute claims professionally using varied phrases like "data released by," "statements indicated," "reports confirmed." Do NOT use fake attributions.
-▸ NO OPINIONS (unless tone is 'opinion'): You are an impartial reporter.
-
-══════════════════════════════════════
-  SECTION 2: ARTICLE STRUCTURE
-══════════════════════════════════════
-
-Use ONLY these HTML tags: <p>, <h2>, <h3>, <ul>, <li>, <blockquote>, <strong>, <em>
-
-─── STEP 1: THE LEAD ───
-A hard-hitting opening paragraph (40–70 words) answering WHO, WHAT, WHERE, and WHEN.
-
-─── STEP 2: THE BODY ───
-- Short paragraphs (2–4 sentences) for high readability.
-- Use <h2> for major section headings (context-specific, not generic).
-- Weave together facts from all research sources.
-
-─── STEP 3: QUOTES & REALITY ───
-- Extract real quotes using <blockquote> if available in the research.
-- Explain the tangible impact on people, markets, or policies.
-
-─── STEP 4: THE CLOSING ───
-A sharp, forward-looking observation about broader implications. DO NOT summarize.
-
-══════════════════════════════════════
-  SECTION 3: STRICT RULES
-══════════════════════════════════════
-
-▸ NO FAKE FACTS: Only use facts from the provided research. Do not hallucinate dates, names, or statistics.
-▸ NO PLAGIARISM: Rewrite and synthesize — do not copy sentences verbatim.
-
-══════════════════════════════════════
-  SECTION 4: SEO METADATA
-══════════════════════════════════════
-
-▸ TITLE: 55–70 characters. Strong, natural headline.
-▸ META DESCRIPTION: 140–160 characters. Compelling, makes readers click.
-▸ CATEGORY: Must be EXACTLY: {category}
-▸ TAGS: Exactly 6–8 meaningful, specific tags.
-
-══════════════════════════════════════
-  OUTPUT FORMAT (STRICT)
-══════════════════════════════════════
-
-Return ONLY a valid JSON object with exactly these five keys. No markdown, no extra text.
-
-{{
-  "title": "Your natural, strong headline here",
-  "meta_description": "Compelling meta description here",
-  "content": "<p>Strong lead...</p><h2>Heading</h2><p>Body...</p>",
-  "category": "{category}",
-  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]
-}}
-"""
+    return (
+        "You are a 20-year veteran Senior Correspondent and Deputy Editor at Ferox Times, "
+        "held to Reuters, AP, BBC and Dawn editorial standards.\n\n"
+        f"EDITOR BRIEF: {description}\n\n"
+        "You have internet research as your knowledge base.\n"
+        "Write a COMPLETE, PUBLICATION-READY article that passes any chief editor without revision.\n\n"
+        f"CATEGORY: {category}\n"
+        f"TONE: {tone_instruction}\n"
+        f"{lang_block}\n\n"
+        "THE IRON RULES:\n"
+        "- Third person only (unless tone=opinion). Never you/we/our.\n"
+        "- Every claim from the research only. Zero hallucination.\n"
+        "- State facts. Do not tell reader how to feel.\n"
+        "- Every paragraph must add new information or be deleted.\n"
+        "- Vary sentence rhythm deliberately.\n"
+        "- Numbers make news concrete. Use them: 47 percent not nearly half.\n"
+        "- BANNED: Moreover, Furthermore, Additionally, In conclusion, To summarize,\n"
+        "  It is important to note, Needless to say, Delves into, A testament to,\n"
+        "  Tapestry, Landscape, Ecosystem, Groundbreaking, Game-changing, Cutting-edge,\n"
+        "  Robust, Shed light on, Pave the way, Paradigm shift, Holistic, Synergy,\n"
+        "  In today's fast-paced world, Ever-evolving, Unprecedented (cite the precedent if using).\n"
+        "  Any rhetorical question to reader. Let us explore. As mentioned earlier.\n"
+        "- ATTRIBUTION (rotate, never repeat same phrase twice): officials said, data showed,\n"
+        "  the filing indicated, statements confirmed, records showed, sources said,\n"
+        "  the announcement read, the decision document showed.\n\n"
+        "ARTICLE STRUCTURE (7 blocks mandatory, minimum 700 words readable content):\n"
+        "HTML tags ONLY: <p> <h2> <h3> <ul> <li> <blockquote> <strong> <em>\n\n"
+        "BLOCK 1 - THE LEAD (no heading): 45-65 words. WHO+WHAT+WHERE+WHEN+WHY NOW.\n"
+        "  First word must be a proper noun or number. No scene-setting preamble.\n\n"
+        "BLOCK 2 - NUT GRAF (no heading): 1-2 sentences. Connects to bigger ongoing story/trend.\n\n"
+        "BLOCK 3 - THE DEVELOPMENT (no heading): 3-4 paragraphs. Factual narrative in logical order.\n"
+        "  Each paragraph = one complete idea. <strong> on single most critical figure (once only).\n\n"
+        "BLOCK 4 - CONTEXT AND HISTORY (mandatory <h2>, story-specific heading NOT generic Background):\n"
+        "  2-3 paragraphs. Historical, legal, or economic context. Reader unfamiliar with topic understands fully.\n\n"
+        "BLOCK 5 - HUMAN STAKES AND IMPACT (mandatory <h2>, story-specific heading NOT generic Impact):\n"
+        "  Who is directly affected and how? Concrete numbers, not vague descriptions.\n"
+        "  Real quotes in <blockquote> if available. One <ul> list allowed for 4+ distinct consequences.\n\n"
+        "BLOCK 6 - OFFICIAL RESPONSES AND EXPERT ANALYSIS (mandatory <h2>, story-specific heading):\n"
+        "  Quote or paraphrase key stakeholders. Include countervailing perspective if relevant.\n\n"
+        "BLOCK 7 - THE ROAD AHEAD (mandatory <h2>, story-specific heading NOT generic What Comes Next):\n"
+        "  2 paragraphs. Verified upcoming events, dates, hearings, or deadlines from research.\n"
+        "  Final sentence: sharp factual observation about broader implication. No moral judgement.\n\n"
+        "SEO METADATA:\n"
+        "- TITLE: 58-68 characters. Include primary keyword naturally. Specific: name, number, or place.\n"
+        "  No sensationalism. No clickbait. No question format.\n"
+        "  Good example: IMF Approves 3bn Pakistan Bailout, Demands Fuel Price Hike\n"
+        "  Bad example: Shocking Move by IMF Rattles Pakistan Struggling Economy\n"
+        "- META DESCRIPTION: 148-160 characters. Extends headline with second most important fact.\n"
+        "  Active voice. Complete sentence. No trailing ellipsis.\n"
+        f"- CATEGORY: Must be exactly: {category}\n"
+        "- TAGS: Exactly 7 tags, title-cased, max 4 words each.\n"
+        "  2 broad topic, 2 named entity, 2 issue/event, 1 type tag.\n"
+        "  Type tag must be one of: Breaking News, Analysis, Report, Feature, Investigation\n\n"
+        "OUTPUT: Return ONLY a valid JSON object with exactly these five keys.\n"
+        "No markdown fences. No preamble. No explanation. Pure JSON only.\n\n"
+        "{{\n"
+        '  \"title\": \"Specific fact-based headline 58-68 chars\",\n'
+        '  \"meta_description\": \"Second key fact, active voice, 148-160 chars\",\n'
+        '  \"content\": \"<p>Lead...</p><p>Nut graf...</p><h2>Specific Context Heading</h2><p>...</p>\",\n'
+        f'  \"category\": \"{category}\",\n'
+        '  \"tags\": [\"Broad Topic\", \"Named Entity\", \"Named Entity 2\", \"Issue\", \"Event\", \"Second Issue\", \"Report\"]\n'
+        "}}"
+    )
 
 
 def _search_web_for_topic(description: str, max_results: int = 5) -> str:
@@ -649,8 +624,8 @@ def generate_article_from_prompt(
                     {"role": "user",   "content": user_content},
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.60,
-                max_tokens=4000,
+                temperature=0.42,  # Slightly higher for writer prose
+                max_tokens=5000,   # Writer gets more tokens for 700+ words
             )
 
             raw_response = response.choices[0].message.content

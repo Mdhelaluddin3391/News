@@ -32,6 +32,7 @@ from interactions.views import SubscribeNewsletterView, UnsubscribeNewsletterVie
 from news.feeds import LatestArticlesFeed
 from news.sitemaps import ArticleSitemap, AuthorSitemap, CategorySitemap, TagSitemap
 from users.views import CookieTokenRefreshView, CsrfCookieView, LogoutView, set_auth_cookies
+from news.admin_views import AIArticleWriterView
 
 User = get_user_model()
 
@@ -77,6 +78,7 @@ urlpatterns = [
     path('health/', HealthCheckView.as_view(), name='health_check'),
     path('health/db/', DatabaseHealthCheckView.as_view(), name='health_check_db'),
     path('health/redis/', RedisHealthCheckView.as_view(), name='health_check_redis'),
+    path('admin/news/ai-writer/', AIArticleWriterView.as_view(), name='admin-ai-writer'),
     path('admin/', admin.site.urls),
     path('tinymce/', include('tinymce.urls')),
     path('api/', include('core.urls')),

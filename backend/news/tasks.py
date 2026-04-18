@@ -392,55 +392,93 @@ def auto_post_article_task(self, article_id):
         return f"Article {article_id} not found."
 
     article_url = f"{settings.FRONTEND_URL}/article/{article.slug}"
-    short_desc = article.description[:100] + "..." if article.description else ""
-    message = (
-        f"🚨 {article.title}\n\n"
-        f"📝 {short_desc}\n\n"
-        f"🔗 Read more:\n{article_url}\n\n"
+    short_desc = (article.description[:150].strip() + "...") if article.description else ""
+
+    # HTML-formatted Telegram message (bold + clickable link)
+    tg_message = (
+        f"<b>{article.title}</b>\n\n"
+        f"{short_desc}\n\n"
+        f'<a href="{article_url}">\U0001f517 Puri Khabar Parhein</a>\n\n'
+        "#FeroxTimes"
+    )
+    # Plain text for Facebook / Twitter
+    plain_message = (
+        f"\U0001f6a8 {article.title}\n\n"
+        f"\U0001f4dd {short_desc}\n\n"
+        f"\U0001f517 Read more:\n{article_url}\n\n"
         "#FeroxTimes #LatestNews"
     )
     posted_targets = []
 
+    # ── Facebook ─────────────────────────────────────────────────────────────
     if article.post_to_facebook and settings.FACEBOOK_PAGE_ID and settings.FACEBOOK_ACCESS_TOKEN:
-        response = requests.post(
-            f"https://graph.facebook.com/v18.0/{settings.FACEBOOK_PAGE_ID}/feed",
-            data={"message": message, "access_token": settings.FACEBOOK_ACCESS_TOKEN},
-            timeout=15,
-        )
-        response.raise_for_status()
-        posted_targets.append('facebook')
-        Article.objects.filter(pk=article.pk).update(post_to_facebook=False)
+        try:
+            response = requests.post(
+                f"https://graph.facebook.com/v18.0/{settings.FACEBOOK_PAGE_ID}/feed",
+                data={"message": plain_message, "access_token": settings.FACEBOOK_ACCESS_TOKEN},
+                timeout=15,
+            )
+            response.raise_for_status()
+            posted_targets.append("facebook")
+            Article.objects.filter(pk=article.pk).update(post_to_facebook=False)
+            logger.info("[AutoPost] \u2705 Facebook posted for article %s", article_id)
+        except Exception as fb_exc:
+            logger.error("[AutoPost] \u274c Facebook FAILED for article %s: %s | Body: %s",
+                         article_id, fb_exc,
+                         getattr(getattr(fb_exc, "response", None), "text", "N/A"))
+            raise
 
-    if article.post_to_twitter and all(
-        [
-            settings.TWITTER_API_KEY,
-            settings.TWITTER_API_SECRET,
-            settings.TWITTER_ACCESS_TOKEN,
-            settings.TWITTER_ACCESS_TOKEN_SECRET,
-        ]
-    ):
-        client = tweepy.Client(
-            consumer_key=settings.TWITTER_API_KEY,
-            consumer_secret=settings.TWITTER_API_SECRET,
-            access_token=settings.TWITTER_ACCESS_TOKEN,
-            access_token_secret=settings.TWITTER_ACCESS_TOKEN_SECRET,
-        )
-        client.create_tweet(text=message)
-        posted_targets.append('twitter')
-        Article.objects.filter(pk=article.pk).update(post_to_twitter=False)
+    # ── Twitter ──────────────────────────────────────────────────────────────
+    if article.post_to_twitter and all([
+        settings.TWITTER_API_KEY, settings.TWITTER_API_SECRET,
+        settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_ACCESS_TOKEN_SECRET,
+    ]):
+        try:
+            client = tweepy.Client(
+                consumer_key=settings.TWITTER_API_KEY,
+                consumer_secret=settings.TWITTER_API_SECRET,
+                access_token=settings.TWITTER_ACCESS_TOKEN,
+                access_token_secret=settings.TWITTER_ACCESS_TOKEN_SECRET,
+            )
+            client.create_tweet(text=plain_message[:280])
+            posted_targets.append("twitter")
+            Article.objects.filter(pk=article.pk).update(post_to_twitter=False)
+            logger.info("[AutoPost] \u2705 Twitter posted for article %s", article_id)
+        except Exception as tw_exc:
+            logger.error("[AutoPost] \u274c Twitter FAILED for article %s: %s", article_id, tw_exc)
+            raise
 
+    # ── Telegram ─────────────────────────────────────────────────────────────
     if article.post_to_telegram and settings.TELEGRAM_BOT_TOKEN and settings.TELEGRAM_CHANNEL_ID:
-        response = requests.post(
-            f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
-            data={
-                "chat_id": settings.TELEGRAM_CHANNEL_ID,
-                "text": message,
-            },
-            timeout=15,
-        )
-        response.raise_for_status()
-        posted_targets.append('telegram')
-        Article.objects.filter(pk=article.pk).update(post_to_telegram=False)
+        try:
+            response = requests.post(
+                f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
+                json={
+                    "chat_id":                  settings.TELEGRAM_CHANNEL_ID,
+                    "text":                     tg_message,
+                    "parse_mode":               "HTML",
+                    "disable_web_page_preview": False,
+                },
+                timeout=15,
+            )
+            tg_data = response.json()
+            if not tg_data.get("ok"):
+                err_desc = tg_data.get("description", "Unknown Telegram API error")
+                logger.error(
+                    "[AutoPost] \u274c Telegram API rejected message for article %s: %s",
+                    article_id, err_desc
+                )
+                raise Exception(f"Telegram API error: {err_desc}")
 
-    logger.info("Auto-post completed for article %s targets=%s", article_id, posted_targets)
+            posted_targets.append("telegram")
+            Article.objects.filter(pk=article.pk).update(post_to_telegram=False)
+            logger.info(
+                "[AutoPost] \u2705 Telegram posted for article %s (msg_id=%s)",
+                article_id, tg_data.get("result", {}).get("message_id")
+            )
+        except Exception as tg_exc:
+            logger.error("[AutoPost] \u274c Telegram FAILED for article %s: %s", article_id, tg_exc)
+            raise
+
+    logger.info("[AutoPost] Completed for article %s targets=%s", article_id, posted_targets)
     return f"Auto-post completed for article {article_id}: {', '.join(posted_targets) or 'no targets'}"

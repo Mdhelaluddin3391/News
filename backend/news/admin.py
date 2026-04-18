@@ -2,6 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib import messages
 from django.db.models import Count, Q
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.text import slugify
@@ -331,6 +332,7 @@ class ArticleAdmin(admin.ModelAdmin):
     actions = [
         'make_published', 'make_draft', 'regenerate_slug', 'run_ai_import_now',
         'admin_force_trending', 'admin_force_featured', 'admin_remove_special_flags',
+        'post_to_telegram_now',
     ]
 
     # ── Fieldsets ─────────────────────────────────────────────────────────
@@ -553,6 +555,53 @@ class ArticleAdmin(admin.ModelAdmin):
             level=messages.WARNING,
         )
 
+    @admin.action(description='📢 Post selected article to Telegram NOW')
+    def post_to_telegram_now(self, request, queryset):
+        """
+        Admin se manually kisi bhi published article ko Telegram par post karo.
+        Signal ka wait nahi karna – direct Celery task queue mein dalta hai.
+        """
+        if not (request.user.role in ['admin', 'editor'] or request.user.is_superuser):
+            self.message_user(request, "⛔ Sirf Admin/Editor ye action kar sakta hai.", level=messages.ERROR)
+            return
+
+        import os
+        tg_token = os.getenv("TELEGRAM_BOT_TOKEN")
+        tg_channel = os.getenv("TELEGRAM_CHANNEL_ID")
+
+        if not tg_token or not tg_channel:
+            self.message_user(
+                request,
+                "❌ TELEGRAM_BOT_TOKEN ya TELEGRAM_CHANNEL_ID .env mein set nahi hai!",
+                level=messages.ERROR,
+            )
+            return
+
+        queued = 0
+        skipped = 0
+        for article in queryset:
+            if article.status != 'published':
+                self.message_user(
+                    request,
+                    f"⚠️ '{article.title[:50]}' published nahi hai — skip kiya.",
+                    level=messages.WARNING,
+                )
+                skipped += 1
+                continue
+            # Force flag on so the task actually sends it
+            Article.objects.filter(pk=article.pk).update(post_to_telegram=True)
+            from news.tasks import auto_post_article_task
+            auto_post_article_task.delay(article.id)
+            queued += 1
+
+        if queued:
+            self.message_user(
+                request,
+                f"📢 {queued} article(s) Telegram par post karne ke liye queue mein daal diye! "
+                f"30-60 seconds mein channel par nazar aayenge.",
+                level=messages.SUCCESS,
+            )
+
     # ── Queryset (role-based) ──────────────────────────────────────────────
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -629,8 +678,13 @@ class ArticleAdmin(admin.ModelAdmin):
 
     # ── Changelist dashboard message ───────────────────────────────────────
     def changelist_view(self, request, extra_context=None):
-        # Show pending AI drafts notice to admins/editors
+        extra_context = extra_context or {}
+
+        # Inject AI Article Writer button URL for admins / editors
         if request.user.role in ['admin', 'editor'] or request.user.is_superuser:
+            extra_context['ai_writer_url'] = '/admin/news/ai-writer/'
+            extra_context['show_ai_writer_button'] = True
+
             ai_drafts = Article.objects.filter(is_imported=True, status='draft').count()
             if ai_drafts > 0:
                 messages.warning(

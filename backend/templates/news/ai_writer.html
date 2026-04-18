@@ -1,0 +1,666 @@
+{% load i18n %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>✍️ AI Article Writer — Ferox Times Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    /* ── Layout ───────────────────────────────────────── */
+    .aw-container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* ── Back Link ────────────────────────────────────── */
+    .aw-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 13px;
+      margin-bottom: 28px;
+      transition: color .2s;
+    }
+    .aw-back:hover { color: #e2e8f0; }
+    .aw-back svg { width: 14px; height: 14px; }
+
+    /* ── Header ───────────────────────────────────────── */
+    .aw-header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+      border: 1px solid rgba(99,102,241,.35);
+      border-radius: 16px;
+      padding: 36px 40px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .aw-header::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(139,92,246,.25) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .aw-header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(139,92,246,.2);
+      border: 1px solid rgba(139,92,246,.4);
+      color: #c4b5fd;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .aw-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    .aw-header p {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.6;
+      max-width: 540px;
+    }
+
+    /* ── Step Indicators ──────────────────────────────── */
+    .aw-steps {
+      display: flex;
+      gap: 0;
+      margin-bottom: 28px;
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 20px 24px;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .aw-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 120px;
+    }
+    .aw-step-num {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      background: #2d3748;
+      color: #64748b;
+      flex-shrink: 0;
+      transition: all .3s;
+    }
+    .aw-step-num.active {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(124,58,237,.5);
+    }
+    .aw-step-label { font-size: 12px; color: #64748b; }
+    .aw-step-label.active { color: #c4b5fd; font-weight: 600; }
+    .aw-step-arrow { color: #2d3748; font-size: 14px; }
+
+    /* ── Card ─────────────────────────────────────────── */
+    .aw-card {
+      background: #1a1f2e;
+      border: 1px solid #2d3748;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 20px;
+    }
+    .aw-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #2d3748;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Form Elements ────────────────────────────────── */
+    .aw-field { margin-bottom: 24px; }
+    .aw-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+    .aw-helper {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    textarea.aw-input,
+    select.aw-input {
+      width: 100%;
+      background: #0f1117;
+      border: 1.5px solid #2d3748;
+      border-radius: 10px;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      resize: vertical;
+      -webkit-appearance: none;
+    }
+    textarea.aw-input:focus,
+    select.aw-input:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124,58,237,.15);
+    }
+    textarea.aw-input {
+      min-height: 140px;
+      line-height: 1.6;
+    }
+    select.aw-input {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 38px;
+    }
+    select.aw-input option {
+      background: #1a1f2e;
+      color: #e2e8f0;
+    }
+
+    /* ── Grid ─────────────────────────────────────────── */
+    .aw-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) { .aw-grid { grid-template-columns: 1fr; } }
+
+    /* ── Char Counter ─────────────────────────────────── */
+    .aw-char-count {
+      font-size: 11px;
+      color: #64748b;
+      text-align: right;
+      margin-top: 4px;
+    }
+    .aw-char-count.warn { color: #f59e0b; }
+
+    /* ── Save Mode Toggle ─────────────────────────────── */
+    .aw-toggle-group {
+      display: flex;
+      gap: 10px;
+    }
+    .aw-toggle-label {
+      flex: 1;
+      cursor: pointer;
+    }
+    .aw-toggle-label input { display: none; }
+    .aw-toggle-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border: 1.5px solid #2d3748;
+      border-radius: 10px;
+      transition: all .2s;
+      background: #0f1117;
+    }
+    .aw-toggle-label input:checked + .aw-toggle-box {
+      border-color: #7c3aed;
+      background: rgba(124,58,237,.08);
+    }
+    .aw-toggle-icon { font-size: 20px; }
+    .aw-toggle-text strong { display: block; font-size: 13px; font-weight: 600; color: #e2e8f0; }
+    .aw-toggle-text span { font-size: 12px; color: #64748b; }
+
+    /* ── Submit Button ────────────────────────────────── */
+    .aw-btn-generate {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all .25s;
+      box-shadow: 0 4px 15px rgba(124,58,237,.35);
+      letter-spacing: .01em;
+    }
+    .aw-btn-generate:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124,58,237,.5);
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    }
+    .aw-btn-generate:active:not(:disabled) { transform: translateY(0); }
+    .aw-btn-generate:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* ── Loading Overlay ──────────────────────────────── */
+    #aw-loading {
+      display: none;
+      position: fixed; inset: 0;
+      z-index: 9999;
+      background: rgba(15,17,23,.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+    #aw-loading.active { display: flex; }
+    .aw-spinner {
+      width: 56px; height: 56px;
+      border: 3px solid rgba(124,58,237,.2);
+      border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .aw-loading-text { text-align: center; }
+    .aw-loading-text h2 { font-size: 18px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; }
+    .aw-loading-text p { font-size: 13px; color: #94a3b8; }
+    .aw-loading-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .aw-loading-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #64748b;
+      transition: color .5s;
+    }
+    .aw-loading-step.done { color: #4ade80; }
+    .aw-loading-step.active-step { color: #c4b5fd; }
+    .aw-loading-step-icon { font-size: 16px; }
+
+    /* ── Messages ─────────────────────────────────────── */
+    .aw-messages { margin-bottom: 20px; }
+    .aw-msg {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    .aw-msg.success { background: rgba(74,222,128,.1); border: 1px solid rgba(74,222,128,.3); color: #4ade80; }
+    .aw-msg.error   { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); color: #f87171; }
+    .aw-msg.info    { background: rgba(96,165,250,.1);  border: 1px solid rgba(96,165,250,.3);  color: #60a5fa; }
+    .aw-msg.warning { background: rgba(251,191,36,.1);  border: 1px solid rgba(251,191,36,.3);  color: #fbbf24; }
+    .aw-msg-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Tips Box ─────────────────────────────────────── */
+    .aw-tips {
+      background: rgba(99,102,241,.08);
+      border: 1px solid rgba(99,102,241,.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .aw-tips h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #a5b4fc;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .aw-tips ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .aw-tips li {
+      font-size: 12px;
+      color: #94a3b8;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.5;
+    }
+    .aw-tips li::before { content: '→'; color: #6366f1; margin-top: 1px; flex-shrink: 0; }
+
+    /* ── Permission Denied ────────────────────────────── */
+    .aw-denied {
+      text-align: center;
+      padding: 60px 40px;
+      background: rgba(248,113,113,.05);
+      border: 1px solid rgba(248,113,113,.2);
+      border-radius: 16px;
+    }
+    .aw-denied-icon { font-size: 48px; margin-bottom: 16px; }
+    .aw-denied h2 { font-size: 20px; font-weight: 700; color: #f87171; margin-bottom: 8px; }
+    .aw-denied p { font-size: 14px; color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div id="aw-loading">
+  <div class="aw-spinner"></div>
+  <div class="aw-loading-text">
+    <h2>🤖 AI is working on your article…</h2>
+    <p>Please don't close this window</p>
+    <div class="aw-loading-steps">
+      <div class="aw-loading-step active-step" id="ls-1">
+        <span class="aw-loading-step-icon">🔍</span>
+        Searching the internet for relevant sources…
+      </div>
+      <div class="aw-loading-step" id="ls-2">
+        <span class="aw-loading-step-icon">📥</span>
+        Scraping and reading articles…
+      </div>
+      <div class="aw-loading-step" id="ls-3">
+        <span class="aw-loading-step-icon">✍️</span>
+        Writing your journalist-style article…
+      </div>
+      <div class="aw-loading-step" id="ls-4">
+        <span class="aw-loading-step-icon">💾</span>
+        Saving article to database…
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="aw-container">
+  <!-- Back Link -->
+  <a href="/admin/news/article/" class="aw-back">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+    Back to Articles
+  </a>
+
+  <!-- Header -->
+  <div class="aw-header">
+    <div class="aw-header-badge">
+      🤖 Powered by Groq AI + DuckDuckGo
+    </div>
+    <h1>✍️ AI Article Writer</h1>
+    <p>
+      Describe what you want to write about. The AI will search the internet,
+      gather research from multiple sources, and write a complete journalist-style article for you.
+    </p>
+  </div>
+
+  <!-- Step Indicators -->
+  <div class="aw-steps">
+    <div class="aw-step">
+      <div class="aw-step-num active">1</div>
+      <div class="aw-step-label active">Describe Topic</div>
+    </div>
+    <div class="aw-step-arrow">›</div>
+    <div class="aw-step">
+      <div class="aw-step-num">2</div>
+      <div class="aw-step-label">AI Researches</div>
+    </div>
+    <div class="aw-step-arrow">›</div>
+    <div class="aw-step">
+      <div class="aw-step-num">3</div>
+      <div class="aw-step-label">Article Written</div>
+    </div>
+    <div class="aw-step-arrow">›</div>
+    <div class="aw-step">
+      <div class="aw-step-num">4</div>
+      <div class="aw-step-label">Review & Publish</div>
+    </div>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+  <div class="aw-messages">
+    {% for message in messages %}
+    <div class="aw-msg {% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}">
+      <span class="aw-msg-icon">
+        {% if message.tags == 'error' %}❌{% elif message.tags == 'success' %}✅{% elif message.tags == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+      </span>
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if has_permission %}
+
+  <!-- Tips Box -->
+  <div class="aw-tips">
+    <h3>💡 Tips for the best results</h3>
+    <ul>
+      <li>Be specific: "Write a 600-word article about Pakistan's economic crisis in April 2025 focusing on IMF loan conditions"</li>
+      <li>Include key names, events, or places you want covered in the article</li>
+      <li>Mention the angle: "focus on economic impact" or "from a human interest perspective"</li>
+      <li>Article generation takes 30–60 seconds. The AI reads multiple sources before writing.</li>
+    </ul>
+  </div>
+
+  <!-- Main Form -->
+  <form id="aw-form" method="POST" action="/admin/news/ai-writer/">
+    {% csrf_token %}
+
+    <!-- Article Description -->
+    <div class="aw-card">
+      <div class="aw-card-title">📝 Article Brief</div>
+
+      <div class="aw-field">
+        <label class="aw-label" for="description">What should this article be about? *</label>
+        <p class="aw-helper">
+          Describe the topic, angle, and key points you want covered. Be as specific as possible.
+          The AI will search the internet and write a complete, researched article based on your description.
+        </p>
+        <textarea
+          class="aw-input"
+          id="description"
+          name="description"
+          placeholder="Example: Write a comprehensive article about India's 2024 general election results, focusing on Modi's BJP performance, opposition coalition, and what this means for future policies..."
+          maxlength="1000"
+          required
+        >{{ description|default:'' }}</textarea>
+        <div class="aw-char-count" id="desc-counter">0 / 1000</div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="aw-card">
+      <div class="aw-card-title">⚙️ Article Settings</div>
+
+      <div class="aw-grid">
+        <!-- Category -->
+        <div class="aw-field">
+          <label class="aw-label" for="category">Category</label>
+          <select class="aw-input" id="category" name="category">
+            {% for cat in categories %}
+            <option value="{{ cat }}" {% if cat == category %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Tone -->
+        <div class="aw-field">
+          <label class="aw-label" for="tone">Writing Tone / Style</label>
+          <select class="aw-input" id="tone" name="tone">
+            {% for tone_val, tone_label in tones %}
+            <option value="{{ tone_val }}" {% if tone_val == tone %}selected{% endif %}>{{ tone_label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Language -->
+        <div class="aw-field">
+          <label class="aw-label" for="language">Language</label>
+          <select class="aw-input" id="language" name="language">
+            {% for lang_val, lang_label in languages %}
+            <option value="{{ lang_val }}" {% if lang_val == language %}selected{% endif %}>{{ lang_label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Mode -->
+    <div class="aw-card">
+      <div class="aw-card-title">💾 Save Mode</div>
+
+      <div class="aw-toggle-group">
+        <label class="aw-toggle-label">
+          <input type="radio" name="save_status" value="draft" checked />
+          <div class="aw-toggle-box">
+            <span class="aw-toggle-icon">📝</span>
+            <div class="aw-toggle-text">
+              <strong>Save as Draft</strong>
+              <span>Review & edit before publishing</span>
+            </div>
+          </div>
+        </label>
+        <label class="aw-toggle-label">
+          <input type="radio" name="save_status" value="published" />
+          <div class="aw-toggle-box">
+            <span class="aw-toggle-icon">✅</span>
+            <div class="aw-toggle-text">
+              <strong>Publish Directly</strong>
+              <span>Article goes live immediately</span>
+            </div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Generate Button -->
+    <button class="aw-btn-generate" type="submit" id="aw-submit-btn">
+      <span id="btn-icon">🚀</span>
+      <span id="btn-text">Generate Article with AI</span>
+    </button>
+
+  </form>
+
+  {% else %}
+  <!-- Permission Denied -->
+  <div class="aw-denied">
+    <div class="aw-denied-icon">⛔</div>
+    <h2>Access Denied</h2>
+    <p>Only Admins and Editors can use the AI Article Writer.</p>
+  </div>
+  {% endif %}
+
+</div><!-- /container -->
+
+<script>
+  // ── Char counter ──────────────────────────────────────────────────
+  const textarea = document.getElementById('description');
+  const counter  = document.getElementById('desc-counter');
+
+  function updateCounter() {
+    const len = textarea ? textarea.value.length : 0;
+    if (counter) {
+      counter.textContent = len + ' / 1000';
+      counter.classList.toggle('warn', len > 800);
+    }
+  }
+  if (textarea) {
+    textarea.addEventListener('input', updateCounter);
+    updateCounter();
+  }
+
+  // ── Loading overlay ───────────────────────────────────────────────
+  const form       = document.getElementById('aw-form');
+  const overlay    = document.getElementById('aw-loading');
+  const submitBtn  = document.getElementById('aw-submit-btn');
+  const btnText    = document.getElementById('btn-text');
+  const btnIcon    = document.getElementById('btn-icon');
+
+  const steps = [
+    { id: 'ls-1', delay: 0 },
+    { id: 'ls-2', delay: 8000  },
+    { id: 'ls-3', delay: 18000 },
+    { id: 'ls-4', delay: 38000 },
+  ];
+
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const desc = textarea ? textarea.value.trim() : '';
+      if (desc.length < 15) {
+        e.preventDefault();
+        alert('Please enter at least 15 characters describing your article topic.');
+        return;
+      }
+
+      // Show overlay
+      overlay.classList.add('active');
+      submitBtn.disabled = true;
+      btnText.textContent = 'Generating…';
+      btnIcon.textContent = '⏳';
+
+      // Animate steps
+      steps.forEach(({ id, delay }, i) => {
+        setTimeout(() => {
+          // Mark previous as done
+          if (i > 0) {
+            const prev = document.getElementById(steps[i-1].id);
+            if (prev) { prev.classList.remove('active-step'); prev.classList.add('done'); prev.querySelector('.aw-loading-step-icon').textContent = '✅'; }
+          }
+          const el = document.getElementById(id);
+          if (el) el.classList.add('active-step');
+        }, delay);
+      });
+    });
+  }
+
+  // ── Save toggle visual feedback ───────────────────────────────────
+  document.querySelectorAll('input[name="save_status"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('.aw-toggle-box').forEach(box => {
+        box.style.borderColor = '';
+        box.style.background  = '';
+      });
+    });
+  });
+</script>
+</body>
+</html>

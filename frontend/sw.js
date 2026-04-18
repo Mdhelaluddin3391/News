@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v10';
+const CACHE_VERSION = 'v11';
 const SHELL_CACHE = `ferox-times-shell-${CACHE_VERSION}`;
 const PAGE_CACHE = `ferox-times-pages-${CACHE_VERSION}`;
 const ASSET_CACHE = `ferox-times-assets-${CACHE_VERSION}`;

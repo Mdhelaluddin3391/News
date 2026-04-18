@@ -1,5 +1,6 @@
 """
 ai_utils.py — Groq AI rewriting utility for automated news import.
+                Also powers the Admin AI Article Writer (generate_article_from_prompt).
 
 Flow:
   raw_text (scraped by newspaper3k)
@@ -372,4 +373,325 @@ def rewrite_article_with_ai(
         original_title,
         last_error,
     )
+    return None
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  ADMIN AI ARTICLE WRITER  —  generate_article_from_prompt()
+# ════════════════════════════════════════════════════════════════════════════
+
+def _build_writer_prompt(
+    description: str,
+    category: str,
+    tone: str,
+    language: str,
+) -> str:
+    """
+    Builds the Groq system prompt for the Admin AI Article Writer.
+    This is different from the auto-import prompt — it takes a human-written
+    description and creates a fresh, original article from internet research.
+    """
+    tone_instructions = {
+        "neutral":       "Authoritative, objective, and factual — standard AP/Reuters news tone.",
+        "breaking":      "Urgent and high-impact. Lead with the most critical fact. Use short, punchy sentences.",
+        "analysis":      "Deep, explanatory, and context-rich. Explain the 'why' behind events. Include expert context.",
+        "feature":       "Narrative-driven, immersive storytelling with human interest angles.",
+        "opinion":       "First-person analytical perspective. Present a clear, well-reasoned argument.",
+    }.get(tone, "Authoritative, objective, and factual — standard AP/Reuters news tone.")
+
+    lang_note = ""
+    if language == "urdu":
+        lang_note = "IMPORTANT: Write the ENTIRE article — title, meta_description, AND content — in Urdu (Roman or script as appropriate). JSON keys must remain in English."
+    elif language == "both":
+        lang_note = "Write the content in BOTH English and Urdu. First the full English version, then the Urdu translation below it."
+
+    return f"""You are a Senior Journalist and Editorial Writer at Ferox Times.
+
+A senior editor has given you this assignment brief:
+"{description}"
+
+You have been provided with internet research (from DuckDuckGo) as a knowledge base.
+Your task is to write a COMPLETE, ORIGINAL, high-quality news article based ONLY on facts found in the knowledge base.
+
+══════════════════════════════════════
+  ASSIGNMENT SETTINGS
+══════════════════════════════════════
+
+Category  : {category}
+Tone Style: {tone_instructions}
+{lang_note}
+
+══════════════════════════════════════
+  SECTION 1: WRITING RULES
+══════════════════════════════════════
+
+▸ TONE: {tone_instructions}
+▸ BAN AI CLICHÉS: NEVER use "Moreover," "Furthermore," "In conclusion," "It is important to note," "Delves into," "A testament to," "Tapestry," "Landscape," or "In today's ever-evolving world."
+▸ COMPREHENSIVE: Write a complete, well-structured article of at least 600 words. Synthesize all provided research.
+▸ NARRATIVE FLOW: Present facts logically. Ground the story with context. Explain WHY this matters.
+▸ ATTRIBUTION: Attribute claims professionally using varied phrases like "data released by," "statements indicated," "reports confirmed." Do NOT use fake attributions.
+▸ NO OPINIONS (unless tone is 'opinion'): You are an impartial reporter.
+
+══════════════════════════════════════
+  SECTION 2: ARTICLE STRUCTURE
+══════════════════════════════════════
+
+Use ONLY these HTML tags: <p>, <h2>, <h3>, <ul>, <li>, <blockquote>, <strong>, <em>
+
+─── STEP 1: THE LEAD ───
+A hard-hitting opening paragraph (40–70 words) answering WHO, WHAT, WHERE, and WHEN.
+
+─── STEP 2: THE BODY ───
+- Short paragraphs (2–4 sentences) for high readability.
+- Use <h2> for major section headings (context-specific, not generic).
+- Weave together facts from all research sources.
+
+─── STEP 3: QUOTES & REALITY ───
+- Extract real quotes using <blockquote> if available in the research.
+- Explain the tangible impact on people, markets, or policies.
+
+─── STEP 4: THE CLOSING ───
+A sharp, forward-looking observation about broader implications. DO NOT summarize.
+
+══════════════════════════════════════
+  SECTION 3: STRICT RULES
+══════════════════════════════════════
+
+▸ NO FAKE FACTS: Only use facts from the provided research. Do not hallucinate dates, names, or statistics.
+▸ NO PLAGIARISM: Rewrite and synthesize — do not copy sentences verbatim.
+
+══════════════════════════════════════
+  SECTION 4: SEO METADATA
+══════════════════════════════════════
+
+▸ TITLE: 55–70 characters. Strong, natural headline.
+▸ META DESCRIPTION: 140–160 characters. Compelling, makes readers click.
+▸ CATEGORY: Must be EXACTLY: {category}
+▸ TAGS: Exactly 6–8 meaningful, specific tags.
+
+══════════════════════════════════════
+  OUTPUT FORMAT (STRICT)
+══════════════════════════════════════
+
+Return ONLY a valid JSON object with exactly these five keys. No markdown, no extra text.
+
+{{
+  "title": "Your natural, strong headline here",
+  "meta_description": "Compelling meta description here",
+  "content": "<p>Strong lead...</p><h2>Heading</h2><p>Body...</p>",
+  "category": "{category}",
+  "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6"]
+}}
+"""
+
+
+def _search_web_for_topic(description: str, max_results: int = 5) -> str:
+    """
+    Searches DuckDuckGo for the given topic/description and scrapes the
+    top results to build a rich research knowledge base for the AI.
+
+    Returns a concatenated string of scraped text from multiple sources.
+    """
+    import time
+    from duckduckgo_search import DDGS
+    import requests
+
+    _BOT_UA = "FeroxTimesBot/1.0 (+https://www.feroxtimes.com/about)"
+    _SCRAPE_TIMEOUT = 15
+    _MIN_TEXT = 150
+
+    def _scrape_url(url: str) -> str:
+        """Quick scraper for a single URL."""
+        try:
+            from newspaper import Article as WebArticle
+            wa = WebArticle(url, browser_user_agent=_BOT_UA, request_timeout=_SCRAPE_TIMEOUT)
+            wa.download()
+            wa.parse()
+            text = wa.text or ""
+            if len(text.strip()) >= _MIN_TEXT:
+                return text.strip()
+        except Exception:
+            pass
+
+        # Fallback: simple requests + paragraph extraction
+        try:
+            from html.parser import HTMLParser
+
+            class _PE(HTMLParser):
+                def __init__(self):
+                    super().__init__()
+                    self._in = False; self._paras = []; self._cur = []
+                def handle_starttag(self, tag, attrs):
+                    if tag == "p": self._in = True; self._cur = []
+                def handle_endtag(self, tag):
+                    if tag == "p" and self._in:
+                        t = "".join(self._cur).strip()
+                        if len(t) > 30: self._paras.append(t)
+                        self._in = False
+                def handle_data(self, data):
+                    if self._in: self._cur.append(data)
+
+            r = requests.get(url, headers={"User-Agent": _BOT_UA}, timeout=_SCRAPE_TIMEOUT, allow_redirects=True)
+            r.raise_for_status()
+            p = _PE(); p.feed(r.text)
+            return "\n\n".join(p._paras)
+        except Exception:
+            return ""
+
+    knowledge_base = ""
+    try:
+        with DDGS() as ddgs:
+            results = list(ddgs.text(description, max_results=max_results))
+
+        logger.info("[AI Writer] DuckDuckGo returned %d results for: '%s'", len(results), description[:60])
+
+        for i, res in enumerate(results, 1):
+            url = res.get("href", "")
+            title = res.get("title", "No Title")
+            snippet = res.get("body", "")
+
+            if not url:
+                continue
+
+            logger.info("[AI Writer] Scraping source %d/%d: %s", i, len(results), url)
+            time.sleep(1)  # Polite delay
+            body = _scrape_url(url)
+
+            if body and len(body.strip()) > _MIN_TEXT:
+                # Truncate each source to 3000 chars to avoid token overflow
+                truncated = body[:3000]
+                knowledge_base += f"\n\n--- Source {i}: {title} ({url}) ---\n{snippet}\n\n{truncated}\n"
+            elif snippet:
+                # Fallback: use DuckDuckGo snippet if scraping failed
+                knowledge_base += f"\n\n--- Source {i} (snippet only): {title} ---\n{snippet}\n"
+
+    except Exception as exc:
+        logger.warning("[AI Writer] DuckDuckGo search failed for '%s': %s", description[:60], exc)
+
+    return knowledge_base.strip()
+
+
+def generate_article_from_prompt(
+    description: str,
+    category: str = "World",
+    tone: str = "neutral",
+    language: str = "english",
+    max_retries: int = 3,
+) -> dict | None:
+    """
+    Admin AI Article Writer — Core Engine.
+
+    Takes a human-written description of what kind of article is needed,
+    searches the internet for relevant information via DuckDuckGo, and
+    generates a complete journalist-style article using Groq AI.
+
+    Parameters
+    ----------
+    description : str  — What the article should be about (admin's brief).
+    category    : str  — Target category (e.g., 'Technology', 'Sports').
+    tone        : str  — Writing tone ('neutral', 'breaking', 'analysis', 'feature', 'opinion').
+    language    : str  — Output language ('english', 'urdu', 'both').
+    max_retries : int  — Number of Groq retry attempts.
+
+    Returns
+    -------
+    dict | None
+        On success: {"title", "meta_description", "content", "category", "tags", "research_sources_count"}
+        On failure: None
+    """
+    if not _GROQ_KEY:
+        logger.error("[AI Writer] Cannot generate — GROQ_API_KEY is not configured.")
+        return None
+
+    if not description or len(description.strip()) < 10:
+        logger.warning("[AI Writer] Description too short — aborting.")
+        return None
+
+    # ── Step 1: Internet Research via DuckDuckGo ─────────────────────────────
+    logger.info("[AI Writer] Starting internet research for: '%s'", description[:80])
+    knowledge_base = _search_web_for_topic(description, max_results=5)
+
+    if not knowledge_base or len(knowledge_base.strip()) < 200:
+        logger.warning(
+            "[AI Writer] Could not gather sufficient research for '%s'. "
+            "Proceeding with description only.",
+            description[:60],
+        )
+        knowledge_base = f"No web results found. Generate the best possible article based on your training knowledge about: {description}"
+
+    research_sources_count = knowledge_base.count("--- Source")
+    logger.info("[AI Writer] Research complete — %d sources gathered (%d chars).",
+                research_sources_count, len(knowledge_base))
+
+    # ── Step 2: Build Prompt & Call Groq ─────────────────────────────────────
+    system_prompt = _build_writer_prompt(description, category, tone, language)
+    user_content = (
+        f"EDITOR'S BRIEF: {description}\n\n"
+        f"══════════════════════════════════════\n"
+        f"INTERNET RESEARCH KNOWLEDGE BASE:\n"
+        f"(Use ONLY facts from below. Do not hallucinate.)\n"
+        f"══════════════════════════════════════\n\n"
+        f"{knowledge_base[:14000]}\n\n"
+        f"══════════════════════════════════════\n"
+        f"REMINDER: Return ONLY valid JSON. Lead paragraph must answer WHO, WHAT, WHERE, WHEN in 40–70 words."
+    )
+
+    client = Groq(api_key=_GROQ_KEY)
+    last_error = None
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            logger.info("[AI Writer] Groq attempt %d/%d...", attempt, max_retries)
+            response = client.chat.completions.create(
+                model=_MODEL_NAME,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user",   "content": user_content},
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.60,
+                max_tokens=4000,
+            )
+
+            raw_response = response.choices[0].message.content
+            data = _extract_json(raw_response)
+
+            if data is None:
+                logger.error("[AI Writer] JSON parse failed on attempt %d.", attempt)
+                last_error = "JSON parse failed"
+                time.sleep(2 * attempt)
+                continue
+
+            if not _validate_ai_response(data):
+                logger.error("[AI Writer] Validation failed on attempt %d.", attempt)
+                last_error = "Validation failed"
+                time.sleep(3 * attempt)
+                continue
+
+            # ── Enforce field length constraints ──────────────────────────
+            data["title"]            = str(data["title"]).strip()[:250]
+            data["meta_description"] = str(data["meta_description"]).strip()[:160]
+            data["category"]         = category  # Always use admin-selected category
+            data["tags"]             = [str(t).strip()[:50] for t in data.get("tags", [])[:8] if str(t).strip()]
+            if not data["tags"]:
+                data["tags"] = ["News"]
+
+            # Add metadata for caller
+            data["research_sources_count"] = research_sources_count
+
+            logger.info(
+                "✅ [AI Writer] Article generated: '%s' [%s] | %d chars | %d tags | %d sources",
+                data["title"], data["category"],
+                len(data["content"]), len(data["tags"]),
+                research_sources_count,
+            )
+            return data
+
+        except Exception as exc:
+            last_error = str(exc)
+            logger.warning("[AI Writer] Groq attempt %d/%d failed: %s", attempt, max_retries, exc)
+            if attempt < max_retries:
+                time.sleep(5 * attempt)
+
+    logger.error("[AI Writer] ❌ All %d attempts exhausted. Last error: %s", max_retries, last_error)
     return None

@@ -1,0 +1,32 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block object-tools-items %}
+  {% if show_ai_writer_button %}
+  <li>
+    <a href="{{ ai_writer_url }}"
+       style="
+         display: inline-flex;
+         align-items: center;
+         gap: 7px;
+         background: linear-gradient(135deg, #7c3aed, #6d28d9);
+         color: #fff !important;
+         font-weight: 700;
+         font-size: 13px;
+         padding: 8px 16px;
+         border-radius: 6px;
+         text-decoration: none;
+         box-shadow: 0 2px 8px rgba(124,58,237,0.4);
+         transition: opacity 0.2s;
+         white-space: nowrap;
+       "
+       onmouseover="this.style.opacity='0.85'"
+       onmouseout="this.style.opacity='1'"
+       title="AI se naya article likho — internet search + Groq AI"
+    >
+      ✍️ AI Article Writer
+    </a>
+  </li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

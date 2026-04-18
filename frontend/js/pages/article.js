@@ -242,13 +242,19 @@ function renderArticle(article) {
         }, 100);
     }
 
+    // ── Author link: clickable if slug exists ─────────────────────────────
+    const safeAuthorName = typeof window.escapeHtml === 'function' ? window.escapeHtml(authorName) : authorName;
+    const authorHTML = authorSlug
+        ? `<a href="/author/${authorSlug}" class="author-link" style="color: inherit; text-decoration: none; font-weight: 600; border-bottom: 1px dotted currentColor;">${safeAuthorName}</a>`
+        : `<span style="font-weight: 600;">${safeAuthorName}</span>`;
+
     const html = `
         <div class="detail-content" style="padding-bottom: 1rem;">
                 ${liveBadgeHTML}
             <h1 class="detail-title">${safeTitle}</h1>
             <div class="detail-meta" style="margin-bottom: 1rem; border-bottom: none;">
-                <span class="detail-author"><i class="fas fa-user-edit" style="color: #64748b;"></i> ${typeof window.escapeHtml === 'function' ? window.escapeHtml(authorName) : authorName}</span>
                 <span class="detail-source">${sourceHTML}</span>
+                <span class="detail-author"><i class="fas fa-pen-nib" style="color: #64748b;"></i> By ${authorHTML}</span>
                 <span class="detail-date">${date}</span>
                 <span><i class="far fa-eye"></i> ${article.views || 0} views</span>
             </div>

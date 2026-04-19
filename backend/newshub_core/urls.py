@@ -33,7 +33,6 @@ from news.feeds import LatestArticlesFeed
 from news.sitemaps import ArticleSitemap, AuthorSitemap, CategorySitemap, TagSitemap
 from users.views import CookieTokenRefreshView, CsrfCookieView, LogoutView, set_auth_cookies
 from news.admin_views import AIArticleWriterView
-from news.debug_views import TelegramTestView
 
 User = get_user_model()
 
@@ -80,7 +79,6 @@ urlpatterns = [
     path('health/db/', DatabaseHealthCheckView.as_view(), name='health_check_db'),
     path('health/redis/', RedisHealthCheckView.as_view(), name='health_check_redis'),
     path('admin/news/ai-writer/', AIArticleWriterView.as_view(), name='admin-ai-writer'),
-    path('admin/news/telegram-test/', TelegramTestView.as_view(), name='admin-telegram-test'),
     path('admin/', admin.site.urls),
     path('tinymce/', include('tinymce.urls')),
     path('api/', include('core.urls')),

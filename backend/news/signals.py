@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_save
@@ -17,9 +19,20 @@ from news.tasks import (
     auto_update_trending_task,
 )
 
+logger = logging.getLogger(__name__)
+
 
 @receiver(post_save, sender=Article)
-def handle_article_publish(sender, instance, **_kwargs):
+def handle_article_publish(sender, instance, created, **kwargs):
+    # ── Internal-only saves ko skip karo (e.g. post_to_telegram=False update after posting)
+    # Ye prevent karta hai infinite loop aur unnecessary task queuing
+    update_fields = kwargs.get('update_fields')
+    internal_only_fields = {'post_to_facebook', 'post_to_twitter', 'post_to_telegram',
+                            'push_sent', 'newsletter_sent', 'featured_image',
+                            'is_featured', 'is_trending', 'views'}
+    if update_fields and set(update_fields).issubset(internal_only_fields):
+        return
+
     if instance.status == 'published' and not instance.push_sent:
         transaction.on_commit(lambda: send_push_notifications_task.delay(instance.id))
 
@@ -70,7 +83,13 @@ def handle_article_publish(sender, instance, **_kwargs):
     if instance.status == 'published' and any(
         [instance.post_to_facebook, instance.post_to_twitter, instance.post_to_telegram]
     ):
-        transaction.on_commit(lambda: auto_post_article_task.delay(instance.id))
+        article_id = instance.id
+        logger.info(
+            "[Signal] Social post queued for article %s | FB=%s TW=%s TG=%s",
+            article_id, instance.post_to_facebook,
+            instance.post_to_twitter, instance.post_to_telegram
+        )
+        transaction.on_commit(lambda: auto_post_article_task.delay(article_id))
 
     # ── Auto-update featured & trending instantly on publish ──────────────
     # Celery Beat wala 30-min/1-hour wait nahi karna padega.

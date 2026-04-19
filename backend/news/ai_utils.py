@@ -31,8 +31,12 @@ _GROQ_KEY = os.getenv("GROQ_API_KEY")
 if not _GROQ_KEY:
     logger.warning("GROQ_API_KEY is not set — AI rewriting will be disabled.")
 
-# Groq model to use
-_MODEL_NAME = "llama-3.3-70b-versatile"
+# Groq model strategy: Primary (high quality) → Fallback (high rate limit)
+# llama-3.3-70b-versatile: 100k tokens/day free (better quality)
+# llama-3.1-8b-instant:    500k tokens/day free (faster, great fallback)
+_MODEL_PRIMARY  = "llama-3.3-70b-versatile"
+_MODEL_FALLBACK = "llama-3.1-8b-instant"
+_MODEL_NAME = _MODEL_PRIMARY  # Default (used in rewrite_article_with_ai)
 
 
 def _build_prompt(original_title: str, source_name: str) -> str:
@@ -146,8 +150,8 @@ _VALID_CATEGORIES = {
     "Crime", "Education", "Economy",
 }
 
-# Minimum content length for a valid article (650 words ≈ ~4000 chars in HTML)
-_MIN_CONTENT_CHARS = 2000
+# Minimum content length for a valid article (500 words ≈ ~1500 chars in HTML)
+_MIN_CONTENT_CHARS = 1500
 
 
 def _validate_ai_response(data: dict) -> bool:
@@ -265,23 +269,25 @@ def rewrite_article_with_ai(
     last_error = None
     client = Groq(api_key=_GROQ_KEY)
 
+    # Model selection: try primary first, fallback on rate limit (429)
+    models_to_try = [_MODEL_PRIMARY, _MODEL_FALLBACK]
+    used_model = _MODEL_PRIMARY
+
     for attempt in range(1, max_retries + 1):
         try:
             logger.info(
-                "Groq attempt %d/%d for '%s'…",
-                attempt, max_retries, original_title,
+                "Groq attempt %d/%d for '%s' [model=%s]…",
+                attempt, max_retries, original_title, used_model,
             )
             response = client.chat.completions.create(
-                model=_MODEL_NAME,
+                model=used_model,
                 messages=[
                     {"role": "system", "content": instruction},
                     {"role": "user", "content": user_content}
                 ],
                 response_format={"type": "json_object"},
-                # Temperature 0.45 ensures strict factual adherence and minimal creative hallucination
-                temperature=0.40,  # Low temp = factual accuracy
-                # Enough tokens for a 900-word HTML article with headings and sources section
-                max_tokens=4500,   # Enough for 7-block structure
+                temperature=0.40,
+                max_tokens=4000,
             )
 
             raw_response_text = response.choices[0].message.content
@@ -315,21 +321,20 @@ def rewrite_article_with_ai(
             data["title"]            = str(data["title"]).strip()[:250]
             data["meta_description"] = str(data["meta_description"]).strip()[:160]
             data["category"]         = str(data["category"]).strip()[:100]
-            # Accept up to 8 tags (6–8 is ideal per our prompt)
             data["tags"]             = [str(t).strip()[:50] for t in data["tags"][:8] if str(t).strip()]
 
-            # Ensure at least 1 tag survived sanitization
             if not data["tags"]:
                 data["tags"] = ["News"]
 
             logger.info(
                 "✅ Groq rewrite complete for '%s' → '%s' [%s] | "
-                "Content: %d chars | Tags: %d | (attempt %d/%d)",
+                "Content: %d chars | Tags: %d | model=%s | (attempt %d/%d)",
                 original_title,
                 data["title"],
                 data["category"],
                 len(data["content"]),
                 len(data["tags"]),
+                used_model,
                 attempt,
                 max_retries,
             )
@@ -337,12 +342,22 @@ def rewrite_article_with_ai(
 
         except Exception as exc:
             last_error = str(exc)
+            error_str = str(exc)
+
+            # ── Rate limit hit → switch to fallback model immediately ──────
+            if "429" in error_str and used_model == _MODEL_PRIMARY:
+                logger.warning(
+                    "[AutoSwitch] Primary model '%s' rate-limited for '%s'. "
+                    "Switching to fallback '%s'.",
+                    _MODEL_PRIMARY, original_title, _MODEL_FALLBACK,
+                )
+                used_model = _MODEL_FALLBACK
+                time.sleep(2)
+                continue  # Retry immediately with fallback model
+
             logger.warning(
-                "Groq API attempt %d/%d failed for '%s': %s",
-                attempt,
-                max_retries,
-                original_title,
-                exc,
+                "Groq API attempt %d/%d failed for '%s' [%s]: %s",
+                attempt, max_retries, original_title, used_model, exc,
             )
             if attempt < max_retries:
                 backoff = 5 * attempt
@@ -614,18 +629,21 @@ def generate_article_from_prompt(
     client = Groq(api_key=_GROQ_KEY)
     last_error = None
 
+    # Model selection: primary (better quality) → fallback (higher rate limit)
+    used_model = _MODEL_PRIMARY
+
     for attempt in range(1, max_retries + 1):
         try:
-            logger.info("[AI Writer] Groq attempt %d/%d...", attempt, max_retries)
+            logger.info("[AI Writer] Groq attempt %d/%d [model=%s]...", attempt, max_retries, used_model)
             response = client.chat.completions.create(
-                model=_MODEL_NAME,
+                model=used_model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user",   "content": user_content},
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.42,  # Slightly higher for writer prose
-                max_tokens=5000,   # Writer gets more tokens for 700+ words
+                temperature=0.42,
+                max_tokens=4500,
             )
 
             raw_response = response.choices[0].message.content
@@ -638,7 +656,7 @@ def generate_article_from_prompt(
                 continue
 
             if not _validate_ai_response(data):
-                logger.error("[AI Writer] Validation failed on attempt %d.", attempt)
+                logger.error("[AI Writer] Validation failed on attempt %d [model=%s].", attempt, used_model)
                 last_error = "Validation failed"
                 time.sleep(3 * attempt)
                 continue
@@ -655,16 +673,30 @@ def generate_article_from_prompt(
             data["research_sources_count"] = research_sources_count
 
             logger.info(
-                "✅ [AI Writer] Article generated: '%s' [%s] | %d chars | %d tags | %d sources",
+                "✅ [AI Writer] Article generated: '%s' [%s] | %d chars | %d tags | %d sources | model=%s",
                 data["title"], data["category"],
                 len(data["content"]), len(data["tags"]),
-                research_sources_count,
+                research_sources_count, used_model,
             )
             return data
 
         except Exception as exc:
             last_error = str(exc)
-            logger.warning("[AI Writer] Groq attempt %d/%d failed: %s", attempt, max_retries, exc)
+            error_str = str(exc)
+
+            # ── Rate limit (429) → auto-switch to fallback model ──────────
+            if "429" in error_str and used_model == _MODEL_PRIMARY:
+                logger.warning(
+                    "[AI Writer] Primary model '%s' rate-limited. "
+                    "Auto-switching to fallback '%s' (higher limit).",
+                    _MODEL_PRIMARY, _MODEL_FALLBACK,
+                )
+                used_model = _MODEL_FALLBACK
+                time.sleep(2)
+                continue  # Immediate retry with fallback
+
+            logger.warning("[AI Writer] Groq attempt %d/%d failed [%s]: %s",
+                           attempt, max_retries, used_model, exc)
             if attempt < max_retries:
                 time.sleep(5 * attempt)
 

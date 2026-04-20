@@ -17,19 +17,14 @@ from django.utils.timezone import now as timezone_now
 # ═══════════════════════════════════════════════════════════════════════════
 
 class StatusFilter(admin.SimpleListFilter):
-    """Filter by publication status — shows count for each option."""
-    title = '📋 Status'
-    parameter_name = 'article_status'   # Must NOT match model field name 'status'
+    """Filter by publication status."""
+    title = 'Status'
+    parameter_name = 'article_status'
 
     def lookups(self, request, model_admin):
-        qs = model_admin.get_queryset(request)
-        counts = {
-            row['status']: row['c']
-            for row in qs.values('status').annotate(c=Count('id'))
-        }
         return [
-            ('draft',     f'📝 Draft ({counts.get("draft", 0)})'),
-            ('published', f'✅ Published ({counts.get("published", 0)})'),
+            ('draft',     'Draft'),
+            ('published', 'Published'),
         ]
 
     def queryset(self, request, queryset):
@@ -40,21 +35,16 @@ class StatusFilter(admin.SimpleListFilter):
         return queryset
 
 
-
 class ImportTypeFilter(admin.SimpleListFilter):
     """Filter by article origin — AI imported vs manually written."""
-    title = '🤖 Article Type'
+    title = 'Article Type'
     parameter_name = 'import_type'
 
     def lookups(self, request, model_admin):
-        qs = model_admin.get_queryset(request)
-        total     = qs.count()
-        imported  = qs.filter(is_imported=True).count()
-        manual    = qs.filter(is_imported=False).count()
         return [
-            ('imported', f'🤖 AI Imported ({imported})'),
-            ('manual',   f'✍️  Manual ({manual})'),
-            ('all',      f'📰 All Articles ({total})'),
+            ('imported', 'AI Imported'),
+            ('manual',   'Manual'),
+            ('all',      'All Articles'),
         ]
 
     def queryset(self, request, queryset):
@@ -67,18 +57,18 @@ class ImportTypeFilter(admin.SimpleListFilter):
 
 class PublishDateFilter(admin.SimpleListFilter):
     """Quick date-range filter for articles."""
-    title = '📅 Published Date'
+    title = 'Published Date'
     parameter_name = 'pub_date'
 
     def lookups(self, request, model_admin):
         return [
-            ('today',       '📆 Today'),
-            ('yesterday',   '📆 Yesterday'),
-            ('this_week',   '📆 This Week'),
-            ('last_7',      '📆 Last 7 Days'),
-            ('this_month',  '📆 This Month'),
-            ('last_30',     '📆 Last 30 Days'),
-            ('older',       '🗂️  Older'),
+            ('today',       'Today'),
+            ('yesterday',   'Yesterday'),
+            ('this_week',   'This Week'),
+            ('last_7',      'Last 7 Days'),
+            ('this_month',  'This Month'),
+            ('last_30',     'Last 30 Days'),
+            ('older',       'Older'),
         ]
 
     def queryset(self, request, queryset):
@@ -105,19 +95,18 @@ class PublishDateFilter(admin.SimpleListFilter):
 
 class FlagsFilter(admin.SimpleListFilter):
     """Filter by special article flags — Breaking, Trending, Featured, etc."""
-    title = '🚩 Special Flags'
+    title = 'Special Flags'
     parameter_name = 'flags'
 
     def lookups(self, request, model_admin):
-        qs = model_admin.get_queryset(request)
         return [
-            ('breaking',     f'🚨 Breaking News ({qs.filter(is_breaking=True).count()})'),
-            ('trending',     f'🔥 Trending ({qs.filter(is_trending=True).count()})'),
-            ('featured',     f'⭐ Featured ({qs.filter(is_featured=True).count()})'),
-            ('editors_pick', f"✏️  Editor's Pick ({qs.filter(is_editors_pick=True).count()})"),
-            ('top_story',    f'🏆 Top Story ({qs.filter(is_top_story=True).count()})'),
-            ('live',         f'🔴 Live Blog ({qs.filter(is_live=True).count()})'),
-            ('web_story',    f'📱 Web Story ({qs.filter(is_web_story=True).count()})'),
+            ('breaking',     'Breaking News'),
+            ('trending',     'Trending'),
+            ('featured',     'Featured'),
+            ('editors_pick', "Editor's Pick"),
+            ('top_story',    'Top Story'),
+            ('live',         'Live Blog'),
+            ('web_story',    'Web Story'),
         ]
 
     def queryset(self, request, queryset):
@@ -137,16 +126,13 @@ class FlagsFilter(admin.SimpleListFilter):
 
 class HasImageFilter(admin.SimpleListFilter):
     """Filter articles by whether they have a featured image."""
-    title = '🖼️  Featured Image'
+    title = 'Featured Image'
     parameter_name = 'has_image'
 
     def lookups(self, request, model_admin):
-        qs = model_admin.get_queryset(request)
-        with_img    = qs.exclude(featured_image='').exclude(featured_image__isnull=True).count()
-        without_img = qs.filter(Q(featured_image='') | Q(featured_image__isnull=True)).count()
         return [
-            ('yes', f'✅ Has Image ({with_img})'),
-            ('no',  f'❌ No Image ({without_img})'),
+            ('yes', 'Has Image'),
+            ('no',  'No Image'),
         ]
 
     def queryset(self, request, queryset):
@@ -159,16 +145,16 @@ class HasImageFilter(admin.SimpleListFilter):
 
 class SocialPostFilter(admin.SimpleListFilter):
     """Filter by social media posting status."""
-    title = '📢 Social Media'
+    title = 'Social Media'
     parameter_name = 'social'
 
     def lookups(self, request, model_admin):
         return [
-            ('pending_fb',  '📘 Facebook Pending'),
-            ('pending_tw',  '🐦 Twitter Pending'),
-            ('pending_tg',  '📨 Telegram Pending'),
-            ('push_sent',   '🔔 Push Sent'),
-            ('push_unsent', '🔕 Push Not Sent'),
+            ('pending_fb',  'Facebook Pending'),
+            ('pending_tw',  'Twitter Pending'),
+            ('pending_tg',  'Telegram Pending'),
+            ('push_sent',   'Push Sent'),
+            ('push_unsent', 'Push Not Sent'),
         ]
 
     def queryset(self, request, queryset):
@@ -234,13 +220,13 @@ class ArticleAdminForm(forms.ModelForm):
 
 class ActivistDraftFilter(admin.SimpleListFilter):
     """Filter to quickly find articles submitted by Independent Journalism Contributors (Authors) that need editorial review."""
-    title = '✍️ Independent Contributor Drafts'
+    title = 'Independent Contributor Drafts'
     parameter_name = 'activist_drafts'
 
     def lookups(self, request, model_admin):
         return [
-            ('pending_review', '🚨 Pending Review (Drafts)'),
-            ('published', '✅ Published by Guests'),
+            ('pending_review', 'Pending Review (Drafts)'),
+            ('published', 'Published by Guests'),
         ]
 
     def queryset(self, request, queryset):
@@ -337,31 +323,31 @@ class ArticleAdmin(admin.ModelAdmin):
 
     # ── Fieldsets ─────────────────────────────────────────────────────────
     fieldsets = (
-        ('📝 Article Content', {
+        ('Article Content', {
             'fields': ('title', 'slug', 'category', 'author',
                        'description', 'content', 'featured_image', 'tags_input')
         }),
-        ('📄 Writer Evidence & Notes', {
+        ('Writer Evidence & Notes', {
             'fields': ('supporting_document', 'writer_notes'),
             'description': 'Editorial team reviews these to verify writer claims. Not publicly visible.',
         }),
-        ('🤖 AI Import & Source Data', {
+        ('AI Import & Source Data', {
             'fields': ('is_imported', 'source_name', 'source_url',
                        'original_title', 'meta_description', 'original_content'),
             'classes': ('collapse',),
             'description': 'Auto-populated when article is imported via AI. Editing not recommended.',
         }),
-        ('⚙️ Settings & Flags', {
+        ('Settings & Flags', {
             'fields': ('status', 'published_at', 'views',
                        'is_featured', 'is_trending', 'is_breaking',
                        'is_editors_pick', 'is_top_story',
                        'is_live', 'is_web_story'),
         }),
-        ('🚀 Social Media Auto-Post', {
+        ('Social Media Auto-Post', {
             'fields': ('post_to_facebook', 'post_to_twitter', 'post_to_telegram'),
-            'description': 'Article "Published" status mein save karne par auto-post hoga.',
+            'description': 'Social media platforms to post to. Will post when status is set to Published.',
         }),
-        ('🔒 System Trackers (Read Only)', {
+        ('System Trackers (Read Only)', {
             'fields': ('frontend_link', 'newsletter_sent', 'push_sent', 'web_story_created_at'),
             'classes': ('collapse',),
         }),
@@ -369,19 +355,16 @@ class ArticleAdmin(admin.ModelAdmin):
 
     # ── Custom list_display columns ────────────────────────────────────────
 
-    @admin.display(description='🌐 Link')
+    @admin.display(description='Link')
     def frontend_url_link(self, obj):
         import os
         base_url = os.getenv('FRONTEND_URL', 'http://localhost').rstrip('/')
         if not obj.slug:
             return "-"
         url = f"{base_url}/article/{obj.slug}"
-        return format_html(
-            '<a href="{}" target="_blank" style="background:#3498db; color:white; padding:3px 8px; border-radius:3px; text-decoration:none; font-size:11px;">Copy / View</a>',
-            url
-        )
+        return format_html('<a href="{}" target="_blank">View</a>', url)
 
-    @admin.display(description='🌐 Frontend URL')
+    @admin.display(description='Frontend URL')
     def frontend_link(self, obj):
         if not obj.slug:
             return "-"
@@ -393,27 +376,15 @@ class ArticleAdmin(admin.ModelAdmin):
     @admin.display(description='Status', ordering='status')
     def colored_status(self, obj):
         if obj.status == 'published':
-            return format_html(
-                '<span style="color:#27ae60;font-weight:bold;">✅ Published</span>'
-            )
-        return format_html(
-            '<span style="color:#e67e22;font-weight:bold;">📝 Draft</span>'
-        )
+            return format_html('<span style="color:#10b981;font-weight:bold;">Published</span>')
+        return format_html('<span style="color:#d97706;font-weight:bold;">Draft</span>')
 
     @admin.display(description='Type', ordering='is_imported')
     def import_badge(self, obj):
         if obj.is_imported:
-            # Show source name too for AI imports
             source = obj.source_name or "GNews"
-            return format_html(
-                '<span style="background:#2980b9;color:#fff;padding:2px 7px;'
-                'border-radius:4px;font-size:11px;" title="Source: {}">🤖 AI</span>',
-                source,
-            )
-        return format_html(
-            '<span style="background:#8e44ad;color:#fff;padding:2px 7px;'
-            'border-radius:4px;font-size:11px;">✍️ Manual</span>'
-        )
+            return format_html('<span style="color:#2563eb;font-weight:bold;" title="Source: {}">AI</span>', source)
+        return format_html('<span style="color:#7c3aed;font-weight:bold;">Manual</span>')
 
     # ── Tags logic ─────────────────────────────────────────────────────────
     def save_related(self, request, form, formsets, change):
@@ -435,7 +406,7 @@ class ArticleAdmin(admin.ModelAdmin):
 
     # ── Bulk Actions ───────────────────────────────────────────────────────
 
-    @admin.action(description='✅ Publish selected articles')
+    @admin.action(description='Publish selected articles')
     def make_published(self, request, queryset):
         if request.user.role in ['admin', 'editor'] or request.user.is_superuser:
             updated = 0
@@ -448,29 +419,29 @@ class ArticleAdmin(admin.ModelAdmin):
                 # Use standard save() so custom overrides in models.py execute correctly
                 article.save()
                 updated += 1
-            self.message_user(request, f'✅ {updated} article(s) published.')
+            self.message_user(request, f'{updated} article(s) published.')
         else:
             self.message_user(request, "Permission denied.", level='error')
 
-    @admin.action(description='📝 Move selected articles to Draft')
+    @admin.action(description='Move selected articles to Draft')
     def make_draft(self, request, queryset):
         count = queryset.update(status='draft')
-        self.message_user(request, f'📝 {count} article(s) moved to draft.')
+        self.message_user(request, f'{count} article(s) moved to draft.')
 
-    @admin.action(description='🔄 Regenerate slug from title')
+    @admin.action(description='Regenerate slug from title')
     def regenerate_slug(self, request, queryset):
         """
         Clears slug → Article.save() regenerates from current title.
-        ⚠️ Do NOT use on published articles without 301 redirects.
+        Do NOT use on published articles without 301 redirects.
         """
         count = 0
         for article in queryset:
             article.slug = ''
             article.save()
             count += 1
-        self.message_user(request, f'🔄 Slug regenerated for {count} article(s).')
+        self.message_user(request, f'Slug regenerated for {count} article(s).')
 
-    @admin.action(description='🤖 Run AI News Import Now (GNews → Groq → Draft)')
+    @admin.action(description='Run AI News Import Now (GNews → Groq → Draft)')
     def run_ai_import_now(self, request, queryset):
         """
         Manually triggers the GNews → scrape → Groq → draft pipeline.
@@ -480,7 +451,7 @@ class ArticleAdmin(admin.ModelAdmin):
         if not (request.user.role in ['admin', 'editor'] or request.user.is_superuser):
             self.message_user(
                 request,
-                "⛔ Permission denied. Only Admins and Editors can trigger AI import.",
+                "Permission denied. Only Admins and Editors can trigger AI import.",
                 level=messages.ERROR,
             )
             return
@@ -492,7 +463,7 @@ class ArticleAdmin(admin.ModelAdmin):
         if not gnews_key:
             self.message_user(
                 request,
-                "❌ GNEWS_API_KEY is not configured in the environment. Please set it in your .env file.",
+                "GNEWS_API_KEY is not configured in the environment. Please set it in your .env file.",
                 level=messages.ERROR,
             )
             return
@@ -500,7 +471,7 @@ class ArticleAdmin(admin.ModelAdmin):
         if not groq_key:
             self.message_user(
                 request,
-                "❌ GROQ_API_KEY is not configured. AI rewriting is disabled.",
+                "GROQ_API_KEY is not configured. AI rewriting is disabled.",
                 level=messages.ERROR,
             )
             return
@@ -510,59 +481,52 @@ class ArticleAdmin(admin.ModelAdmin):
             auto_import_news_task.delay()
             self.message_user(
                 request,
-                "🤖 AI News Import has been queued in Celery! "
+                "AI News Import has been queued in Celery! "
                 "New articles will appear as Drafts within 2–5 minutes. "
-                "Use the '🤖 AI Imported' filter to find them.",
+                "Use the 'AI Imported' filter to find them.",
                 level=messages.SUCCESS,
             )
         except Exception as exc:
             self.message_user(
                 request,
-                f"❌ Could not queue AI import task: {exc}",
+                f"Could not queue AI import task: {exc}",
                 level=messages.ERROR,
             )
 
     # ─────────────── Admin-Only Flag Override Actions ────────────────
 
-    @admin.action(description='🔥 Force TRENDING on selected (Admin Override)')
+    @admin.action(description='Force TRENDING on selected (Admin Override)')
     def admin_force_trending(self, request, queryset):
-        """Admin se manually kisi bhi article ko force trending mein daal sakte hain."""
         if not (request.user.role == 'admin' or request.user.is_superuser):
-            self.message_user(request, "⛔ Sirf Admin ye action kar sakta hai.", level=messages.ERROR)
+            self.message_user(request, "Permission denied. Only Admins can do this.", level=messages.ERROR)
             return
         count = queryset.update(is_trending=True)
-        self.message_user(request, f"🔥 {count} article(s) force-marked as Trending. (Admin Override)")
+        self.message_user(request, f"{count} article(s) force-marked as Trending. (Admin Override)")
 
-    @admin.action(description='⭐ Force FEATURED on selected (Admin Override)')
+    @admin.action(description='Force FEATURED on selected (Admin Override)')
     def admin_force_featured(self, request, queryset):
-        """Admin se manually kisi bhi article ko force featured mein daal sakte hain."""
         if not (request.user.role == 'admin' or request.user.is_superuser):
-            self.message_user(request, "⛔ Sirf Admin ye action kar sakta hai.", level=messages.ERROR)
+            self.message_user(request, "Permission denied. Only Admins can do this.", level=messages.ERROR)
             return
         count = queryset.update(is_featured=True)
-        self.message_user(request, f"⭐ {count} article(s) force-marked as Featured. (Admin Override)")
+        self.message_user(request, f"{count} article(s) force-marked as Featured. (Admin Override)")
 
-    @admin.action(description='🧹 Remove ALL special flags from selected (Trending/Featured/Breaking)')
+    @admin.action(description='Remove ALL special flags from selected (Trending/Featured/Breaking)')
     def admin_remove_special_flags(self, request, queryset):
-        """Ek saath sabhi special flags (trending, featured, breaking) clear kar do."""
         if not (request.user.role == 'admin' or request.user.is_superuser):
-            self.message_user(request, "⛔ Sirf Admin ye action kar sakta hai.", level=messages.ERROR)
+            self.message_user(request, "Permission denied. Only Admins can do this.", level=messages.ERROR)
             return
         count = queryset.update(is_trending=False, is_featured=False, is_breaking=False)
         self.message_user(
             request,
-            f"🧹 {count} article(s) ke sabhi special flags (Trending/Featured/Breaking) clear ho gaye.",
+            f"{count} article(s) had special flags cleared.",
             level=messages.WARNING,
         )
 
-    @admin.action(description='📢 Post selected article to Telegram NOW')
+    @admin.action(description='Post selected article to Telegram NOW')
     def post_to_telegram_now(self, request, queryset):
-        """
-        Admin se manually kisi bhi published article ko Telegram par post karo.
-        Signal ka wait nahi karna – direct Celery task queue mein dalta hai.
-        """
         if not (request.user.role in ['admin', 'editor'] or request.user.is_superuser):
-            self.message_user(request, "⛔ Sirf Admin/Editor ye action kar sakta hai.", level=messages.ERROR)
+            self.message_user(request, "Permission denied. Only Admins/Editors can do this.", level=messages.ERROR)
             return
 
         import os
@@ -572,7 +536,7 @@ class ArticleAdmin(admin.ModelAdmin):
         if not tg_token or not tg_channel:
             self.message_user(
                 request,
-                "❌ TELEGRAM_BOT_TOKEN ya TELEGRAM_CHANNEL_ID .env mein set nahi hai!",
+                "TELEGRAM_BOT_TOKEN or TELEGRAM_CHANNEL_ID missing in .env!",
                 level=messages.ERROR,
             )
             return
@@ -583,12 +547,11 @@ class ArticleAdmin(admin.ModelAdmin):
             if article.status != 'published':
                 self.message_user(
                     request,
-                    f"⚠️ '{article.title[:50]}' published nahi hai — skip kiya.",
+                    f"'{article.title[:50]}' is not published — skipped.",
                     level=messages.WARNING,
                 )
                 skipped += 1
                 continue
-            # Force flag on so the task actually sends it
             Article.objects.filter(pk=article.pk).update(post_to_telegram=True)
             from news.tasks import auto_post_article_task
             auto_post_article_task.delay(article.id)
@@ -597,8 +560,7 @@ class ArticleAdmin(admin.ModelAdmin):
         if queued:
             self.message_user(
                 request,
-                f"📢 {queued} article(s) Telegram par post karne ke liye queue mein daal diye! "
-                f"30-60 seconds mein channel par nazar aayenge.",
+                f"{queued} article(s) queued for Telegram posting!",
                 level=messages.SUCCESS,
             )
 
@@ -689,9 +651,8 @@ class ArticleAdmin(admin.ModelAdmin):
             if ai_drafts > 0:
                 messages.warning(
                     request,
-                    f'📥 {ai_drafts} AI-imported article(s) are waiting for your review! '
-                    f'Please review and publish them. '
-                    f'[Filter: Article Type → 🤖 AI Imported + Status → 📝 Draft]'
+                    f'{ai_drafts} AI-imported article(s) are waiting for your review! '
+                    f'Please review and publish them.'
                 )
 
         if request.user.role in ['author', 'reporter'] and hasattr(request.user, 'author_profile'):
@@ -701,6 +662,6 @@ class ArticleAdmin(admin.ModelAdmin):
             draft   = total - pub
             messages.info(
                 request,
-                f'📊 MY STATS  |  Total: {total}  |  ✅ Published: {pub}  |  📝 Draft: {draft}'
+                f'MY STATS | Total: {total} | Published: {pub} | Draft: {draft}'
             )
         return super().changelist_view(request, extra_context=extra_context)

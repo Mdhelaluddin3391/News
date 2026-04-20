@@ -517,16 +517,9 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_TASK_SOFT_TIME_LIMIT = int(os.getenv('CELERY_TASK_SOFT_TIME_LIMIT', '180'))
 CELERY_TASK_TIME_LIMIT = int(os.getenv('CELERY_TASK_TIME_LIMIT', '240'))
 CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.getenv('CELERY_WORKER_MAX_TASKS_PER_CHILD', '100'))
-CELERY_TASK_ROUTES = {
-    'core.tasks.send_async_email': {'queue': 'mail'},
-    'news.tasks.process_article_image': {'queue': 'media'},
-    'news.tasks.send_push_notifications_task': {'queue': 'notifications'},
-    'news.tasks.auto_post_article_task': {'queue': 'notifications'},
-    'news.tasks.auto_import_news_task': {'queue': 'default'},
-    'news.tasks.cleanup_expired_flags_task': {'queue': 'default'},
-    'news.tasks.auto_update_trending_task': {'queue': 'default'},
-    'news.tasks.auto_update_featured_task': {'queue': 'default'},
-}
+# CELERY_TASK_ROUTES ko hata diya taaki saare tasks single 'default' worker ke paas jaayein
+# Is se email aur baaki sab properly process hone lagenge
+# CELERY_TASK_ROUTES = { ... } 
 CELERY_BEAT_SCHEDULE = {
     'auto-import-news-every-30-mins': {
         'task': 'news.tasks.auto_import_news_task',

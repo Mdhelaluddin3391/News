@@ -32,23 +32,20 @@ from .models import (
 # ═══════════════════════════════════════════════════════════════════════════
 
 class ContactResolvedFilter(admin.SimpleListFilter):
-    title = '📬 Status'
-    parameter_name = 'contact_status'
+    title = 'Status'
+    parameter_name = 'status'
 
     def lookups(self, request, model_admin):
-        qs = model_admin.get_queryset(request)
-        pending  = qs.filter(is_resolved=False).count()
-        resolved = qs.filter(is_resolved=True).count()
         return [
-            ('pending',  f'🔴 Pending ({pending})'),
-            ('resolved', f'✅ Resolved ({resolved})'),
+            ('resolved',   'Resolved'),
+            ('unresolved', 'Unresolved'),
         ]
 
     def queryset(self, request, queryset):
-        if self.value() == 'pending':
-            return queryset.filter(is_resolved=False)
         if self.value() == 'resolved':
             return queryset.filter(is_resolved=True)
+        if self.value() == 'unresolved':
+            return queryset.filter(is_resolved=False)
         return queryset
 
 
@@ -60,21 +57,21 @@ class ContactMessageAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     ordering      = ('is_resolved', '-created_at')
     readonly_fields = ('name', 'email', 'subject', 'message', 'created_at')
-    actions = ['mark_as_resolved', 'mark_as_unresolved']
+    actions = ['mark_resolved', 'mark_unresolved']
 
     fieldsets = (
-        ('📨 Message', {
+        ('Message Details', {
             'fields': ('name', 'email', 'subject', 'message', 'created_at'),
         }),
-        ('✅ Resolution', {
+        ('Resolution Status', {
             'fields': ('is_resolved',),
         }),
     )
 
-    @admin.display(description='📧 Email')
+    @admin.display(description='Email')
     def email_display(self, obj):
         return format_html(
-            '<a href="mailto:{}" style="color:#93c5fd;">{}</a>',
+            '<a href="mailto:{}" style="color:#2563eb;">{}</a>',
             obj.email, obj.email,
         )
 
@@ -85,34 +82,18 @@ class ContactMessageAdmin(admin.ModelAdmin):
     @admin.display(description='Status', ordering='is_resolved')
     def status_badge(self, obj):
         if obj.is_resolved:
-            return format_html(
-                '<span style="background:#064e3b;color:#6ee7b7;padding:2px 9px;'
-                'border-radius:20px;font-size:10px;font-weight:700;">✅ RESOLVED</span>'
-            )
-        return format_html(
-            '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 9px;'
-            'border-radius:20px;font-size:10px;font-weight:700;">🔴 PENDING</span>'
-        )
+            return format_html('<span style="color:#10b981;font-weight:bold;">Resolved</span>')
+        return format_html('<span style="color:#ef4444;font-weight:bold;">Pending</span>')
 
-    @admin.action(description='✅ Mark selected messages as Resolved')
-    def mark_as_resolved(self, request, queryset):
+    @admin.action(description='Mark selected as Resolved')
+    def mark_resolved(self, request, queryset):
         count = queryset.update(is_resolved=True)
-        self.message_user(request, f'✅ {count} message(s) marked as resolved.')
+        self.message_user(request, f'{count} message(s) marked as resolved.')
 
-    @admin.action(description='🔴 Mark selected messages as Unresolved')
-    def mark_as_unresolved(self, request, queryset):
+    @admin.action(description='Mark selected as Unresolved')
+    def mark_unresolved(self, request, queryset):
         count = queryset.update(is_resolved=False)
-        self.message_user(request, f'🔴 {count} message(s) marked as unresolved.', level=messages.WARNING)
-
-    def changelist_view(self, request, extra_context=None):
-        pending  = ContactMessage.objects.filter(is_resolved=False).count()
-        resolved = ContactMessage.objects.filter(is_resolved=True).count()
-        if pending > 0:
-            messages.warning(
-                request,
-                f'📬 {pending} contact message(s) are awaiting reply! Filter: 🔴 Pending to see them.'
-            )
-        return super().changelist_view(request, extra_context=extra_context)
+        self.message_user(request, f'{count} message(s) marked as unresolved.', level=messages.WARNING)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -121,7 +102,7 @@ class ContactMessageAdmin(admin.ModelAdmin):
 
 @admin.register(Advertisement)
 class AdvertisementAdmin(admin.ModelAdmin):
-    list_display  = ('title', 'slot_badge', 'type_badge', 'priority', 'is_active', 'mobile_badge', 'created_at')
+    list_display  = ('title', 'slot_badge', 'type_badge', 'priority', 'is_active', 'created_at')
     list_filter   = ('slot', 'ad_type', 'is_active', 'is_mobile_only', 'created_at')
     search_fields = ('title', 'url', 'google_ad_code')
     list_editable = ('is_active', 'priority')
@@ -130,78 +111,36 @@ class AdvertisementAdmin(admin.ModelAdmin):
     actions = ['activate_ads', 'deactivate_ads']
 
     fieldsets = (
-        ('📢 Basic Info', {
+        ('Ad Setup', {
             'fields': ('title', 'slot', 'ad_type', 'is_active', 'priority', 'is_mobile_only'),
         }),
-        ('🖼️ Brand Ad Details', {
+        ('Brand Ad Details', {
             'fields': ('image', 'url'),
-            'description': 'Only for "Brand Collab (Image + Link)" type ads.',
         }),
-        ('📊 Google AdSense', {
+        ('Google AdSense', {
             'fields': ('google_ad_code',),
-            'description': 'Paste AdSense HTML snippet for "Google AdSense" type ads.',
         }),
     )
 
     @admin.display(description='Slot', ordering='slot')
     def slot_badge(self, obj):
-        SLOT_STYLES = {
-            'header':     ('🔝', '#1e3a8a', '#93c5fd'),
-            'sidebar':    ('📌', '#064e3b', '#6ee7b7'),
-            'in_article': ('📰', '#4c1d95', '#c4b5fd'),
-        }
-        emoji, bg, color = SLOT_STYLES.get(obj.slot, ('?', '#374151', '#9ca3af'))
-        return format_html(
-            '<span style="background:{};color:{};padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;">'
-            '{} {}</span>',
-            bg, color, emoji, obj.get_slot_display(),
-        )
+        return format_html('<span style="font-weight:bold;">{}</span>', obj.get_slot_display())
 
     @admin.display(description='Type', ordering='ad_type')
     def type_badge(self, obj):
         if obj.ad_type == 'brand':
-            return format_html(
-                '<span style="color:#f59e0b;font-weight:600;font-size:11px;">🏷️ Brand</span>'
-            )
-        return format_html(
-            '<span style="color:#34d399;font-weight:600;font-size:11px;">📊 AdSense</span>'
-        )
+            return format_html('<span style="color:#d97706;font-weight:bold;">Brand</span>')
+        return format_html('<span style="color:#059669;font-weight:bold;">AdSense</span>')
 
-    @admin.display(description='Status', ordering='is_active')
-    def status_badge(self, obj):
-        if obj.is_active:
-            return format_html(
-                '<span style="color:#10b981;font-size:12px;font-weight:700;">🟢 Live</span>'
-            )
-        return format_html(
-            '<span style="color:#6b7280;font-size:12px;">⚫ Off</span>'
-        )
-
-    @admin.display(description='📱 Mobile')
-    def mobile_badge(self, obj):
-        if obj.is_mobile_only:
-            return format_html('<span style="color:#3b82f6;font-size:12px;">📱</span>')
-        return format_html('<span style="color:#4b5563;font-size:12px;">—</span>')
-
-    @admin.action(description='🟢 Activate selected ads')
+    @admin.action(description='Activate selected ads')
     def activate_ads(self, request, queryset):
         count = queryset.update(is_active=True)
-        self.message_user(request, f'🟢 {count} ad(s) activated.')
+        self.message_user(request, f'{count} ad(s) activated.')
 
-    @admin.action(description='⚫ Deactivate selected ads')
+    @admin.action(description='Deactivate selected ads')
     def deactivate_ads(self, request, queryset):
         count = queryset.update(is_active=False)
-        self.message_user(request, f'⚫ {count} ad(s) deactivated.', level=messages.WARNING)
-
-    def changelist_view(self, request, extra_context=None):
-        total   = Advertisement.objects.count()
-        live    = Advertisement.objects.filter(is_active=True).count()
-        paused  = total - live
-        messages.info(
-            request,
-            f'📢 Ads — Total: {total}  |  🟢 Live: {live}  |  ⚫ Paused: {paused}'
-        )
-        return super().changelist_view(request, extra_context=extra_context)
+        self.message_user(request, f'{count} ad(s) deactivated.', level=messages.WARNING)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -211,23 +150,22 @@ class AdvertisementAdmin(admin.ModelAdmin):
 @admin.register(AdvertisePage)
 class AdvertisePageAdmin(admin.ModelAdmin):
     fieldsets = (
-        ('🏷️ Hero Section', {
+        ('Hero Section', {
             'fields': ('hero_title', 'hero_description'),
         }),
-        ('📦 Slots Section', {
+        ('Slots Section', {
             'fields': ('slots_section_title',),
         }),
-        ('📩 Inquiry Section', {
+        ('Inquiry Section', {
             'fields': ('inquiry_title', 'inquiry_description', 'submit_button_text', 'success_message'),
         }),
     )
 
     def has_add_permission(self, request):
-        # Singleton: only allow if record doesn't exist yet
         return not self.model.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
-        return False  # Prevent accidental deletion of singleton
+        return False
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -242,21 +180,6 @@ class AdvertiseOptionAdmin(admin.ModelAdmin):
     list_editable = ('sort_order', 'is_active', 'show_on_page', 'show_in_inquiry_form')
     ordering      = ('sort_order', 'id')
 
-    @admin.display(description='Active')
-    def status_display(self, obj):
-        return format_html(
-            '<span style="color:{};">●</span>',
-            '#10b981' if obj.is_active else '#6b7280',
-        )
-
-    @admin.display(description='On Page')
-    def page_display(self, obj):
-        return '✅' if obj.show_on_page else '—'
-
-    @admin.display(description='In Form')
-    def form_display(self, obj):
-        return '✅' if obj.show_in_inquiry_form else '—'
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  SITE SETTINGS ADMIN (Singleton)
@@ -267,22 +190,16 @@ class SiteSettingAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'ga4_status')
 
     fieldsets = (
-        ('📊 Analytics', {
+        ('Analytics', {
             'fields': ('ga4_tracking_id',),
-            'description': 'Enter your Google Analytics 4 Measurement ID (format: G-XXXXXXXXXX).',
         }),
     )
 
     @admin.display(description='GA4 Status')
     def ga4_status(self, obj):
         if obj.ga4_tracking_id:
-            return format_html(
-                '<span style="color:#10b981;font-weight:700;">✅ Active — {}</span>',
-                obj.ga4_tracking_id,
-            )
-        return format_html(
-            '<span style="color:#f59e0b;font-weight:600;">⚠️ Not configured</span>'
-        )
+            return format_html('<span style="color:#10b981;font-weight:bold;">Active</span>')
+        return format_html('<span style="color:#d97706;font-weight:bold;">Not configured</span>')
 
     def has_add_permission(self, request):
         return not self.model.objects.exists()
@@ -303,10 +220,10 @@ class JobPostingAdmin(admin.ModelAdmin):
     search_fields = ('title', 'location', 'description')
     date_hierarchy = 'created_at'
     ordering      = ('-is_active', '-created_at')
-    actions = ['activate_jobs', 'deactivate_jobs']
+    actions = ['open_jobs', 'close_jobs']
 
     fieldsets = (
-        ('💼 Job Details', {
+        ('Job Details', {
             'fields': ('title', 'location', 'employment_type', 'description', 'is_active'),
         }),
     )

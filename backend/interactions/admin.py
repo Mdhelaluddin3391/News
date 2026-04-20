@@ -2,14 +2,14 @@
 interactions/admin.py — Full Moderation & Engagement Admin Panel
 
 Features:
-  ✅ Comment moderation with one-click approve/hide + bulk actions
-  ✅ Comment report queue with priority sorting (unreviewed first)
-  ✅ Newsletter management with total/active/unsubscribed stats
-  ✅ Newsletter bulk email send action
-  ✅ Poll management with live vote counts per option
-  ✅ Push subscription management with user link
-  ✅ Bookmark tracking (who saved what)
-  ✅ CommentReport review workflow: Dismiss / Hide / Delete / Warn User
+  - Comment moderation with one-click approve/hide + bulk actions
+  - Comment report queue with priority sorting (unreviewed first)
+  - Newsletter management with total/active/unsubscribed stats
+  - Newsletter bulk email send action
+  - Poll management with live vote counts per option
+  - Push subscription management with user link
+  - Bookmark tracking (who saved what)
+  - CommentReport review workflow: Dismiss / Hide / Delete / Warn User
 """
 
 from django.contrib import admin, messages
@@ -55,18 +55,14 @@ class BookmarkAdmin(admin.ModelAdmin):
 # ═══════════════════════════════════════════════════════════════════════════
 
 class CommentStatusFilter(admin.SimpleListFilter):
-    title = '🗨️ Status'
+    title = 'Status'
     parameter_name = 'comment_status'
 
     def lookups(self, request, model_admin):
-        qs = model_admin.get_queryset(request)
-        active   = qs.filter(is_active=True).count()
-        hidden   = qs.filter(is_active=False).count()
-        reported = qs.filter(reports__isnull=False).distinct().count()
         return [
-            ('active',   f'✅ Visible ({active})'),
-            ('hidden',   f'🚫 Hidden ({hidden})'),
-            ('reported', f'🚨 Has Reports ({reported})'),
+            ('active',   'Visible'),
+            ('hidden',   'Hidden'),
+            ('reported', 'Has Reports'),
         ]
 
     def queryset(self, request, queryset):
@@ -95,22 +91,19 @@ class CommentAdmin(admin.ModelAdmin):
     readonly_fields = ('user', 'article', 'created_at', 'updated_at', 'report_count')
 
     fieldsets = (
-        ('💬 Comment Details', {
+        ('Comment Details', {
             'fields': ('user', 'article', 'text', 'created_at', 'updated_at'),
         }),
-        ('🛡️ Moderation', {
+        ('Moderation', {
             'fields': ('is_active', 'report_count'),
         }),
     )
 
-    @admin.display(description='👤 User', ordering='user__email')
+    @admin.display(description='User', ordering='user__email')
     def user_display(self, obj):
-        return format_html(
-            '<span style="color:#93c5fd;font-weight:500;">{}</span>',
-            obj.user.name or obj.user.email,
-        )
+        return format_html('<span style="font-weight:bold;">{}</span>', obj.user.name or obj.user.email)
 
-    @admin.display(description='📰 Article')
+    @admin.display(description='Article')
     def article_display(self, obj):
         title = obj.article.title
         return title[:45] + '…' if len(title) > 45 else title
@@ -119,38 +112,29 @@ class CommentAdmin(admin.ModelAdmin):
     def comment_preview(self, obj):
         return obj.text[:70] + '…' if len(obj.text) > 70 else obj.text
 
-    @admin.display(description='🚨 Reports')
+    @admin.display(description='Reports')
     def report_count(self, obj):
         count = obj.reports.count()
         if count == 0:
-            return format_html('<span style="color:#4b5563;">—</span>')
+            return "—"
         color = '#ef4444' if count >= 3 else '#f59e0b'
-        return format_html(
-            '<span style="color:{};font-weight:700;font-size:13px;">⚠️ {}</span>',
-            color, count,
-        )
+        return format_html('<span style="color:{};font-weight:bold;">{}</span>', color, count)
 
     @admin.display(description='Status', ordering='is_active')
     def status_badge(self, obj):
         if obj.is_active:
-            return format_html(
-                '<span style="background:#064e3b;color:#6ee7b7;padding:2px 9px;'
-                'border-radius:20px;font-size:10px;font-weight:700;">✅ VISIBLE</span>'
-            )
-        return format_html(
-            '<span style="background:#7f1d1d;color:#fca5a5;padding:2px 9px;'
-            'border-radius:20px;font-size:10px;font-weight:700;">🚫 HIDDEN</span>'
-        )
+            return format_html('<span style="color:#10b981;font-weight:bold;">Visible</span>')
+        return format_html('<span style="color:#ef4444;font-weight:bold;">Hidden</span>')
 
-    @admin.action(description='✅ Approve (Show) selected comments')
+    @admin.action(description='Approve (Show) selected comments')
     def approve_comments(self, request, queryset):
         count = queryset.update(is_active=True)
-        self.message_user(request, f'✅ {count} comment(s) approved and made visible.')
+        self.message_user(request, f'{count} comment(s) approved and made visible.')
 
-    @admin.action(description='🚫 Hide (Moderate) selected comments')
+    @admin.action(description='Hide (Moderate) selected comments')
     def hide_comments(self, request, queryset):
         count = queryset.update(is_active=False)
-        self.message_user(request, f'🚫 {count} comment(s) hidden from public view.', level=messages.WARNING)
+        self.message_user(request, f'{count} comment(s) hidden from public view.', level=messages.WARNING)
 
     def changelist_view(self, request, extra_context=None):
         total    = Comment.objects.count()
@@ -159,7 +143,7 @@ class CommentAdmin(admin.ModelAdmin):
         reported = Comment.objects.filter(reports__isnull=False).distinct().count()
         messages.info(
             request,
-            f'💬 Total: {total}  |  ✅ Visible: {active}  |  🚫 Hidden: {hidden}  |  🚨 Reported: {reported}'
+            f'Comments | Total: {total} | Visible: {active} | Hidden: {hidden} | Reported: {reported}'
         )
         return super().changelist_view(request, extra_context=extra_context)
 
@@ -169,16 +153,13 @@ class CommentAdmin(admin.ModelAdmin):
 # ═══════════════════════════════════════════════════════════════════════════
 
 class ReportPriorityFilter(admin.SimpleListFilter):
-    title = '📋 Review Status'
+    title = 'Review Status'
     parameter_name = 'review_status'
 
     def lookups(self, request, model_admin):
-        qs = model_admin.get_queryset(request)
-        pending  = qs.filter(is_reviewed=False).count()
-        reviewed = qs.filter(is_reviewed=True).count()
         return [
-            ('pending',  f'🔴 Pending Review ({pending})'),
-            ('reviewed', f'✅ Reviewed ({reviewed})'),
+            ('pending',  'Pending Review'),
+            ('reviewed', 'Reviewed'),
         ]
 
     def queryset(self, request, queryset):
@@ -210,10 +191,10 @@ class CommentReportAdmin(admin.ModelAdmin):
     )
 
     fieldsets = (
-        ('🚨 Report Details', {
+        ('Report Details', {
             'fields': ('comment', 'comment_author', 'comment_preview', 'reported_by', 'reason', 'description', 'created_at'),
         }),
-        ('⚖️ Admin Review & Action', {
+        ('Admin Review & Action', {
             'fields': ('is_reviewed', 'admin_action', 'admin_notes'),
             'description': 'Select action and save to apply moderation.',
         }),
@@ -240,50 +221,44 @@ class CommentReportAdmin(admin.ModelAdmin):
 
     @admin.display(description='Author', ordering='comment__user__email')
     def comment_author(self, obj):
-        return format_html(
-            '<span style="color:#93c5fd;">{}</span>',
-            obj.comment.user.email,
-        )
+        return format_html('<span>{}</span>', obj.comment.user.email)
 
     @admin.display(description='Reported By')
     def reported_by_display(self, obj):
-        return format_html(
-            '<span style="color:#fcd34d;">{}</span>',
-            obj.reported_by.email,
-        )
+        return format_html('<span>{}</span>', obj.reported_by.email)
 
     @admin.display(description='Reason', ordering='reason')
     def reason_badge(self, obj):
         COLORS = {
-            'spam':          ('#92400e', '#fcd34d'),
-            'offensive':     ('#7f1d1d', '#fca5a5'),
-            'inappropriate': ('#4c1d95', '#c4b5fd'),
-            'harassment':    ('#7f1d1d', '#f87171'),
-            'false_info':    ('#1e3a8a', '#93c5fd'),
-            'other':         ('#374151', '#9ca3af'),
+            'spam':          '#b45309',
+            'offensive':     '#b91c1c',
+            'inappropriate': '#6d28d9',
+            'harassment':    '#b91c1c',
+            'false_info':    '#1d4ed8',
+            'other':         '#4b5563',
         }
-        bg, color = COLORS.get(obj.reason, ('#374151', '#9ca3af'))
+        color = COLORS.get(obj.reason, '#4b5563')
         return format_html(
-            '<span style="background:{};color:{};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;">{}</span>',
-            bg, color, obj.get_reason_display().upper(),
+            '<span style="color:{};font-weight:bold;">{}</span>',
+            color, obj.get_reason_display().upper(),
         )
 
     @admin.display(description='Status', ordering='is_reviewed')
     def review_status(self, obj):
         if obj.is_reviewed:
-            return format_html('<span style="color:#10b981;font-weight:700;">✅ Done</span>')
-        return format_html('<span style="color:#ef4444;font-weight:700;animation:none;">🔴 Pending</span>')
+            return format_html('<span style="color:#10b981;font-weight:bold;">Done</span>')
+        return format_html('<span style="color:#ef4444;font-weight:bold;">Pending</span>')
 
     @admin.display(description='Action Taken', ordering='admin_action')
     def admin_action_display(self, obj):
         ACTION_STYLES = {
             'none':      ('—', '#6b7280'),
-            'hidden':    ('🚫 Hidden', '#f59e0b'),
-            'deleted':   ('🗑️ Deleted', '#ef4444'),
-            'warn_user': ('⚠️ Warned', '#f97316'),
+            'hidden':    ('Hidden', '#f59e0b'),
+            'deleted':   ('Deleted', '#ef4444'),
+            'warn_user': ('Warned', '#f97316'),
         }
         label, color = ACTION_STYLES.get(obj.admin_action, ('?', '#6b7280'))
-        return format_html('<span style="color:{};font-weight:600;">{}</span>', color, label)
+        return format_html('<span style="color:{};font-weight:bold;">{}</span>', color, label)
 
     # ── Helpers ─────────────────────────────────────────────────────────────────
     def _mark_related(self, report, action, notes):
@@ -293,37 +268,37 @@ class CommentReportAdmin(admin.ModelAdmin):
 
     # ── Actions ────────────────────────────────────────────────────────────
 
-    @admin.action(description='✅ Mark as Reviewed (No Action)')
+    @admin.action(description='Mark as Reviewed (No Action)')
     def mark_reviewed(self, request, queryset):
         count = queryset.update(is_reviewed=True)
-        self.message_user(request, f'✅ {count} report(s) marked as reviewed.')
+        self.message_user(request, f'{count} report(s) marked as reviewed.')
 
-    @admin.action(description='🟢 Dismiss — Report was invalid')
+    @admin.action(description='Dismiss — Report was invalid')
     def dismiss_reports_action(self, request, queryset):
         queryset.update(is_reviewed=True, admin_action='none')
-        self.message_user(request, f'🟢 {queryset.count()} reports dismissed.')
+        self.message_user(request, f'{queryset.count()} reports dismissed.')
 
-    @admin.action(description='🚫 Hide Comment from public view')
+    @admin.action(description='Hide Comment from public view')
     def hide_comment_action(self, request, queryset):
         for report in queryset:
             report.comment.is_active = False
             report.comment.save(update_fields=['is_active'])
             self._mark_related(report, 'hidden', 'Hidden by admin via report interface.')
-        self.message_user(request, f'🚫 {queryset.count()} comment(s) hidden.', level=messages.WARNING)
+        self.message_user(request, f'{queryset.count()} comment(s) hidden.', level=messages.WARNING)
 
-    @admin.action(description='🗑️ Remove Comment + Mark Actioned')
+    @admin.action(description='Remove Comment + Mark Actioned')
     def remove_comment_action(self, request, queryset):
         for report in queryset:
             report.comment.is_active = False
             report.comment.save(update_fields=['is_active'])
             self._mark_related(report, 'deleted', 'Removed from public view by admin.')
-        self.message_user(request, f'🗑️ {queryset.count()} comment(s) removed.', level=messages.WARNING)
+        self.message_user(request, f'{queryset.count()} comment(s) removed.', level=messages.WARNING)
 
-    @admin.action(description='⚠️ Flag User for Warning')
+    @admin.action(description='Flag User for Warning')
     def warn_user_action(self, request, queryset):
         for report in queryset:
             self._mark_related(report, 'warn_user', 'Author flagged for moderator warning.')
-        self.message_user(request, f'⚠️ {queryset.count()} user(s) flagged for warning.')
+        self.message_user(request, f'{queryset.count()} user(s) flagged for warning.')
 
     def save_model(self, request, obj, form, change):
         if obj.admin_action in ('hidden', 'deleted'):
@@ -338,7 +313,7 @@ class CommentReportAdmin(admin.ModelAdmin):
         if pending > 0:
             messages.warning(
                 request,
-                f'🚨 {pending} report(s) are PENDING review! Filter: 🔴 Pending Review to see them.'
+                f'{pending} report(s) are PENDING review! Filter: Pending Review to see them.'
             )
         return super().changelist_view(request, extra_context=extra_context)
 
@@ -360,10 +335,10 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
     readonly_fields = ('unsubscribe_token', 'unsubscribe_token_used_at')
 
     fieldsets = (
-        ('📧 Subscriber Info', {
+        ('Subscriber Info', {
             'fields': ('email', 'is_active'),
         }),
-        ('🔐 Unsubscribe Token', {
+        ('Unsubscribe Token', {
             'fields': ('unsubscribe_token', 'unsubscribe_token_used_at'),
             'classes': ('collapse',),
         }),
@@ -372,53 +347,44 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
     @admin.display(description='Status', ordering='is_active')
     def status_badge(self, obj):
         if obj.is_active:
-            return format_html(
-                '<span style="background:#064e3b;color:#6ee7b7;padding:2px 9px;'
-                'border-radius:20px;font-size:10px;font-weight:700;">✅ SUBSCRIBED</span>'
-            )
-        return format_html(
-            '<span style="background:#374151;color:#9ca3af;padding:2px 9px;'
-            'border-radius:20px;font-size:10px;font-weight:700;">🔕 UNSUBSCRIBED</span>'
-        )
+            return format_html('<span style="color:#10b981;font-weight:bold;">Subscribed</span>')
+        return format_html('<span style="color:#6b7280;font-weight:bold;">Unsubscribed</span>')
 
     @admin.display(description='Token')
     def token_status(self, obj):
         if obj.unsubscribe_token_used_at:
-            return format_html(
-                '<span style="color:#6b7280;font-size:11px;">Used {}</span>',
-                obj.unsubscribe_token_used_at.strftime('%b %d'),
-            )
-        return format_html('<span style="color:#4b5563;font-size:11px;">—</span>')
+            return format_html('<span>Used {}</span>', obj.unsubscribe_token_used_at.strftime('%b %d'))
+        return "—"
 
-    @admin.action(description='🟢 Activate selected subscribers')
+    @admin.action(description='Activate selected subscribers')
     def activate_subscribers(self, request, queryset):
         count = queryset.update(is_active=True)
-        self.message_user(request, f'🟢 {count} subscriber(s) activated.')
+        self.message_user(request, f'{count} subscriber(s) activated.')
 
-    @admin.action(description='🔕 Deactivate selected subscribers')
+    @admin.action(description='Deactivate selected subscribers')
     def deactivate_subscribers(self, request, queryset):
         count = queryset.update(is_active=False)
-        self.message_user(request, f'🔕 {count} subscriber(s) deactivated.', level=messages.WARNING)
+        self.message_user(request, f'{count} subscriber(s) deactivated.', level=messages.WARNING)
 
-    @admin.action(description='📧 Send Latest News to Selected Subscribers')
+    @admin.action(description='Send Latest News to Selected Subscribers')
     def send_latest_news_email(self, request, queryset):
         active = queryset.filter(is_active=True)
         if not active.exists():
-            self.message_user(request, '❌ No active subscribers in selection.', level=messages.ERROR)
+            self.message_user(request, 'No active subscribers in selection.', level=messages.ERROR)
             return
 
         latest = Article.objects.filter(status='published').order_by('-published_at')[:5]
         if not latest.exists():
-            self.message_user(request, '❌ No published articles to send.', level=messages.ERROR)
+            self.message_user(request, 'No published articles to send.', level=messages.ERROR)
             return
 
-        subject = '📰 Latest Stories from Ferox Times'
+        subject = 'Latest Stories from Ferox Times'
         message_lines = ['Hello!\n\nHere are the latest top stories:\n']
         html_parts = [
             '<html><body style="font-family:Arial,sans-serif;background:#f8f9fa;padding:20px;">',
             '<div style="max-width:600px;margin:auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">',
             '<div style="background:#d32f2f;padding:20px;text-align:center;">',
-            '<h1 style="color:#fff;margin:0;font-size:22px;">📰 Ferox Times</h1></div>',
+            '<h1 style="color:#fff;margin:0;font-size:22px;">Ferox Times</h1></div>',
             '<div style="padding:24px;">',
         ]
 
@@ -446,10 +412,10 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
             send_async_email.delay(subject, '\n'.join(message_lines), recipients, ''.join(html_parts))
             self.message_user(
                 request,
-                f'📧 Newsletter queued for {len(recipients)} subscriber(s)!'
+                f'Newsletter queued for {len(recipients)} subscriber(s)!'
             )
         except Exception as exc:
-            self.message_user(request, f'❌ Email queue error: {exc}', level=messages.ERROR)
+            self.message_user(request, f'Email queue error: {exc}', level=messages.ERROR)
 
     def changelist_view(self, request, extra_context=None):
         total   = NewsletterSubscriber.objects.count()
@@ -457,7 +423,7 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
         unsub   = total - active
         messages.info(
             request,
-            f'📧 Newsletter Stats — Total: {total}  |  ✅ Active: {active}  |  🔕 Unsubscribed: {unsub}'
+            f'Newsletter Stats — Total: {total} | Active: {active} | Unsubscribed: {unsub}'
         )
         return super().changelist_view(request, extra_context=extra_context)
 
@@ -483,7 +449,7 @@ class PollAdmin(admin.ModelAdmin):
     actions       = ['activate_poll', 'deactivate_poll']
 
     fieldsets = (
-        ('📊 Poll Info', {
+        ('Poll Info', {
             'fields': ('question', 'description', 'is_active'),
             'description': 'Only ONE poll can be active at a time. Activating this will be used on the frontend.',
         }),
@@ -493,34 +459,28 @@ class PollAdmin(admin.ModelAdmin):
     def total_votes(self, obj):
         total = sum(option.votes for option in obj.options.all())
         if total == 0:
-            return format_html('<span style="color:#6b7280;">0 votes</span>')
-        return format_html('<span style="color:#10b981;font-weight:700;">🗳️ {}</span>', total)
+            return "0 votes"
+        return format_html('<span style="color:#10b981;font-weight:bold;">{}</span>', total)
 
     @admin.display(description='Status', ordering='is_active')
     def status_badge(self, obj):
         if obj.is_active:
-            return format_html(
-                '<span style="background:#064e3b;color:#6ee7b7;padding:2px 9px;'
-                'border-radius:20px;font-size:10px;font-weight:700;">🟢 ACTIVE</span>'
-            )
-        return format_html(
-            '<span style="background:#374151;color:#9ca3af;padding:2px 9px;'
-            'border-radius:20px;font-size:10px;font-weight:700;">⚫ INACTIVE</span>'
-        )
+            return format_html('<span style="color:#10b981;font-weight:bold;">ACTIVE</span>')
+        return format_html('<span style="color:#6b7280;font-weight:bold;">INACTIVE</span>')
 
-    @admin.action(description='🟢 Activate selected poll (deactivates others)')
+    @admin.action(description='Activate selected poll (deactivates others)')
     def activate_poll(self, request, queryset):
         if queryset.count() > 1:
-            self.message_user(request, '❌ Only one poll can be activated at a time.', level=messages.ERROR)
+            self.message_user(request, 'Only one poll can be activated at a time.', level=messages.ERROR)
             return
         Poll.objects.update(is_active=False)
         queryset.update(is_active=True)
-        self.message_user(request, '🟢 Poll activated! All other polls deactivated.')
+        self.message_user(request, 'Poll activated! All other polls deactivated.')
 
-    @admin.action(description='⚫ Deactivate selected poll')
+    @admin.action(description='Deactivate selected poll')
     def deactivate_poll(self, request, queryset):
         count = queryset.update(is_active=False)
-        self.message_user(request, f'⚫ {count} poll(s) deactivated.', level=messages.WARNING)
+        self.message_user(request, f'{count} poll(s) deactivated.', level=messages.WARNING)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -536,10 +496,10 @@ class PushSubscriptionAdmin(admin.ModelAdmin):
     actions = ['delete_invalid_subscriptions']
 
     fieldsets = (
-        ('📡 Subscription Details', {
+        ('Subscription Details', {
             'fields': ('endpoint', 'user'),
         }),
-        ('🔐 Encryption Keys (Read Only)', {
+        ('Encryption Keys (Read Only)', {
             'fields': ('auth', 'p256dh'),
             'classes': ('collapse',),
         }),
@@ -552,18 +512,16 @@ class PushSubscriptionAdmin(admin.ModelAdmin):
     @admin.display(description='User', ordering='user__email')
     def user_display(self, obj):
         if obj.user:
-            return format_html(
-                '<span style="color:#93c5fd;">{}</span>', obj.user.email
-            )
+            return format_html('<span style="color:#2563eb;">{}</span>', obj.user.email)
         return format_html('<span style="color:#6b7280;">Anonymous</span>')
 
-    @admin.action(description='🗑️ Delete selected (expired/invalid) subscriptions')
+    @admin.action(description='Delete selected (expired/invalid) subscriptions')
     def delete_invalid_subscriptions(self, request, queryset):
         count = queryset.count()
         queryset.delete()
         self.message_user(
             request,
-            f'🗑️ {count} push subscription(s) deleted.',
+            f'{count} push subscription(s) deleted.',
             level=messages.WARNING,
         )
 
@@ -573,6 +531,6 @@ class PushSubscriptionAdmin(admin.ModelAdmin):
         anon     = total - with_user
         messages.info(
             request,
-            f'🔔 Push Subscriptions — Total: {total}  |  👤 Linked to User: {with_user}  |  🕵️ Anonymous: {anon}'
+            f'Push Subscriptions | Total: {total} | Linked to User: {with_user} | Anonymous: {anon}'
         )
         return super().changelist_view(request, extra_context=extra_context)

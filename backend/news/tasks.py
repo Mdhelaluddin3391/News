@@ -394,18 +394,17 @@ def auto_post_article_task(self, article_id):
     article_url = f"{settings.FRONTEND_URL}/article/{article.slug}"
     short_desc = (article.description[:150].strip() + "...") if article.description else ""
 
-    # HTML-formatted Telegram message (bold + clickable link)
+    # HTML-formatted Telegram caption/message
     tg_message = (
         f"<b>{article.title}</b>\n\n"
         f"{short_desc}\n\n"
-        f'<a href="{article_url}">\U0001f517 Puri Khabar Parhein</a>\n\n'
+        f'<a href="{article_url}">🔗 Puri Khabar Parhein</a>\n\n'
         "#FeroxTimes"
     )
-    # Plain text for Facebook / Twitter
+    # Plain text for Facebook / Twitter (shortened because platforms auto-generate a card with description)
     plain_message = (
-        f"\U0001f6a8 {article.title}\n\n"
-        f"\U0001f4dd {short_desc}\n\n"
-        f"\U0001f517 Read more:\n{article_url}\n\n"
+        f"🚨 {article.title}\n\n"
+        f"🔗 Read full story here:\n{article_url}\n\n"
         "#FeroxTimes #LatestNews"
     )
     posted_targets = []
@@ -415,15 +414,15 @@ def auto_post_article_task(self, article_id):
         try:
             response = requests.post(
                 f"https://graph.facebook.com/v18.0/{settings.FACEBOOK_PAGE_ID}/feed",
-                data={"message": plain_message, "access_token": settings.FACEBOOK_ACCESS_TOKEN},
+                data={"message": plain_message, "link": article_url, "access_token": settings.FACEBOOK_ACCESS_TOKEN},
                 timeout=15,
             )
             response.raise_for_status()
             posted_targets.append("facebook")
             Article.objects.filter(pk=article.pk).update(post_to_facebook=False)
-            logger.info("[AutoPost] \u2705 Facebook posted for article %s", article_id)
+            logger.info("[AutoPost] ✅ Facebook posted for article %s", article_id)
         except Exception as fb_exc:
-            logger.error("[AutoPost] \u274c Facebook FAILED for article %s: %s | Body: %s",
+            logger.error("[AutoPost] ❌ Facebook FAILED for article %s: %s | Body: %s",
                          article_id, fb_exc,
                          getattr(getattr(fb_exc, "response", None), "text", "N/A"))
             raise
@@ -443,29 +442,48 @@ def auto_post_article_task(self, article_id):
             client.create_tweet(text=plain_message[:280])
             posted_targets.append("twitter")
             Article.objects.filter(pk=article.pk).update(post_to_twitter=False)
-            logger.info("[AutoPost] \u2705 Twitter posted for article %s", article_id)
+            logger.info("[AutoPost] ✅ Twitter posted for article %s", article_id)
         except Exception as tw_exc:
-            logger.error("[AutoPost] \u274c Twitter FAILED for article %s: %s", article_id, tw_exc)
+            logger.error("[AutoPost] ❌ Twitter FAILED for article %s: %s", article_id, tw_exc)
             raise
 
     # ── Telegram ─────────────────────────────────────────────────────────────
     if article.post_to_telegram and settings.TELEGRAM_BOT_TOKEN and settings.TELEGRAM_CHANNEL_ID:
         try:
-            response = requests.post(
-                f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
-                json={
-                    "chat_id":                  settings.TELEGRAM_CHANNEL_ID,
-                    "text":                     tg_message,
-                    "parse_mode":               "HTML",
-                    "disable_web_page_preview": False,
-                },
-                timeout=15,
-            )
+            # Check if image exists to send a Photo with caption instead of just Text
+            has_image = bool(article.featured_image)
+            
+            if has_image:
+                base_url = settings.FRONTEND_URL.rstrip('/')
+                image_url = article.featured_image.url if article.featured_image.url.startswith('http') else f"{base_url}{article.featured_image.url}"
+                
+                response = requests.post(
+                    f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendPhoto",
+                    json={
+                        "chat_id": settings.TELEGRAM_CHANNEL_ID,
+                        "photo": image_url,
+                        "caption": tg_message,
+                        "parse_mode": "HTML",
+                    },
+                    timeout=15,
+                )
+            else:
+                response = requests.post(
+                    f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage",
+                    json={
+                        "chat_id":                  settings.TELEGRAM_CHANNEL_ID,
+                        "text":                     tg_message,
+                        "parse_mode":               "HTML",
+                        "disable_web_page_preview": False,
+                    },
+                    timeout=15,
+                )
+            
             tg_data = response.json()
             if not tg_data.get("ok"):
                 err_desc = tg_data.get("description", "Unknown Telegram API error")
                 logger.error(
-                    "[AutoPost] \u274c Telegram API rejected message for article %s: %s",
+                    "[AutoPost] ❌ Telegram API rejected message for article %s: %s",
                     article_id, err_desc
                 )
                 raise Exception(f"Telegram API error: {err_desc}")
@@ -473,11 +491,11 @@ def auto_post_article_task(self, article_id):
             posted_targets.append("telegram")
             Article.objects.filter(pk=article.pk).update(post_to_telegram=False)
             logger.info(
-                "[AutoPost] \u2705 Telegram posted for article %s (msg_id=%s)",
+                "[AutoPost] ✅ Telegram posted for article %s (msg_id=%s)",
                 article_id, tg_data.get("result", {}).get("message_id")
             )
         except Exception as tg_exc:
-            logger.error("[AutoPost] \u274c Telegram FAILED for article %s: %s", article_id, tg_exc)
+            logger.error("[AutoPost] ❌ Telegram FAILED for article %s: %s", article_id, tg_exc)
             raise
 
     logger.info("[AutoPost] Completed for article %s targets=%s", article_id, posted_targets)

@@ -112,9 +112,9 @@ class Article(BaseModel):
     is_live = models.BooleanField(default=False, help_text="Tick if this is a Live Blog/Live Update article")
     is_web_story = models.BooleanField(default=False, help_text="Tick karein agar is article ko Web Stories (Shorts) mein dikhana hai (Auto-expires in 24h)")
     web_story_created_at = models.DateTimeField(blank=True, null=True, help_text="Story banne ka time (24h expiry ke liye)")
-    post_to_facebook = models.BooleanField(default=False, help_text="Tick karein Facebook par post karne ke liye")
-    post_to_twitter = models.BooleanField(default=False, help_text="Tick karein Twitter (X) par post karne ke liye")
-    post_to_telegram = models.BooleanField(default=False, help_text="Tick karein Telegram channel par post karne ke liye")
+    post_to_facebook = models.BooleanField(default=True, help_text="Tick karein Facebook par post karne ke liye")
+    post_to_twitter = models.BooleanField(default=True, help_text="Tick karein Twitter (X) par post karne ke liye")
+    post_to_telegram = models.BooleanField(default=True, help_text="Tick karein Telegram channel par post karne ke liye")
     newsletter_sent = models.BooleanField(default=False, help_text="Tick ho jayega jab subscribers ko email bhej diya jayega")
     push_sent = models.BooleanField(default=False, help_text="Tick ho jayega jab push notification bhej diya jayega")
 

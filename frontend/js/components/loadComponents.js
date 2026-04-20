@@ -2,21 +2,31 @@ async function loadComponents() {
     try {
         const headerPlaceholder = document.getElementById('header-placeholder');
         if (headerPlaceholder) {
-            const headerRes = await fetch('/components/header');
-            if (!headerRes.ok) {
-                throw new Error(`Failed to load header (${headerRes.status})`);
+            let headerHtml = sessionStorage.getItem('headerHtmlCache');
+            if (!headerHtml) {
+                const headerRes = await fetch('/components/header');
+                if (!headerRes.ok) {
+                    throw new Error(`Failed to load header (${headerRes.status})`);
+                }
+                headerHtml = await headerRes.text();
+                sessionStorage.setItem('headerHtmlCache', headerHtml);
             }
-            headerPlaceholder.innerHTML = await headerRes.text();
+            headerPlaceholder.innerHTML = headerHtml;
             initHeaderScripts();
         }
 
         const footerPlaceholder = document.getElementById('footer-placeholder');
         if (footerPlaceholder) {
-            const footerRes = await fetch('/components/footer');
-            if (!footerRes.ok) {
-                throw new Error(`Failed to load footer (${footerRes.status})`);
+            let footerHtml = sessionStorage.getItem('footerHtmlCache');
+            if (!footerHtml) {
+                const footerRes = await fetch('/components/footer');
+                if (!footerRes.ok) {
+                    throw new Error(`Failed to load footer (${footerRes.status})`);
+                }
+                footerHtml = await footerRes.text();
+                sessionStorage.setItem('footerHtmlCache', footerHtml);
             }
-            footerPlaceholder.innerHTML = await footerRes.text();
+            footerPlaceholder.innerHTML = footerHtml;
         }
 
         if (typeof updateAuthUI === 'function') {

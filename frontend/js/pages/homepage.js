@@ -156,21 +156,61 @@ function renderEditorsPicks(picks) {
 }
 
 // ==================== GLOBAL SIDEBAR LOADING FUNCTIONS ====================
+// 24-hour auto-refresh interval IDs (cleanup ke liye)
+let _sidebarRefreshTimers = [];
+
+function _clearSidebarRefreshTimers() {
+    _sidebarRefreshTimers.forEach(id => clearInterval(id));
+    _sidebarRefreshTimers = [];
+}
+
+// ──────────────────────────────────────────────────────────
+// EDITOR'S PICKS
+// Primary  : is_editors_pick=true (pure manual by editor)
+// Fallback : Most-viewed articles (agar editor ne kuch select nahi kiya)
+// ──────────────────────────────────────────────────────────
 window.loadEditorsPicks = async function() {
     try {
-        const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_editors_pick=true`);
+        // Primary: Editor-selected articles, max 5
+        const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_editors_pick=true&page_size=5`);
         const data = await res.json();
-        renderEditorsPicks(data.results || data);
+        const articles = (data.results || data).slice(0, 5);
+
+        if (articles.length > 0) {
+            renderEditorsPicks(articles);
+        } else {
+            // Fallback: Most-viewed articles (different from trending — no time filter)
+            console.log("Editor's Picks: No manual picks found, using most-viewed fallback.");
+            const fallbackRes = await fetch(`${HOMEPAGE_API_URL}/articles/?ordering=-views&page_size=5`);
+            const fallbackData = await fallbackRes.json();
+            renderEditorsPicks((fallbackData.results || fallbackData).slice(0, 5));
+        }
     } catch (err) {
         console.error("Error loading Editor's Picks:", err);
     }
 };
 
+// ──────────────────────────────────────────────────────────
+// TRENDING NEWS
+// Primary  : is_trending=true (manual OR 100+ views in 3 days — backend handles this)
+// Fallback : Recent articles ordered by views (last 7 days)
+// ──────────────────────────────────────────────────────────
 window.loadTrendingNews = async function() {
     try {
-        const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_trending=true`);
+        // Primary: Trending articles (backend auto-includes 100+ views in 3 days)
+        const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_trending=true&page_size=5`);
         const data = await res.json();
-        renderTrending(data.results || data);
+        const articles = (data.results || data).slice(0, 5);
+
+        if (articles.length > 0) {
+            renderTrending(articles);
+        } else {
+            // Fallback: Recent articles by view count (past articles jo popular hain)
+            console.log("Trending: No trending articles, using recent high-views fallback.");
+            const fallbackRes = await fetch(`${HOMEPAGE_API_URL}/articles/?page_size=5`);
+            const fallbackData = await fallbackRes.json();
+            renderTrending((fallbackData.results || fallbackData).slice(0, 5));
+        }
     } catch (err) {
         console.error("Error loading Trending News:", err);
     }
@@ -223,17 +263,17 @@ async function loadNextCategories(count = 1) {
     for (let i = currentCategoryIndex; i < endIndex; i++) {
         const cat = allCategoriesList[i];
         try {
-            // page_size=6: 1 Main + 4 Side = 5 articles dikhenge (baki waste fetch se bachne ke liye)
-            const artRes = await fetch(`${HOMEPAGE_API_URL}/articles/?category__slug=${cat.slug}&page_size=6`);
+            // page_size=5: 1 Main + 4 Side = 5 articles dikhenge
+            const artRes = await fetch(`${HOMEPAGE_API_URL}/articles/?category__slug=${cat.slug}&page_size=5`);
             const artData = await artRes.json();
 
             // 1 Main + 4 Side = Total 5 articles
-            const articles = (artData.results || artData).slice(0, 6);
+            const articles = (artData.results || artData).slice(0, 5);
 
             if (articles.length === 0) continue;
 
             const mainArticle = articles[0];
-            const sideArticles = articles.slice(1, 6);
+            const sideArticles = articles.slice(1, 5);
 
             let sideHtml = sideArticles.map(a => {
                 const sideLiveBadge = a.is_live ? `<div class="live-badge-card live-badge-card--compact"><i class="fas fa-circle"></i> LIVE</div>` : '';
@@ -306,6 +346,11 @@ async function loadNextCategories(count = 1) {
     if (pendingTrigger && currentCategoryIndex < allCategoriesList.length) {
         pendingTrigger = false;
         loadNextCategories(1);
+    } else if (currentCategoryIndex < allCategoriesList.length) {
+        // ── FIX 5: IntersectionObserver sirf state-change pe fire hota hai.
+        // Agar sentinel pehle se visible tha (fast scroll), toh observer dobara
+        // fire nahi hoga. Is liye har load ke baad manually check karo.
+        setTimeout(() => checkAndFillIfNeeded(), 150);
     }
 }
 
@@ -325,6 +370,21 @@ function setupScrollObserver() {
     });
 
     observer.observe(sentinel);
+
+    // ── FALLBACK: Scroll event listener ──
+    // IntersectionObserver ke sath problem: agar sentinel pehle se viewport
+    // mein hai, toh observer dobara fire nahi hoga. Scroll event se ye gap
+    // cover hoti hai — throttled hai taaki performance pe asar na pade.
+    let scrollThrottleTimer = null;
+    window.addEventListener('scroll', () => {
+        if (scrollThrottleTimer) return;
+        scrollThrottleTimer = setTimeout(() => {
+            scrollThrottleTimer = null;
+            if (currentCategoryIndex < allCategoriesList.length) {
+                checkAndFillIfNeeded();
+            }
+        }, 200);
+    }, { passive: true });
 
     // ── SIDEBAR BUG FIX ──
     // Pehli baar page load hone ke baad sidebar ki height ki wajah se
@@ -464,11 +524,13 @@ async function initHomepage() {
                 };
                 injectSchema(homepageSchema);
             }
-            
             setTimeout(() => {
                 showCustomPushPrompt();
             }, 4000); 
         }
+
+        // ── Start 24-hour auto-refresh for sidebars ──
+        startSidebarAutoRefresh();
 
     } catch (error) {
         console.error('Error fetching homepage data:', error);
@@ -538,41 +600,8 @@ function showCustomPushPrompt() {
     });
 }
 
-// ==================== Newsletter Form Listener ====================
-const newsletterForm = document.getElementById('newsletterForm');
-if (newsletterForm) {
-    newsletterForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = newsletterForm.querySelector('input[type="email"]').value;
-        const btn = newsletterForm.querySelector('button');
+// ==================== Newsletter Form Listener Moved to Global script.js ====================
 
-        btn.disabled = true;
-        btn.textContent = 'Subscribing...';
-
-        try {
-            const response = await apiFetch(`${CONFIG.API_BASE_URL}/newsletter/subscribe/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email })
-            });
-
-            const data = await response.json().catch(() => ({}));
-
-            if (response.ok) {
-                if(typeof showToast === 'function') showToast(data.message || 'Thank you for subscribing!', 'success');
-                newsletterForm.reset();
-            } else {
-                if(typeof showToast === 'function') showToast(data.error || 'Subscription failed.', 'error');
-            }
-        } catch (err) {
-            console.error(err);
-            if(typeof showToast === 'function') showToast('Network Error. Please try again later.', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Subscribe Now';
-        }
-    });
-}
 
 // ==================== NAYA CODE: Render Recent News ====================
 function renderRecentNews(articles) {
@@ -663,15 +692,59 @@ function renderTopStories(stories) {
     });
 }
 
+// ──────────────────────────────────────────────────────────
+// TOP STORIES
+// Primary  : is_top_story=true (manual OR 200+ views in 7 days — backend handles)
+// Fallback : Latest published articles (koi bhi recent 5)
+// ──────────────────────────────────────────────────────────
 window.loadTopStories = async function() {
     try {
-        const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_top_story=true`);
+        // Primary: Top stories (backend auto-includes 200+ views in 7 days)
+        const res = await fetch(`${HOMEPAGE_API_URL}/articles/?is_top_story=true&page_size=5`);
         const data = await res.json();
-        renderTopStories(data.results || data);
+        const articles = (data.results || data).slice(0, 5);
+
+        if (articles.length > 0) {
+            renderTopStories(articles);
+        } else {
+            // Fallback: Most recent published articles (catch-all)
+            console.log("Top Stories: No top stories found, using recent articles fallback.");
+            const fallbackRes = await fetch(`${HOMEPAGE_API_URL}/articles/?page_size=5`);
+            const fallbackData = await fallbackRes.json();
+            renderTopStories((fallbackData.results || fallbackData).slice(0, 5));
+        }
     } catch (err) {
         console.error("Error loading Top Stories:", err);
     }
 };
+
+// ──────────────────────────────────────────────────────────
+// 24-HOUR AUTO-REFRESH
+// Teeno sections (Editor's Picks, Trending, Top Stories) har 24 ghante
+// apne aap fresh data fetch karenge — page reload ki zaroorat nahi.
+// ──────────────────────────────────────────────────────────
+function startSidebarAutoRefresh() {
+    _clearSidebarRefreshTimers(); // pehle wale timers clear karo
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+    const t1 = setInterval(() => {
+        console.log('[AutoRefresh] Refreshing Editor\'s Picks...');
+        window.loadEditorsPicks();
+    }, TWENTY_FOUR_HOURS);
+
+    const t2 = setInterval(() => {
+        console.log('[AutoRefresh] Refreshing Trending News...');
+        window.loadTrendingNews();
+    }, TWENTY_FOUR_HOURS);
+
+    const t3 = setInterval(() => {
+        console.log('[AutoRefresh] Refreshing Top Stories...');
+        window.loadTopStories();
+    }, TWENTY_FOUR_HOURS);
+
+    _sidebarRefreshTimers.push(t1, t2, t3);
+    console.log('[AutoRefresh] Sidebar sections will auto-refresh every 24 hours.');
+}
 
 // ==================== DYNAMIC WEB STORIES (SHORTS) ====================
 

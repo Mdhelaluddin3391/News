@@ -2,15 +2,15 @@
 users/admin.py — Industry-Level User Management Admin Panel
 
 Features:
-  ✅ Role-coloured badges in list view
-  ✅ Email verification status indicator
-  ✅ Last login + join date tracking
-  ✅ Bulk actions: activate, deactivate, change roles, send verification
-  ✅ Advanced filters: role, active status, verified email, staff flag, date
-  ✅ Author profile inline
-  ✅ Read-only security fields
-  ✅ Proper password handling
-  ✅ Full search across email, name, role
+  - Role-coloured badges in list view
+  - Email verification status indicator
+  - Last login + join date tracking
+  - Bulk actions: activate, deactivate, change roles, send verification
+  - Advanced filters: role, active status, verified email, staff flag, date
+  - Author profile inline
+  - Read-only security fields
+  - Proper password handling
+  - Full search across email, name, role
 """
 
 from django.contrib import admin, messages
@@ -29,21 +29,16 @@ from .models import User
 # ─── Custom Filters ────────────────────────────────────────────────────────
 
 class RoleFilter(admin.SimpleListFilter):
-    title = '🎭 Role'
+    title = 'Role'
     parameter_name = 'role_filter'
 
     def lookups(self, request, model_admin):
-        qs = model_admin.get_queryset(request)
-        role_counts = {
-            row['role']: row['c']
-            for row in qs.values('role').annotate(c=Count('id'))
-        }
         return [
-            ('admin',      f'👑 Admin ({role_counts.get("admin", 0)})'),
-            ('editor',     f'✏️  Editor ({role_counts.get("editor", 0)})'),
-            ('reporter',   f'🎙️  Reporter ({role_counts.get("reporter", 0)})'),
-            ('author',     f'📝 Author ({role_counts.get("author", 0)})'),
-            ('subscriber', f'👤 Subscriber ({role_counts.get("subscriber", 0)})'),
+            ('admin',      'Admin'),
+            ('editor',     'Editor'),
+            ('reporter',   'Reporter'),
+            ('author',     'Author'),
+            ('subscriber', 'Subscriber'),
         ]
 
     def queryset(self, request, queryset):
@@ -53,16 +48,13 @@ class RoleFilter(admin.SimpleListFilter):
 
 
 class EmailVerifiedFilter(admin.SimpleListFilter):
-    title = '✉️ Email Status'
+    title = 'Email Status'
     parameter_name = 'email_verified'
 
     def lookups(self, request, model_admin):
-        qs = model_admin.get_queryset(request)
-        verified   = qs.filter(is_email_verified=True).count()
-        unverified = qs.filter(is_email_verified=False).count()
         return [
-            ('verified',   f'✅ Verified ({verified})'),
-            ('unverified', f'⏳ Unverified ({unverified})'),
+            ('verified',   'Verified'),
+            ('unverified', 'Unverified'),
         ]
 
     def queryset(self, request, queryset):
@@ -74,15 +66,15 @@ class EmailVerifiedFilter(admin.SimpleListFilter):
 
 
 class UserActivityFilter(admin.SimpleListFilter):
-    title = '🕐 Activity'
+    title = 'Activity'
     parameter_name = 'activity'
 
     def lookups(self, request, model_admin):
         return [
-            ('active_today',    '🟢 Active Today'),
-            ('active_7days',    '🟡 Active Last 7 Days'),
-            ('inactive_30days', '🔴 Inactive 30+ Days'),
-            ('never_logged',    '⚫ Never Logged In'),
+            ('active_today',    'Active Today'),
+            ('active_7days',    'Active Last 7 Days'),
+            ('inactive_30days', 'Inactive 30+ Days'),
+            ('never_logged',    'Never Logged In'),
         ]
 
     def queryset(self, request, queryset):
@@ -101,20 +93,16 @@ class UserActivityFilter(admin.SimpleListFilter):
 
 
 class StaffFilter(admin.SimpleListFilter):
-    title = '🔒 Access Level'
+    title = 'Access Level'
     parameter_name = 'access_level'
 
     def lookups(self, request, model_admin):
-        qs = model_admin.get_queryset(request)
-        superusers = qs.filter(is_superuser=True).count()
-        staff      = qs.filter(is_staff=True, is_superuser=False).count()
-        regular    = qs.filter(is_staff=False, is_superuser=False).count()
         return [
-            ('superuser', f'⚡ Superuser ({superusers})'),
-            ('staff',     f'🔑 Staff ({staff})'),
-            ('regular',   f'👤 Regular ({regular})'),
-            ('active',    f'✅ Active Only'),
-            ('inactive',  f'🚫 Inactive Only'),
+            ('superuser', 'Superuser'),
+            ('staff',     'Staff'),
+            ('regular',   'Regular'),
+            ('active',    'Active Only'),
+            ('inactive',  'Inactive Only'),
         ]
 
     def queryset(self, request, queryset):
@@ -193,14 +181,14 @@ class CustomUserAdmin(admin.ModelAdmin):
 
     # ── Fieldsets ─────────────────────────────────────────────────────────
     fieldsets = (
-        ('🔐 Login Credentials', {
+        ('Login Credentials', {
             'fields': ('email', 'password'),
             'description': 'Email is the login username. Use the password widget to change the user password.',
         }),
-        ('👤 Personal Information', {
+        ('Personal Information', {
             'fields': ('name', 'bio', 'profile_picture'),
         }),
-        ('🎭 Role & Permissions', {
+        ('Role & Permissions', {
             'fields': ('role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
             'description': (
                 'Role determines what the user can do. '
@@ -210,12 +198,12 @@ class CustomUserAdmin(admin.ModelAdmin):
                 '<strong>Subscriber:</strong> Frontend only.'
             ),
         }),
-        ('✉️ Email Verification', {
+        ('Email Verification', {
             'fields': ('is_email_verified', 'email_verification_token', 'email_verification_token_created_at'),
             'classes': ('collapse',),
             'description': 'Email verification token details. Clear token fields to force re-verification.',
         }),
-        ('📅 Account History', {
+        ('Account History', {
             'fields': ('last_login', 'date_joined'),
             'classes': ('collapse',),
         }),
@@ -227,12 +215,12 @@ class CustomUserAdmin(admin.ModelAdmin):
         'email_verification_token', 'email_verification_token_created_at',
     )
 
-    # ── Custom column: email with superuser crown ──────────────────────────
-    @admin.display(description='📧 Email', ordering='email')
+    # ── Custom column: email with superuser label ──────────────────────────
+    @admin.display(description='Email', ordering='email')
     def email_display(self, obj):
         if obj.is_superuser:
             return format_html(
-                '{} <span title="Superuser" style="color:#f59e0b;font-size:11px;">⚡</span>',
+                '{} <span title="Superuser" style="color:#f59e0b;font-size:11px;">(SU)</span>',
                 obj.email,
             )
         return obj.email
@@ -241,69 +229,53 @@ class CustomUserAdmin(admin.ModelAdmin):
     @admin.display(description='Role', ordering='role')
     def role_badge(self, obj):
         COLOR_MAP = {
-            'admin':      ('👑', '#dc2626', '#7f1d1d'),
-            'editor':     ('✏️', '#7c3aed', '#4c1d95'),
-            'reporter':   ('🎙️', '#0284c7', '#075985'),
-            'author':     ('📝', '#059669', '#064e3b'),
-            'subscriber': ('👤', '#374151', '#1f2937'),
+            'admin':      '#dc2626',
+            'editor':     '#7c3aed',
+            'reporter':   '#0284c7',
+            'author':     '#059669',
+            'subscriber': '#374151',
         }
-        emoji, fg, bg = COLOR_MAP.get(obj.role, ('?', '#6b7280', '#374151'))
+        color = COLOR_MAP.get(obj.role, '#6b7280')
         return format_html(
-            '<span style="background:{};color:#fff;padding:2px 10px;border-radius:20px;'
-            'font-size:10px;font-weight:700;letter-spacing:0.5px;">'
-            '{} {}</span>',
-            bg, emoji, obj.get_role_display().upper(),
+            '<span style="color:{};font-weight:bold;">{}</span>',
+            color, obj.get_role_display()
         )
 
     # ── Custom column: email verified ─────────────────────────────────────
-    @admin.display(description='✉️ Email', boolean=False, ordering='is_email_verified')
+    @admin.display(description='Email', boolean=False, ordering='is_email_verified')
     def email_verified_badge(self, obj):
         if obj.is_email_verified:
-            return format_html(
-                '<span style="color:#10b981;font-weight:700;font-size:12px;">✅ Verified</span>'
-            )
-        return format_html(
-            '<span style="color:#f59e0b;font-weight:700;font-size:12px;">⏳ Pending</span>'
-        )
+            return format_html('<span style="color:#10b981;font-weight:600;">Verified</span>')
+        return format_html('<span style="color:#f59e0b;font-weight:600;">Pending</span>')
 
     # ── Custom column: active status ──────────────────────────────────────
     @admin.display(description='Active', ordering='is_active')
     def active_badge(self, obj):
         if obj.is_active:
-            return format_html(
-                '<span style="color:#10b981;font-weight:700;">🟢</span>'
-            )
-        return format_html(
-            '<span style="color:#ef4444;font-weight:700;">🔴</span>'
-        )
+            return format_html('<span style="color:#10b981;font-weight:600;">Yes</span>')
+        return format_html('<span style="color:#ef4444;font-weight:600;">No</span>')
 
     # ── Custom column: staff badge ────────────────────────────────────────
     @admin.display(description='Staff', ordering='is_staff')
     def staff_badge(self, obj):
         if obj.is_superuser:
-            return format_html('<span style="color:#f59e0b;font-size:12px;" title="Superuser">⚡</span>')
+            return format_html('<span style="color:#f59e0b;font-size:12px;">Yes (SU)</span>')
         if obj.is_staff:
-            return format_html('<span style="color:#3b82f6;font-size:12px;" title="Staff">🔑</span>')
-        return format_html('<span style="color:#4b5563;font-size:12px;">—</span>')
+            return format_html('<span style="color:#3b82f6;font-size:12px;">Yes</span>')
+        return format_html('<span style="color:#4b5563;font-size:12px;">No</span>')
 
     # ── Custom column: last login ─────────────────────────────────────────
     @admin.display(description='Last Login', ordering='last_login')
     def last_login_display(self, obj):
         if not obj.last_login:
-            return format_html(
-                '<span style="color:#6b7280;font-size:11px;">Never</span>'
-            )
+            return format_html('<span style="color:#6b7280;font-size:12px;">Never</span>')
         now = timezone.now()
         diff = now - obj.last_login
         if diff.days == 0:
-            return format_html('<span style="color:#10b981;font-size:11px;">Today</span>')
+            return format_html('<span style="color:#10b981;font-size:12px;">Today</span>')
         if diff.days <= 7:
-            return format_html(
-                '<span style="color:#f59e0b;font-size:11px;">{} days ago</span>', diff.days
-            )
-        return format_html(
-            '<span style="color:#6b7280;font-size:11px;">{} days ago</span>', diff.days
-        )
+            return format_html('<span style="color:#f59e0b;font-size:12px;">{} days ago</span>', diff.days)
+        return format_html('<span style="color:#6b7280;font-size:12px;">{} days ago</span>', diff.days)
 
     # ── Save model: password hashing + auto staff ──────────────────────────
     def save_model(self, request, obj, form, change):
@@ -336,49 +308,49 @@ class CustomUserAdmin(admin.ModelAdmin):
 
     # ── Bulk Actions ──────────────────────────────────────────────────────
 
-    @admin.action(description='✅ Activate selected users')
+    @admin.action(description='Activate selected users')
     def make_active(self, request, queryset):
         count = queryset.update(is_active=True)
-        self.message_user(request, f'✅ {count} user(s) activated.')
+        self.message_user(request, f'{count} user(s) activated.')
 
-    @admin.action(description='🚫 Deactivate / Block selected users')
+    @admin.action(description='Deactivate / Block selected users')
     def make_inactive(self, request, queryset):
         if not request.user.is_superuser:
             protected = queryset.filter(is_superuser=True)
             if protected.exists():
-                self.message_user(request, '⛔ Cannot deactivate superusers.', level=messages.ERROR)
+                self.message_user(request, 'Cannot deactivate superusers.', level=messages.ERROR)
                 return
         count = queryset.update(is_active=False)
-        self.message_user(request, f'🚫 {count} user(s) deactivated.', level=messages.WARNING)
+        self.message_user(request, f'{count} user(s) deactivated.', level=messages.WARNING)
 
-    @admin.action(description='✏️ Change role → Editor')
+    @admin.action(description='Change role → Editor')
     def make_role_editor(self, request, queryset):
         if not (request.user.is_superuser or request.user.role == 'admin'):
-            self.message_user(request, '⛔ Only Admins can change roles.', level=messages.ERROR)
+            self.message_user(request, 'Only Admins can change roles.', level=messages.ERROR)
             return
         count = queryset.update(role='editor', is_staff=True)
-        self.message_user(request, f'✏️ {count} user(s) set to Editor.')
+        self.message_user(request, f'{count} user(s) set to Editor.')
 
-    @admin.action(description='🎙️ Change role → Reporter')
+    @admin.action(description='Change role → Reporter')
     def make_role_reporter(self, request, queryset):
         if not (request.user.is_superuser or request.user.role == 'admin'):
-            self.message_user(request, '⛔ Only Admins can change roles.', level=messages.ERROR)
+            self.message_user(request, 'Only Admins can change roles.', level=messages.ERROR)
             return
         count = queryset.update(role='reporter', is_staff=True)
-        self.message_user(request, f'🎙️ {count} user(s) set to Reporter.')
+        self.message_user(request, f'{count} user(s) set to Reporter.')
 
-    @admin.action(description='📝 Change role → Author')
+    @admin.action(description='Change role → Author')
     def make_role_author(self, request, queryset):
         if not (request.user.is_superuser or request.user.role == 'admin'):
-            self.message_user(request, '⛔ Only Admins can change roles.', level=messages.ERROR)
+            self.message_user(request, 'Only Admins can change roles.', level=messages.ERROR)
             return
         count = queryset.update(role='author', is_staff=True)
-        self.message_user(request, f'📝 {count} user(s) set to Author.')
+        self.message_user(request, f'{count} user(s) set to Author.')
 
-    @admin.action(description='🎓 Verify as Independent Journalism Contributor (+ Email)')
+    @admin.action(description='Verify as Independent Journalism Contributor (+ Email)')
     def verify_as_activist(self, request, queryset):
         if not (request.user.is_superuser or request.user.role == 'admin'):
-            self.message_user(request, '⛔ Only Admins can verify activists.', level=messages.ERROR)
+            self.message_user(request, 'Only Admins can verify activists.', level=messages.ERROR)
             return
         
         from news.models import Author
@@ -411,44 +383,44 @@ class CustomUserAdmin(admin.ModelAdmin):
             )
             count += 1
             
-        self.message_user(request, f'🎓 {count} user(s) verified as Independent Journalism Contributor and emails sent.')
+        self.message_user(request, f'{count} user(s) verified as Independent Journalism Contributor and emails sent.')
 
-    @admin.action(description='👤 Change role → Subscriber (revoke staff)')
+    @admin.action(description='Change role → Subscriber (revoke staff)')
     def make_role_subscriber(self, request, queryset):
         if not (request.user.is_superuser or request.user.role == 'admin'):
-            self.message_user(request, '⛔ Only Admins can change roles.', level=messages.ERROR)
+            self.message_user(request, 'Only Admins can change roles.', level=messages.ERROR)
             return
         protected = queryset.filter(is_superuser=True)
         if protected.exists():
-            self.message_user(request, '⚠️ Superusers were skipped.', level=messages.WARNING)
+            self.message_user(request, 'Superusers were skipped.', level=messages.WARNING)
             queryset = queryset.filter(is_superuser=False)
         count = queryset.update(role='subscriber', is_staff=False)
-        self.message_user(request, f'👤 {count} user(s) downgraded to Subscriber.', level=messages.WARNING)
+        self.message_user(request, f'{count} user(s) downgraded to Subscriber.', level=messages.WARNING)
 
-    @admin.action(description='✉️ Mark email as Verified')
+    @admin.action(description='Mark email as Verified')
     def mark_email_verified(self, request, queryset):
         count = queryset.update(is_email_verified=True, email_verification_token=None)
-        self.message_user(request, f'✉️ {count} user(s) email marked as verified.')
+        self.message_user(request, f'{count} user(s) email marked as verified.')
 
-    @admin.action(description='🔑 Grant Staff Access')
+    @admin.action(description='Grant Staff Access')
     def grant_staff_access(self, request, queryset):
         if not request.user.is_superuser:
-            self.message_user(request, '⛔ Only Superusers can grant staff access.', level=messages.ERROR)
+            self.message_user(request, 'Only Superusers can grant staff access.', level=messages.ERROR)
             return
         count = queryset.update(is_staff=True)
-        self.message_user(request, f'🔑 {count} user(s) granted staff access.')
+        self.message_user(request, f'{count} user(s) granted staff access.')
 
-    @admin.action(description='🔒 Revoke Staff Access')
+    @admin.action(description='Revoke Staff Access')
     def revoke_staff_access(self, request, queryset):
         if not request.user.is_superuser:
-            self.message_user(request, '⛔ Only Superusers can revoke staff access.', level=messages.ERROR)
+            self.message_user(request, 'Only Superusers can revoke staff access.', level=messages.ERROR)
             return
         protected = queryset.filter(is_superuser=True)
         if protected.exists():
-            self.message_user(request, '⚠️ Superusers were skipped.', level=messages.WARNING)
+            self.message_user(request, 'Superusers were skipped.', level=messages.WARNING)
             queryset = queryset.filter(is_superuser=False)
         count = queryset.update(is_staff=False)
-        self.message_user(request, f'🔒 {count} user(s) staff access revoked.', level=messages.WARNING)
+        self.message_user(request, f'{count} user(s) staff access revoked.', level=messages.WARNING)
 
     # ── Dashboard stats banner ─────────────────────────────────────────────
     def changelist_view(self, request, extra_context=None):
@@ -460,7 +432,7 @@ class CustomUserAdmin(admin.ModelAdmin):
 
         messages.info(
             request,
-            f'👥 Total: {total}  |  ✅ Active: {active}  |  🔑 Staff: {staff}  |  '
-            f'⏳ Unverified: {unverified}  |  🆕 Joined Today: {new_today}'
+            f'Users | Total: {total} | Active: {active} | Staff: {staff} | '
+            f'Unverified: {unverified} | Joined Today: {new_today}'
         )
         return super().changelist_view(request, extra_context=extra_context)

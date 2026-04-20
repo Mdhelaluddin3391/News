@@ -335,3 +335,59 @@ window.updateSEOMetaTags = updateSEOMetaTags;
 window.injectSchema = injectSchema;
 
 document.addEventListener('DOMContentLoaded', ensureDefaultSeoMeta);
+
+// ==================== GLOBAL NEWSLETTER HANDLER ====================
+document.addEventListener('submit', async (e) => {
+    const form = e.target;
+    // Check if the submitted form is a newsletter form
+    if (form.id === 'newsletterForm' || form.classList.contains('newsletter-form')) {
+        e.preventDefault();
+        
+        const emailInput = form.querySelector('input[type="email"]');
+        if (!emailInput) return;
+        const email = emailInput.value;
+        const btn = form.querySelector('button[type="submit"]') || form.querySelector('button');
+
+        if (btn) {
+            btn.dataset.originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Subscribing...';
+        }
+
+        try {
+            // Prefer apiFetch from config/auth if available, fallback to fetch
+            let response, data;
+            
+            if (typeof apiFetch === 'function' && typeof CONFIG !== 'undefined') {
+                response = await apiFetch(`${CONFIG.API_BASE_URL}/newsletter/subscribe/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                data = await response.json().catch(() => ({}));
+            } else {
+                response = await fetch(`http://localhost:8000/api/newsletter/subscribe/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                data = await response.json().catch(() => ({}));
+            }
+
+            if (response.ok) {
+                if(typeof showToast === 'function') showToast(data.message || 'Thank you for subscribing!', 'success');
+                form.reset();
+            } else {
+                if(typeof showToast === 'function') showToast(data.error || 'Subscription failed.', 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            if(typeof showToast === 'function') showToast('Network Error. Please try again later.', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = btn.dataset.originalText || 'Subscribe';
+            }
+        }
+    }
+});

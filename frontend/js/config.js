@@ -2,7 +2,17 @@ const APP_CONFIG = window.__APP_CONFIG__ || {};
 const isFileProtocol = window.location.protocol === 'file:';
 
 if (typeof API_BASE_URL === 'undefined') {
-    window.API_BASE_URL = '/api'; 
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        if (window.location.port !== '80' && window.location.port !== '') {
+            // If running on Live Server or other dev server
+            window.API_BASE_URL = 'http://localhost:5000/api'; 
+        } else {
+            // If running through Nginx Docker
+            window.API_BASE_URL = '/api'; 
+        }
+    } else {
+        window.API_BASE_URL = '/api'; 
+    }
 }
 
 const CONFIG = {

@@ -467,13 +467,7 @@ async function fetchArticle(articleId) {
     clearArticleError();
 
     try {
-        const response = await fetch(`${ARTICLE_DETAIL_API_URL}/${articleId}/`);
-        if (!response.ok) {
-            throw new Error(`HTTP error ${response.status}`);
-        }
-
-        const article = await response.json();
-
+        const article = await apiFetch(`/news/articles/${articleId}/`);
         renderArticle(article);
 
         if (typeof window.fetchActiveAds === 'function') {

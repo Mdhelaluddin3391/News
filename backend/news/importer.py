@@ -92,9 +92,19 @@ def _is_scraping_allowed(url: str) -> bool:
     try:
         parsed = urlparse(url)
         robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
+        
+        # We manually fetch robots.txt using requests with a timeout
+        # because RobotFileParser.read() uses urllib without a timeout and can hang indefinitely.
+        try:
+            resp = requests.get(robots_url, headers={"User-Agent": _BOT_USER_AGENT}, timeout=_ROBOTS_TIMEOUT)
+            lines = resp.text.splitlines()
+        except requests.RequestException as exc:
+            logger.debug("Could not read robots.txt for '%s' due to timeout/error: %s — proceeding.", url, exc)
+            return True  # fail-open
+
         rp = RobotFileParser()
         rp.set_url(robots_url)
-        rp.read()
+        rp.parse(lines)
 
         # First check our specific bot name, then fall back to wildcard (*)
         allowed = rp.can_fetch(_BOT_USER_AGENT, url) or rp.can_fetch("*", url)
@@ -106,8 +116,8 @@ def _is_scraping_allowed(url: str) -> bool:
             )
         return allowed
     except Exception as exc:
-        # Can't read robots.txt — log but allow (fail-open)
-        logger.debug("Could not read robots.txt for '%s': %s — proceeding.", url, exc)
+        # Catch any other unexpected errors during parsing
+        logger.debug("Unexpected error during robots.txt check for '%s': %s — proceeding.", url, exc)
         return True
 
 

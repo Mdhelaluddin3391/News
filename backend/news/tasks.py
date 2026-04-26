@@ -413,10 +413,11 @@ def auto_post_article_task(self, article_id):
         f'<a href="{article_url}">🔗 Puri Khabar Parhein</a>\n\n'
         "#FeroxTimes"
     )
-    # Plain text for Facebook / Twitter (shortened because platforms auto-generate a card with description)
+    # Plain text for Facebook / Twitter with full details and Read More
     plain_message = (
         f"🚨 {article.title}\n\n"
-        f"🔗 Read full story here:\n{article_url}\n\n"
+        f"{short_desc}\n\n"
+        f"🔗 Read more: {article_url}\n\n"
         "#FeroxTimes #LatestNews"
     )
     posted_targets = []

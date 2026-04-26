@@ -213,13 +213,17 @@ function renderArticle(article) {
 
     const backendShareUrl = `${CONFIG.API_BASE_URL}/news/articles/${article.slug}/share/`;
     const shareUrl = encodeURIComponent(backendShareUrl);
+    
+    const summaryDesc = description.length > 100 ? description.substring(0, 97) + '...' : description;
+    const twitterText = encodeURIComponent(`🚨 ${title}\n\n${summaryDesc}\n\n🔗 Read more:\n`);
     const shareTitle = encodeURIComponent(title);
+    
     const shareHTML = `
         <div class="social-share">
             <h3>Share this article</h3>
             <div class="share-buttons">
                 <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" class="share-btn facebook">Facebook</a>
-                <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareTitle}" target="_blank" class="share-btn twitter">Twitter</a>
+                <a href="https://twitter.com/intent/tweet?url=${shareUrl}&text=${twitterText}" target="_blank" class="share-btn twitter">Twitter</a>
                 <a href="https://wa.me/?text=${shareTitle}%20${shareUrl}" target="_blank" class="share-btn whatsapp">WhatsApp</a>
                 <a href="https://www.linkedin.com/shareArticle?mini=true&url=${shareUrl}&title=${shareTitle}" target="_blank" class="share-btn linkedin">LinkedIn</a>
             </div>

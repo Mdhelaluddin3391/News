@@ -320,60 +320,72 @@ def send_push_notifications_task(self, article_id):
     retry_backoff_max=600,
     retry_jitter=True,
     retry_kwargs={"max_retries": 3},
-    soft_time_limit=600, 
-    time_limit=660,     
+    soft_time_limit=1200,  # 20 minutes — deep research takes time (5-8 sources per article)
+    time_limit=1320,       # 22 minutes hard limit
 )
 def auto_import_news_task(self):
     """
-    Celery Beat task that runs every 30 minutes.
-    Fetches top 3 trending headlines from GNews API, scrapes full text,
-    rewrites via Groq AI, and saves each as a draft Article.
+    Celery Beat task — runs every 30 minutes.
 
-    Error Handling:
-    - GNEWS_API_KEY not set     → logs error, returns without crashing.
-    - GROQ_API_KEY not set    → logged inside ai_utils; articles skipped.
-    - GNews API unreachable     → logged inside importer; task returns safe msg.
-    - Scraping failure          → logged inside importer; individual article skipped.
-    - SoftTimeLimitExceeded     → caught here, logs warning, returns safely.
+    Pipeline:
+      GNews API → fetch 8 top-headlines → deep DuckDuckGo research (5-8 sources)
+      → Groq AI writes full news article → save EXACTLY 2 drafts.
+
+    Produces exactly 2 research-backed, newsroom-standard draft articles per run.
+    Extra headlines are fetched (8) to survive duplicates and robots.txt blocks.
+
+    Time Budget:
+      ~3-5 min per article (research + Groq) × 2 = ~6-10 min per task.
+      Soft time limit: 20 min. Hard limit: 22 min.
     """
     gnews_key = os.getenv("GNEWS_API_KEY")
-    groq_key = os.getenv("GROQ_API_KEY")
+    groq_key  = os.getenv("GROQ_API_KEY")
 
     if not gnews_key:
-        msg = "❌ GNEWS_API_KEY is not set in the environment. Please add it to your .env file."
+        msg = "❌ GNEWS_API_KEY is not set. Add it to your .env file."
         logger.error(msg)
         return msg
 
     if not groq_key:
-        msg = "❌ GROQ_API_KEY is not set. AI rewriting is disabled — no articles will be imported."
+        msg = "❌ GROQ_API_KEY is not set. AI rewriting disabled — no articles will be imported."
         logger.error(msg)
         return msg
 
     try:
-        from .importer import fetch_and_import_news
+        from .importer import fetch_and_import_news, ARTICLES_PER_RUN, GNEWS_FETCH_LIMIT
     except ImportError as exc:
         msg = f"❌ Could not import fetch_and_import_news: {exc}"
         logger.exception(msg)
         return msg
 
     try:
-        logger.info("[auto_import] Starting GNews top-headlines fetch (max=3)…")
+        logger.info(
+            "[auto_import] ▶ Starting deep-research import cycle "
+            "(target: %d articles, fetching %d headlines from GNews)…",
+            ARTICLES_PER_RUN, GNEWS_FETCH_LIMIT,
+        )
+        # GNews: fetch max=8 top headlines in English (general category)
         gnews_url = (
             f"https://gnews.io/api/v4/top-headlines"
-            f"?category=general&lang=en&max=3&apikey={gnews_key}"
+            f"?category=general&lang=en&max={GNEWS_FETCH_LIMIT}&apikey={gnews_key}"
         )
         result = fetch_and_import_news(gnews_url, provider="gnews")
-        logger.info("[auto_import] Completed. Result: %s", result)
+        logger.info("[auto_import] ✅ Cycle complete. Result: %s", result)
         return result
 
     except SoftTimeLimitExceeded:
-        msg = "⏱️ auto_import_news_task hit soft time limit (10 min). Partial results may have been saved."
+        msg = (
+            "⏱️ auto_import_news_task hit 20-min soft time limit. "
+            "Partial results may have been saved. Deep research phase was running — "
+            "consider reducing _MAX_RESEARCH_SOURCES in importer.py if this recurs."
+        )
         logger.warning(msg)
         return msg
     except Exception as exc:
         msg = f"❌ Unexpected error in auto_import_news_task: {exc}"
         logger.exception(msg)
-        raise  # Re-raise so Celery retry logic can handle it
+        raise  # Re-raise so Celery retry logic handles it
+
 
 
 @shared_task(

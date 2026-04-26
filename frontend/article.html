@@ -7,18 +7,31 @@
     <base href="/">
     <title>Article - Ferox Times</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
-    
-    <link rel="preconnect" href="https://www.feroxtimes.com" crossorigin>
-    
+
+    <!-- Primary Meta (JS will update these dynamically) -->
     <meta name="description" content="Read the latest breaking news and in-depth articles on Ferox Times.">
-    
-    <meta property="og:title" content="Article - Ferox Times">
-    <meta property="og:description" content="Read the latest breaking news and in-depth articles on Ferox Times.">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="author" content="Ferox Times">
+
+    <!-- Open Graph (JS updates dynamically after article loads) -->
     <meta property="og:type" content="article">
-    <meta property="og:image" content="https://www.feroxtimes.com/images/default-news.png">
-    
+    <meta property="og:site_name" content="Ferox Times">
+    <meta property="og:url" id="og-url" content="">
+    <meta property="og:title" id="og-title" content="Article - Ferox Times">
+    <meta property="og:description" id="og-description" content="Read the latest breaking news and in-depth articles on Ferox Times.">
+    <meta property="og:image" id="og-image" content="https://www.feroxtimes.com/images/default-news.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Article - Ferox Times">
+    <meta name="twitter:site" content="@feroxtimes">
+    <meta name="twitter:title" id="twitter-title" content="Article - Ferox Times">
+    <meta name="twitter:description" id="twitter-description" content="Read the latest breaking news and in-depth articles on Ferox Times.">
+    <meta name="twitter:image" id="twitter-image" content="https://www.feroxtimes.com/images/default-news.png">
+
+    <!-- Canonical (set by JS after article slug is known) -->
     <link rel="canonical" id="canonical-url" href="">
     <script>
         document.addEventListener("DOMContentLoaded", () => {
@@ -30,7 +43,12 @@
                 .setAttribute("href", canonicalOrigin + canonicalPath);
         });
     </script>
-    
+
+    <!-- Preconnects for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components/top-bar.css">

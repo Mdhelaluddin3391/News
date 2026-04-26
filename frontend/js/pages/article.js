@@ -122,8 +122,11 @@ function renderArticle(article) {
     }
 
     if (typeof updateSEOMetaTags === 'function') {
-        const seoDescription = description.length > 150 ? description.substring(0, 150) + '...' : description;
-        updateSEOMetaTags(title, seoDescription, imageUrl, cleanPageUrl, seoKeywords, 'article');
+        // Use AI-generated meta_description if available, otherwise fall back to excerpt
+        const seoDescription = article.meta_description 
+            || (description.length > 160 ? description.substring(0, 157) + '...' : description);
+        updateSEOMetaTags(title, seoDescription, imageUrl, cleanPageUrl, seoKeywords, 'article',
+            'index, follow, max-image-preview:large, max-snippet:-1');
     }
 
     if (typeof injectSchema === 'function') {
@@ -132,12 +135,21 @@ function renderArticle(article) {
 
         const articleSchema = {
             "@type": "NewsArticle",
+            "@id": cleanPageUrl + "#article",
             "mainEntityOfPage": {
                 "@type": "WebPage",
                 "@id": cleanPageUrl
             },
             "headline": title,
-            "image": [imageUrl],
+            "name": title,
+            "image": [
+                {
+                    "@type": "ImageObject",
+                    "url": imageUrl,
+                    "width": 1200,
+                    "height": 630
+                }
+            ],
             "datePublished": article.published_at || new Date().toISOString(),
             "dateModified": article.updated_at || article.published_at || new Date().toISOString(),
             "author": {
@@ -147,13 +159,25 @@ function renderArticle(article) {
             },
             "publisher": {
                 "@type": "Organization",
+                "@id": `${window.location.origin}/#organization`,
                 "name": "Ferox Times",
                 "logo": {
                     "@type": "ImageObject",
-                    "url": `${window.location.origin}/images/default-news.png`
+                    "url": `${window.location.origin}/images/default-news.png`,
+                    "width": 1200,
+                    "height": 630
                 }
             },
-            "description": description.substring(0, 150)
+            "description": article.meta_description || description.substring(0, 160),
+            "articleSection": categoryName,
+            "keywords": seoKeywords,
+            "url": cleanPageUrl,
+            "isPartOf": {
+                "@type": "WebSite",
+                "@id": `${window.location.origin}/#website`,
+                "name": "Ferox Times",
+                "url": window.location.origin
+            }
         };
 
         const breadcrumbSchema = {

@@ -1,23 +1,40 @@
+# =========================================================
+# Ferox Times — robots.txt
+# Industry-level configuration for maximum SEO indexability
+# =========================================================
+
+# ── Global Rules (All crawlers) ──────────────────────────
 User-agent: *
 Allow: /
+
+# Block: Backend & Admin
 Disallow: /admin/
 Disallow: /api/
+Disallow: /static/
+Disallow: /media/admin/
+Disallow: /tinymce/
+Disallow: /health/
+
+# Block: Auth & User-Private Pages (no indexing value)
 Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /verify-email
+Disallow: /unsubscribe
+
+# Block: Personalised / Session-Dependent Pages
 Disallow: /profile
 Disallow: /edit-profile
 Disallow: /saved
-Disallow: /unsubscribe
-Disallow: /search
-Disallow: /*?*q=*
-Disallow: /*?*search=*
-Disallow: /*?*page=*
-Disallow: /*?*sort=*
-Disallow: /*?*filter=*
-Disallow: /*?*utm_*
-Disallow: /*?*fbclid=*
-Disallow: /*?*gclid=*
+Disallow: /write-article
+
+# Block: Query Strings That Create Duplicate Content
+Disallow: /*?*utm_
+Disallow: /*?*fbclid=
+Disallow: /*?*gclid=
+Disallow: /*?*ref=
+Disallow: /*?*_t=
+
+# ── Sitemaps ─────────────────────────────────────────────
 Sitemap: https://www.feroxtimes.com/sitemap.xml

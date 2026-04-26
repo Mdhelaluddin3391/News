@@ -1,127 +1,218 @@
 """
-ai_utils.py — Groq AI rewriting utility for automated news import.
-                Also powers the Admin AI Article Writer (generate_article_from_prompt).
+ai_utils.py — Groq AI rewriting engine for the Ferox Times GNews intelligence pipeline.
 
-Flow:
-  raw_text (scraped by newspaper3k)
-      ↓
-  rewrite_article_with_ai()
-      ↓ (Groq LLM, JSON mode)
+Input:
+  original_title  — Headline from GNews
+  raw_text        — Multi-source knowledge base built by importer._build_knowledge_base()
+                    (5-8 scraped internet sources, typically 15 000 – 30 000 chars)
+  source_name     — Publisher name
+
+Output:
   dict with keys: title, meta_description, content, category, tags
 
-Key Features:
-   Transforms raw data into high-quality, human-like journalism.
-   Adapts length based on source material to produce a well-rounded article.
-   Strong narrative flow with human context and significance.
-   Strict adherence to factual accuracy (no fake facts).
+Journalistic Standard: Reuters / AP / BBC newsroom level.
+Article Format: Pure news — lead, nut graf, development, context, stakes, voices, outlook.
+Article Style:  NEVER blog. NEVER listicle. NEVER opinion. Always third-person news prose.
 """
 
-import os
 import json
-import re
 import logging
+import os
+import re
 import time
 
 from groq import Groq
 
 logger = logging.getLogger(__name__)
 
-# ─── Initialise Groq once at module load ─────────────────────────────────
+# ─── Groq Client Initialisation ───────────────────────────────────────────────
 _GROQ_KEY = os.getenv("GROQ_API_KEY")
 if not _GROQ_KEY:
     logger.warning("GROQ_API_KEY is not set — AI rewriting will be disabled.")
 
-# Groq model strategy: Primary (high quality) → Fallback (high rate limit)
-# llama-3.3-70b-versatile: 100k tokens/day free (better quality)
-# llama-3.1-8b-instant:    500k tokens/day free (faster, great fallback)
+# Model strategy:
+#   Primary  (llama-3.3-70b-versatile) — Best quality, 100k tokens/day free tier.
+#   Fallback (llama-3.1-8b-instant)    — Higher rate limit, 500k tokens/day free tier.
 _MODEL_PRIMARY  = "llama-3.3-70b-versatile"
 _MODEL_FALLBACK = "llama-3.1-8b-instant"
-_MODEL_NAME = _MODEL_PRIMARY  # Default (used in rewrite_article_with_ai)
 
+
+# ─── Master Newsroom Prompt ───────────────────────────────────────────────────
 
 def _build_prompt(original_title: str, source_name: str) -> str:
     """
-    Returns the master journalistic prompt for the Auto-Import pipeline.
-    Engineered to produce AP/Reuters-standard news articles.
+    Builds the master Groq system prompt for the GNews intelligence pipeline.
+
+    This prompt is engineered to produce publication-ready news articles at
+    Reuters/AP/BBC editorial standard from a multi-source knowledge base.
+    It enforces strict anti-blog, anti-AI-cliché, and anti-hallucination rules.
     """
     return (
-        "You are a veteran Senior Correspondent at Ferox Times, a global news publication.\n"
-        "held to the same editorial standards as Reuters, AP, and the BBC.\n\n"
-        f"SOURCE: {source_name}\n"
-        f"HEADLINE: {original_title}\n\n"
-        "You have been given raw source text and DuckDuckGo background research.\n"
-        "Write a COMPLETE, ORIGINAL, PUBLICATION-READY news article.\n\n"
-        "EDITORIAL RULES (non-negotiable):\n"
-        "- Write in third person. Never use you/we/our.\n"
-        "- Every sentence must carry new information. No padding.\n"
-        "- Vary sentence length: short for impact, longer for causality.\n"
-        "- First word of the article must be a proper noun or number, never A/The/In.\n"
-        "- BANNED PHRASES: Moreover, Furthermore, Additionally, In conclusion, To summarize,\n"
+        # ── Role ────────────────────────────────────────────────────────────
+        "You are the Chief Foreign Correspondent at Ferox Times, a global digital "
+        "news organisation held to the same editorial standards as Reuters, AP, BBC, "
+        "and the Financial Times.\n\n"
+
+        # ── Assignment ──────────────────────────────────────────────────────
+        f"STORY ASSIGNMENT: {original_title}\n"
+        f"ORIGINAL SOURCE: {source_name}\n\n"
+
+        "You have been given a multi-source internet knowledge base assembled from "
+        "5-8 live web sources. Your task is to synthesise all available facts and "
+        "write a COMPLETE, ORIGINAL, 100%% PUBLICATION-READY news article.\n\n"
+
+        # ── The Iron Rules (Non-Negotiable) ─────────────────────────────────
+        "THE IRON RULES — VIOLATING ANY OF THESE DISQUALIFIES THE ARTICLE:\n\n"
+
+        "RULE 1 — PURE NEWS FORMAT ONLY:\n"
+        "  This is a newspaper article. It is NOT a blog post. It is NOT a listicle.\n"
+        "  It is NOT a how-to guide. It is NOT an opinion piece. It is NOT an essay.\n"
+        "  Every paragraph must report a new fact, quote, or development.\n"
+        "  If a sentence does not add new information, delete it.\n\n"
+
+        "RULE 2 — ZERO HALLUCINATION:\n"
+        "  Every claim, figure, date, name, and statistic must come from the\n"
+        "  knowledge base provided. Do not invent any information. Do not guess.\n"
+        "  If the exact figure is not in the knowledge base, say 'officials said'\n"
+        "  or omit the claim entirely. Accuracy is non-negotiable.\n\n"
+
+        "RULE 3 — THIRD PERSON ONLY:\n"
+        "  Never use 'you', 'we', 'our', 'let us', 'readers', 'I', or any\n"
+        "  direct address to the audience.\n\n"
+
+        "RULE 4 — BANNED PHRASES (automatic disqualification if used):\n"
+        "  Moreover, Furthermore, Additionally, In conclusion, To summarize,\n"
         "  It is important to note, Needless to say, Delves into, A testament to,\n"
-        "  Tapestry, Landscape, Ecosystem, Groundbreaking, Game-changing, Cutting-edge,\n"
-        "  Robust, Shed light on, Pave the way, Paradigm shift, Holistic, Synergy,\n"
-        "  In today's world, In the modern era, Ever-evolving, Unprecedented (unless citing the precedent).\n"
-        "- ATTRIBUTION: Rotate phrases: officials said, data showed, the filing indicated,\n"
-        "  statements confirmed, the announcement read, records showed, sources said.\n\n"
-        "ARTICLE STRUCTURE (seamless narrative, highly professional, minimum 650 words of readable content):\n"
-        "Use ONLY these HTML tags: <p> <h2> <h3> <ul> <li> <blockquote> <strong> <em>\n\n"
-        "Blend these elements organically like a top-tier newspaper. DO NOT use rigid formulas or explicit labels:\n"
-        "1. THE LEAD: 45-65 words. WHO+WHAT+WHERE+WHEN+WHY NOW. First word = proper noun/number.\n"
-        "2. NUT GRAF: 1-2 sentences explaining the broader significance to an uninformed reader.\n"
-        "3. THE DEVELOPMENT: 3-4 paragraphs of logical factual narrative.\n"
-        "4. CONTEXT & BACKGROUND: Place the event in historical/legal/economic context seamlessly.\n"
-        "5. HUMAN STAKES: Explain who is directly affected and how using concrete numbers.\n"
-        "6. VOICES: Include official responses and real quotes in <blockquote>.\n"
-        "7. FUTURE OUTLOOK: Upcoming events or deadlines, ending with a sharp factual observation.\n\n"
-        "SUBHEADING RULES:\n"
-        "- Subheadings (<h2>) are ENCOURAGED to structure long text, but they MUST be story-specific.\n"
-        "- NEVER use generic or meta words like 'Context', 'History', 'Impact', 'Background', 'Stakes', 'Responses', or 'The Road Ahead'.\n"
-        "- Example of Good <h2>: 'Diplomatic Fallout in Europe' or 'Markets React to Rate Hike'.\n"
-        "- Example of Bad <h2>: 'Context and History' or 'Official Responses'.\n\n"
-        "SEO METADATA & TAGS:\n"
-        "- TITLE: 58-68 characters. Include high-traffic SEO keywords naturally. Specific: name, number, or place.\n"
-        "  Good: Pakistan Raises Interest Rate to 22 Percent Amid IMF Pressure\n"
-        "  Bad: Shocking Decision Rocks Pakistan Economy\n"
-        "- META DESCRIPTION: 148-160 characters. Extends headline with second key fact safely. SEO optimized, active voice.\n"
-        "- CATEGORY: Exactly one of: Technology, World, Politics, Sports, Business,\n"
-        "  Entertainment, Science, Health, Environment, Crime, Education, Economy\n"
-        "- TAGS: Exactly 7 highly relevant SEO tags, title-cased, max 4 words each.\n"
-        "  2 broad topic tags, 2 named entity tags, 2 issue/event tags, 1 type tag.\n"
-        "  Type tag must be one of: Breaking News, Analysis, Report, Feature, Investigation\n\n"
-        "OUTPUT: Return ONLY a valid JSON object with exactly these five keys.\n"
-        "No markdown fences. No preamble. No explanation. Pure JSON only.\n\n"
+        "  Tapestry, Landscape, Ecosystem, Groundbreaking, Game-changing,\n"
+        "  Cutting-edge, Robust, Shed light on, Pave the way, Paradigm shift,\n"
+        "  Holistic, Synergy, In today's fast-paced world, In the modern era,\n"
+        "  Ever-evolving, Unprecedented (use only if a precedent is cited),\n"
+        "  Deep dive, Dive in, Let's explore, As mentioned, Notably, Crucially,\n"
+        "  Essentially, Interestingly, Surprisingly, Importantly.\n\n"
+
+        "RULE 5 — ATTRIBUTION DISCIPLINE (rotate — never repeat the same phrase twice):\n"
+        "  Use these in rotation: officials said | data showed | the filing indicated\n"
+        "  | statements confirmed | the announcement read | records showed\n"
+        "  | sources said | the document showed | the report found\n"
+        "  | authorities stated | the agency confirmed.\n\n"
+
+        "RULE 6 — NUMBERS AND SPECIFICITY:\n"
+        "  Numbers make news concrete. Always use figures: '47 percent', '$3.2 billion',\n"
+        "  '12 people', not 'nearly half', 'billions', 'many people'.\n\n"
+
+        # ── Article Architecture ─────────────────────────────────────────────
+        "ARTICLE ARCHITECTURE — Follow this narrative structure seamlessly.\n"
+        "Do NOT label these sections. Blend them like a professional newspaper story.\n"
+        "Use HTML tags ONLY: <p> <h2> <h3> <ul> <li> <blockquote> <strong> <em>\n\n"
+
+        "1. THE LEAD PARAGRAPH [MANDATORY — MUST be first]\n"
+        "   · 40-65 words. One paragraph. No subheading before it.\n"
+        "   · Answers WHO + WHAT + WHERE + WHEN + WHY IT MATTERS NOW.\n"
+        "   · First word MUST be a proper noun (name/place/org) or a specific number.\n"
+        "   · NEVER start with A / An / The / In / On / At.\n"
+        "   · Uses present perfect or simple past tense for immediacy.\n\n"
+
+        "2. NUT GRAF [MANDATORY — immediately after lead]\n"
+        "   · 1-2 sentences. Places the story in its larger context.\n"
+        "   · Why does this matter beyond today? What pattern or trend does it fit?\n\n"
+
+        "3. CORE DEVELOPMENT [3-5 paragraphs]\n"
+        "   · Chronological or logical unfolding of the key facts.\n"
+        "   · Use <strong> on ONE critical statistic or figure per section (once).\n"
+        "   · Every paragraph introduces a new fact, angle, or development.\n\n"
+
+        "4. STORY-SPECIFIC SUBHEADINGS [<h2> — REQUIRED for articles over 500 words]\n"
+        "   · Subheadings must be INTENSELY STORY-SPECIFIC — like a newspaper section header.\n"
+        "   · GOOD examples: 'Fed Rate Decision Rattles Asian Markets'\n"
+        "                     'IMF Demands Fuel Subsidy Cuts by March'\n"
+        "                     'Three Officers Charged in Birmingham Probe'\n"
+        "   · BAD examples (BANNED): 'Background', 'Context', 'History',\n"
+        "                             'Impact', 'Analysis', 'Key Developments',\n"
+        "                             'What This Means', 'Expert Views', 'Outlook'.\n\n"
+
+        "5. HISTORICAL / LEGAL / ECONOMIC CONTEXT [1-2 paragraphs]\n"
+        "   · Place the event in context seamlessly within the narrative flow.\n"
+        "   · No separate section titled 'Background' or 'History'.\n\n"
+
+        "6. HUMAN STAKES [1-2 paragraphs]\n"
+        "   · Who is directly affected? Use concrete numbers.\n"
+        "   · Real quotes or official statements in <blockquote> tags.\n\n"
+
+        "7. VOICES AND REACTIONS [1-2 paragraphs]\n"
+        "   · Official responses, expert perspectives, countervailing views.\n"
+        "   · Use <blockquote> for direct quotes. Attribute precisely.\n\n"
+
+        "8. FUTURE OUTLOOK [MANDATORY — final paragraph]\n"
+        "   · Verified upcoming events, deadlines, or next steps from the knowledge base.\n"
+        "   · End with a sharp, factual observation — not a moral judgement.\n"
+        "   · This must be the LAST paragraph. No summary. No conclusion label.\n\n"
+
+        "MINIMUM CONTENT LENGTH: 750 words of readable prose.\n"
+        "MAXIMUM BLOG MARKERS: 0. If there is a tip, list-of-advice, or how-to sentence, delete it.\n\n"
+
+        # ── SEO Metadata Rules ───────────────────────────────────────────────
+        "SEO METADATA RULES:\n\n"
+
+        "TITLE (58-68 characters EXACTLY):\n"
+        "  · Must contain 1-2 high-intent search keywords people would actually Google.\n"
+        "  · Must include a proper noun (name, place, organisation) OR a specific number.\n"
+        "  · No question format. No exclamation marks. No sensationalism. No ALL CAPS.\n"
+        "  · GOOD: 'Pakistan Raises Interest Rate to 22 Percent Amid IMF Pressure'\n"
+        "  · GOOD: 'Apple Cuts iPhone 15 Production by 10 Million Units'\n"
+        "  · BAD:  'Shocking Decision That Rocked Pakistan Economy'\n"
+        "  · BAD:  'What You Need to Know About the Latest IMF News'\n\n"
+
+        "META DESCRIPTION (148-160 characters EXACTLY):\n"
+        "  · Complete sentence. Active voice. No trailing ellipsis.\n"
+        "  · Must contain the second most important fact from the story.\n"
+        "  · Must be SEO-optimised: include primary keyword naturally.\n\n"
+
+        "CATEGORY — choose EXACTLY ONE:\n"
+        "  Technology | World | Politics | Sports | Business |\n"
+        "  Entertainment | Science | Health | Environment | Crime | Education | Economy\n\n"
+
+        "TAGS — exactly 7, title-cased, max 4 words each:\n"
+        "  · 2 broad topic tags (e.g. 'Interest Rate Hike', 'Nuclear Energy')\n"
+        "  · 2 named entity tags (e.g. 'IMF', 'Samsung Electronics')\n"
+        "  · 2 issue or event tags (e.g. 'Economic Crisis 2025', 'Peace Talks')\n"
+        "  · 1 article type tag — MUST be one of:\n"
+        "    Breaking News | Analysis | Report | Feature | Investigation\n\n"
+
+        # ── Output Format ────────────────────────────────────────────────────
+        "OUTPUT: Return ONLY a valid JSON object with EXACTLY these five keys.\n"
+        "NO markdown code fences. NO preamble text. NO trailing explanation. Pure JSON.\n\n"
         "{{\n"
-        '  \"title\": \"Specific fact-based SEO headline 58-68 chars\",\n'
-        '  \"meta_description\": \"Expanded detail, SEO optimized, active voice, 148-160 chars.\",\n'
-        '  \"content\": \"<p>Lead...</p><p>Nut graf...</p><h2>Story Specific Heading</h2><p>...</p>\",\n'
-        '  \"category\": \"One valid category\",\n'
-        '  \"tags\": [\"Broad Topic\", \"Named Entity\", \"Named Entity 2\", \"Issue\", \"Event\", \"Second Issue\", \"Report\"]\n'
+        '  "title": "Fact-based SEO headline, exactly 58-68 chars",\n'
+        '  "meta_description": "Second key fact, SEO optimised, active voice, 148-160 chars",\n'
+        '  "content": "<p>Lead paragraph...</p><p>Nut graf...</p><h2>Story-Specific Heading</h2><p>...</p>",\n'
+        '  "category": "One valid category from the list",\n'
+        '  "tags": ["Broad Tag 1", "Broad Tag 2", "Named Entity", "Named Entity 2", "Issue Tag", "Event Tag", "Report"]\n'
         "}}"
     )
 
 
+# ─── JSON Extraction Helpers ──────────────────────────────────────────────────
 
-# ─── JSON extraction helper ────────────────────────────────────────────────
 _JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 
 
 def _extract_json(text: str) -> dict | None:
     """
-    Tries multiple strategies to extract a valid JSON object from model output:
-    1. Direct json.loads (model returned clean JSON).
-    2. Strip a markdown ```json … ``` code fence.
-    3. Find the first '{' … last '}' substring.
+    Extracts a JSON object from model output using three strategies:
+      1. Direct json.loads (clean JSON).
+      2. Strip markdown code fence.
+      3. Substring between first { and last }.
     Returns None if all strategies fail.
     """
     text = text.strip()
 
-    # Strategy 1 — clean JSON
+    # Strategy 1
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
 
-    # Strategy 2 — markdown fence
+    # Strategy 2
     match = _JSON_BLOCK_RE.search(text)
     if match:
         try:
@@ -129,10 +220,9 @@ def _extract_json(text: str) -> dict | None:
         except json.JSONDecodeError:
             pass
 
-    # Strategy 3 — substring between first { and last }
-    start = text.find("{")
-    end = text.rfind("}")
-    if start != -1 and end != -1 and end > start:
+    # Strategy 3
+    start, end = text.find("{"), text.rfind("}")
+    if start != -1 and end > start:
         try:
             return json.loads(text[start : end + 1])
         except json.JSONDecodeError:
@@ -141,7 +231,8 @@ def _extract_json(text: str) -> dict | None:
     return None
 
 
-# ─── Validation helper ─────────────────────────────────────────────────────
+# ─── Response Validation ──────────────────────────────────────────────────────
+
 _REQUIRED_KEYS = {"title", "meta_description", "content", "category", "tags"}
 _VALID_CATEGORIES = {
     "Technology", "World", "Politics", "Sports", "Business",
@@ -149,68 +240,60 @@ _VALID_CATEGORIES = {
     "Crime", "Education", "Economy",
 }
 
-# Minimum content length for a valid article (500 words ≈ ~1500 chars in HTML)
-_MIN_CONTENT_CHARS = 1500
+# Minimum content length for a credible news article (≈700 words ≈ ~2500 chars with HTML)
+_MIN_CONTENT_CHARS = 2000
 
 
 def _validate_ai_response(data: dict) -> bool:
     """
-    Ensures the parsed dict has all required keys with non-empty values,
-    valid category, and tags as a non-empty list.
-
-    Also performs basic newsroom-standard checks:
-    - Content length checks
-
-    Raises a descriptive warning for each failure instead of a generic message.
+    Validates the parsed AI response for completeness and quality.
+    Logs a descriptive warning for each failure point.
+    Returns False if any check fails; True if all pass.
     """
     if not isinstance(data, dict):
-        logger.warning("AI response is not a dict — got: %s", type(data))
+        logger.warning("[Validate] AI response is not a dict — type: %s", type(data))
         return False
 
     if not _REQUIRED_KEYS.issubset(data.keys()):
         missing = _REQUIRED_KEYS - data.keys()
-        logger.warning("AI response missing required keys: %s", missing)
+        logger.warning("[Validate] Missing required keys: %s", missing)
         return False
 
     title = str(data.get("title", "")).strip()
-    if len(title) < 10:
-        logger.warning("AI response has missing or too-short title (got: '%s').", title)
+    if len(title) < 20:
+        logger.warning("[Validate] Title too short (%d chars): '%s'", len(title), title)
         return False
 
     content = str(data.get("content", "")).strip()
     if len(content) < _MIN_CONTENT_CHARS:
         logger.warning(
-            "AI response content is too short (%d chars, minimum %d). "
-            "This usually means the AI did not fully follow the prompt.",
-            len(content),
-            _MIN_CONTENT_CHARS,
+            "[Validate] Content too short: %d chars (min %d). AI may not have followed the prompt.",
+            len(content), _MIN_CONTENT_CHARS,
         )
         return False
 
     meta = str(data.get("meta_description", "")).strip()
-    if len(meta) < 100:
-        logger.warning("AI response meta_description is too short (%d chars, SEO needs >=100).", len(meta))
+    if len(meta) < 80:
+        logger.warning("[Validate] meta_description too short: %d chars (min 80).", len(meta))
         return False
 
-    if not isinstance(data.get("tags"), list) or len(data["tags"]) < 3:
-        logger.warning(
-            "AI response has invalid or insufficient tags list (got: %s).",
-            data.get("tags"),
-        )
+    tags = data.get("tags")
+    if not isinstance(tags, list) or len(tags) < 3:
+        logger.warning("[Validate] Insufficient tags: %s", tags)
         return False
 
-    # Auto-correct invalid category to "World" instead of hard-failing
+    # Auto-correct invalid category (don't hard-fail, just warn + fix)
     if data.get("category") not in _VALID_CATEGORIES:
         logger.warning(
-            "AI returned invalid category '%s' — defaulting to 'World'.",
-            data.get("category"),
+            "[Validate] Invalid category '%s' — defaulting to 'World'.", data.get("category")
         )
         data["category"] = "World"
 
     return True
 
 
-# ─── Public API ────────────────────────────────────────────────────────────
+# ─── Public API ───────────────────────────────────────────────────────────────
+
 def rewrite_article_with_ai(
     original_title: str,
     raw_text: str,
@@ -218,96 +301,100 @@ def rewrite_article_with_ai(
     max_retries: int = 3,
 ) -> dict | None:
     """
-    Sends the raw scraped article text to Groq and returns a dict
-    containing the AI-rewritten, SEO-optimised, newsroom-standard article data.
+    Generates a complete, publication-ready news article from the multi-source
+    knowledge base built by importer._build_knowledge_base().
 
-    Uses a strict journalistic prompt engineered to:
-    - Act as a copy-editor, extracting and cleaning text without expanding artificially.
-    - Enforce strict Reuters/AP editorial standards (no blog/AI/emotional language, no fake attribution).
-    - Produce a strong WHO/WHAT/WHERE/WHEN lead paragraph in 40–60 words.
+    This is the core AI engine for the Ferox Times auto-import pipeline.
+    It receives 15 000 – 30 000 chars of pre-researched, multi-source material
+    and returns a fully written, SEO-optimised newsroom-standard article.
 
     Parameters
     ----------
-    original_title : str   — The headline fetched from the news API.
-    raw_text       : str   — Full scraped body text from newspaper3k.
-    source_name    : str   — Publisher name (e.g. "BBC News"), used in the prompt.
-    max_retries    : int   — Number of times to retry on transient Groq errors (default: 3).
+    original_title : str  — GNews headline (used for attribution and prompt context).
+    raw_text       : str  — Full multi-source knowledge base from the research phase.
+    source_name    : str  — Original publisher name (e.g. 'BBC News').
+    max_retries    : int  — Groq retry attempts on transient errors (default: 3).
 
     Returns
     -------
     dict | None
         On success: {"title", "meta_description", "content", "category", "tags"}
-        On any failure: None  (caller should skip the article gracefully)
+        On failure: None  (caller skips article gracefully)
     """
     if not _GROQ_KEY:
-        logger.error("Cannot call Groq — GROQ_API_KEY is not configured.")
+        logger.error("[Groq] GROQ_API_KEY not configured — skipping AI rewrite.")
         return None
 
-    if not raw_text or len(raw_text.strip()) < 100:
+    if not raw_text or len(raw_text.strip()) < 300:
         logger.warning(
-            "Skipping AI rewrite for '%s' — scraped text too short (%d chars).",
-            original_title,
+            "[Groq] Knowledge base too short (%d chars) for '%s' — skipping.",
             len(raw_text) if raw_text else 0,
+            original_title,
         )
         return None
 
-    # Truncate to avoid exceeding context window (~12k chars is safe for llama-3.3-70b)
-    truncated_text = raw_text[:12000]
+    system_prompt = _build_prompt(original_title, source_name)
 
-    instruction = _build_prompt(original_title, source_name)
+    # Truncate knowledge base to safe context window size.
+    # llama-3.3-70b has 128k context; we send up to 20k chars of research.
+    knowledge_base_truncated = raw_text[:20000]
+
     user_content = (
-        f"Raw Article Text to Transform:\n\n"
-        f"---\n{truncated_text}\n---\n\n"
-        f"REMINDER: Your output MUST:\n"
-        f"1. Have a lead paragraph (40–60 words) answering WHO, WHAT, WHERE, WHEN\n"
-        f"2. NARRATIVE FLOW: Write a compelling story with human context.\n"
-        f"3. NO FAKE FACTS: Do not invent names, dates, or events. Stick to the source facts.\n"
-        f"Return ONLY the JSON object — no preamble, no markdown, no explanation."
+        f"STORY ASSIGNMENT: {original_title}\n\n"
+        f"{'═' * 70}\n"
+        f"MULTI-SOURCE KNOWLEDGE BASE\n"
+        f"(Synthesise ONLY facts from the sources below. Zero hallucination.)\n"
+        f"{'═' * 70}\n\n"
+        f"{knowledge_base_truncated}\n\n"
+        f"{'═' * 70}\n"
+        f"FINAL REMINDERS:\n"
+        f"1. Lead paragraph: WHO + WHAT + WHERE + WHEN in 40-65 words. First word = proper noun.\n"
+        f"2. Minimum 750 words of pure news prose — no blog, no lists, no tips.\n"
+        f"3. All subheadings (<h2>) MUST be story-specific — never generic labels.\n"
+        f"4. Return ONLY valid JSON. No markdown. No preamble. No explanation.\n"
+        f"{'═' * 70}"
     )
 
-    last_error = None
     client = Groq(api_key=_GROQ_KEY)
-
-    # Model selection: try primary first, fallback on rate limit (429)
-    models_to_try = [_MODEL_PRIMARY, _MODEL_FALLBACK]
     used_model = _MODEL_PRIMARY
+    last_error = None
 
     for attempt in range(1, max_retries + 1):
         try:
             logger.info(
-                "Groq attempt %d/%d for '%s' [model=%s]…",
-                attempt, max_retries, original_title, used_model,
+                "[Groq] Attempt %d/%d for '%s' [model=%s]…",
+                attempt, max_retries, original_title[:70], used_model,
             )
+
             response = client.chat.completions.create(
                 model=used_model,
                 messages=[
-                    {"role": "system", "content": instruction},
-                    {"role": "user", "content": user_content}
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user",   "content": user_content},
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.40,
-                max_tokens=4000,
+                temperature=0.35,   # Low temperature = factual, structured output
+                max_tokens=5000,    # Enough for a 900-1200 word article in HTML
             )
 
-            raw_response_text = response.choices[0].message.content
-            data = _extract_json(raw_response_text)
+            raw_response = response.choices[0].message.content
+            data = _extract_json(raw_response)
 
             if data is None:
                 logger.error(
-                    "Could not extract JSON from Groq response for '%s'. Raw (first 500 chars): %s",
-                    original_title,
-                    raw_response_text[:500],
+                    "[Groq] JSON extraction failed on attempt %d for '%s'. "
+                    "Raw output (first 400 chars): %s",
+                    attempt, original_title[:60], raw_response[:400],
                 )
-                last_error = "JSON parse failed"
+                last_error = "JSON extraction failed"
                 time.sleep(2 * attempt)
                 continue
 
             if not _validate_ai_response(data):
                 logger.error(
-                    "Groq response for '%s' failed validation on attempt %d. "
-                    "Content length: %d chars. Category: '%s'. Tags count: %d.",
-                    original_title,
-                    attempt,
+                    "[Groq] Validation failed on attempt %d [model=%s] for '%s'. "
+                    "Content: %d chars | Category: '%s' | Tags: %d.",
+                    attempt, used_model, original_title[:60],
                     len(str(data.get("content", ""))),
                     data.get("category"),
                     len(data.get("tags", [])) if isinstance(data.get("tags"), list) else 0,
@@ -316,386 +403,51 @@ def rewrite_article_with_ai(
                 time.sleep(3 * attempt)
                 continue
 
-            # ── Enforce field length constraints to prevent DB errors ──────
+            # ── Enforce field length constraints ───────────────────────────
             data["title"]            = str(data["title"]).strip()[:250]
             data["meta_description"] = str(data["meta_description"]).strip()[:160]
             data["category"]         = str(data["category"]).strip()[:100]
-            data["tags"]             = [str(t).strip()[:50] for t in data["tags"][:8] if str(t).strip()]
-
+            data["tags"]             = [
+                str(t).strip()[:50]
+                for t in data["tags"][:8]
+                if str(t).strip()
+            ]
             if not data["tags"]:
                 data["tags"] = ["News"]
 
             logger.info(
-                "✅ Groq rewrite complete for '%s' → '%s' [%s] | "
-                "Content: %d chars | Tags: %d | model=%s | (attempt %d/%d)",
-                original_title,
-                data["title"],
-                data["category"],
-                len(data["content"]),
-                len(data["tags"]),
-                used_model,
-                attempt,
-                max_retries,
+                "✅ [Groq] Article written: '%s' [%s] | %d chars | %d tags | model=%s | attempt %d/%d",
+                data["title"], data["category"],
+                len(data["content"]), len(data["tags"]),
+                used_model, attempt, max_retries,
             )
             return data
 
         except Exception as exc:
             last_error = str(exc)
-            error_str = str(exc)
 
-            # ── Rate limit hit → switch to fallback model immediately ──────
-            if "429" in error_str and used_model == _MODEL_PRIMARY:
+            # ── Rate limit (429) → switch to fallback model immediately ───
+            if "429" in str(exc) and used_model == _MODEL_PRIMARY:
                 logger.warning(
-                    "[AutoSwitch] Primary model '%s' rate-limited for '%s'. "
-                    "Switching to fallback '%s'.",
-                    _MODEL_PRIMARY, original_title, _MODEL_FALLBACK,
+                    "[Groq] Primary model '%s' rate-limited for '%s'. "
+                    "Auto-switching to fallback '%s'.",
+                    _MODEL_PRIMARY, original_title[:60], _MODEL_FALLBACK,
                 )
                 used_model = _MODEL_FALLBACK
                 time.sleep(2)
-                continue  # Retry immediately with fallback model
+                continue  # Retry immediately with fallback
 
             logger.warning(
-                "Groq API attempt %d/%d failed for '%s' [%s]: %s",
-                attempt, max_retries, original_title, used_model, exc,
+                "[Groq] Attempt %d/%d failed [model=%s] for '%s': %s",
+                attempt, max_retries, used_model, original_title[:60], exc,
             )
             if attempt < max_retries:
                 backoff = 5 * attempt
-                logger.info("Retrying in %ds…", backoff)
+                logger.info("[Groq] Retrying in %ds…", backoff)
                 time.sleep(backoff)
 
     logger.error(
-        "❌ All %d Groq attempts exhausted for '%s'. Last error: %s",
-        max_retries,
-        original_title,
-        last_error,
+        "❌ [Groq] All %d attempts exhausted for '%s'. Last error: %s",
+        max_retries, original_title[:60], last_error,
     )
-    return None
-
-
-# ════════════════════════════════════════════════════════════════════════════
-#  ADMIN AI ARTICLE WRITER  —  generate_article_from_prompt()
-# ════════════════════════════════════════════════════════════════════════════
-
-def _build_writer_prompt(
-    description: str,
-    category: str,
-    tone: str,
-    language: str,
-) -> str:
-    """
-    Builds the ultra-professional Groq prompt for the Admin AI Article Writer.
-    Takes an editor brief and returns a publication-ready news article.
-    """
-    tone_map = {
-        "neutral":  "Standard news report: objective, factual, third-person. No emotion.",
-        "breaking": "Breaking news urgent register: short sentences, present tense, critical fact FIRST.",
-        "analysis": "In-depth analytical piece: explain causes and consequences. Use expert framing.",
-        "feature":  "Long-form feature: narrative arc, vivid scenes grounded in facts.",
-        "opinion":  "Signed editorial: evidence-backed argument. First-person allowed ONLY in this mode.",
-    }
-    tone_instruction = tone_map.get(tone, tone_map["neutral"])
-
-    lang_block = ""
-    if language == "urdu":
-        lang_block = (
-            "LANGUAGE: Write the ENTIRE article (title, meta_description, AND content) "
-            "in Urdu script. JSON keys must remain in English. "
-            "Apply the same journalistic standards in Urdu register."
-        )
-    elif language == "both":
-        lang_block = (
-            "LANGUAGE: Write the full article TWICE inside content. "
-            "First: complete English version. Then <hr>. Then: complete Urdu translation. "
-            "Title and meta_description in English only."
-        )
-
-    return (
-        "You are a 20-year veteran Senior Correspondent and Deputy Editor at Ferox Times, "
-        "held to Reuters, AP, BBC and Dawn editorial standards.\n\n"
-        f"EDITOR BRIEF: {description}\n\n"
-        "You have internet research as your knowledge base.\n"
-        "Write a COMPLETE, PUBLICATION-READY article that passes any chief editor without revision.\n\n"
-        f"CATEGORY: {category}\n"
-        f"TONE: {tone_instruction}\n"
-        f"{lang_block}\n\n"
-        "THE IRON RULES:\n"
-        "- Third person only (unless tone=opinion). Never you/we/our.\n"
-        "- Every claim from the research only. Zero hallucination.\n"
-        "- State facts. Do not tell reader how to feel.\n"
-        "- Every paragraph must add new information or be deleted.\n"
-        "- Vary sentence rhythm deliberately.\n"
-        "- Numbers make news concrete. Use them: 47 percent not nearly half.\n"
-        "- BANNED: Moreover, Furthermore, Additionally, In conclusion, To summarize,\n"
-        "  It is important to note, Needless to say, Delves into, A testament to,\n"
-        "  Tapestry, Landscape, Ecosystem, Groundbreaking, Game-changing, Cutting-edge,\n"
-        "  Robust, Shed light on, Pave the way, Paradigm shift, Holistic, Synergy,\n"
-        "  In today's fast-paced world, Ever-evolving, Unprecedented (cite the precedent if using).\n"
-        "  Any rhetorical question to reader. Let us explore. As mentioned earlier.\n"
-        "- ATTRIBUTION (rotate, never repeat same phrase twice): officials said, data showed,\n"
-        "  the filing indicated, statements confirmed, records showed, sources said,\n"
-        "  the announcement read, the decision document showed.\n\n"
-        "ARTICLE STRUCTURE (seamless narrative, highly professional, minimum 700 words readable content):\n"
-        "HTML tags ONLY: <p> <h2> <h3> <ul> <li> <blockquote> <strong> <em>\n\n"
-        "Blend these elements organically like a top-tier newspaper. DO NOT use rigid formulas or explicitly title these sections:\n"
-        "1. THE LEAD: 45-65 words. WHO+WHAT+WHERE+WHEN+WHY NOW. First word = proper noun/number. No scene-setting.\n"
-        "2. NUT GRAF: 1-2 sentences connecting to bigger ongoing story/trend.\n"
-        "3. THE DEVELOPMENT: Factual narrative. <strong> on single most critical figure (once only).\n"
-        "4. CONTEXT & HISTORY: Ensure a reader unfamiliar with the topic fully understands the background seamlessly.\n"
-        "5. HUMAN STAKES: Who is directly affected? Concrete numbers. Real quotes in <blockquote>.\n"
-        "6. EXPERT ANALYSIS: Quote or paraphrase key stakeholders. Include countervailing perspectives.\n"
-        "7. FUTURE OUTLOOK: Verified upcoming events/deadlines, ending with a sharp factual observation. No moral judgement.\n\n"
-        "SUBHEADING RULES:\n"
-        "- Subheadings (<h2>) are ENCOURAGED to structure long text, but they MUST be intensely story-specific.\n"
-        "- NEVER use generic or meta words like 'Context', 'History', 'Background', 'Impact', 'Stakes', 'Analysis', or 'What Comes Next'.\n"
-        "- Example of Good <h2>: 'IMF Demands Revenue Reforms' or 'Border Tensions Escalate'.\n"
-        "- Example of Bad <h2>: 'Context and History' or 'Expert Analysis'.\n\n"
-        "SEO METADATA & TAGS:\n"
-        "- TITLE: 58-68 characters. Include high-traffic primary SEO keywords naturally. Specific: name, number, or place.\n"
-        "  No sensationalism. No clickbait. No question format.\n"
-        "  Good example: IMF Approves 3bn Pakistan Bailout, Demands Fuel Price Hike\n"
-        "  Bad example: Shocking Move by IMF Rattles Pakistan Struggling Economy\n"
-        "- META DESCRIPTION: 148-160 characters. Extends headline with second most important fact.\n"
-        "  SEO optimized, active voice. Complete sentence. No trailing ellipsis.\n"
-        f"- CATEGORY: Must be exactly: {category}\n"
-        "- TAGS: Exactly 7 highly relevant, high-traffic SEO tags, title-cased, max 4 words each.\n"
-        "  2 broad topic, 2 named entity, 2 issue/event, 1 type tag.\n"
-        "  Type tag must be one of: Breaking News, Analysis, Report, Feature, Investigation\n\n"
-        "OUTPUT: Return ONLY a valid JSON object with exactly these five keys.\n"
-        "No markdown fences. No preamble. No explanation. Pure JSON only.\n\n"
-        "{{\n"
-        '  \"title\": \"Specific fact-based SEO headline 58-68 chars\",\n'
-        '  \"meta_description\": \"Second key fact, SEO optimized, active voice, 148-160 chars\",\n'
-        '  \"content\": \"<p>Lead...</p><p>Nut graf...</p><h2>Specific Story Heading</h2><p>...</p>\",\n'
-        f'  \"category\": \"{category}\",\n'
-        '  \"tags\": [\"Broad Topic\", \"Named Entity\", \"Named Entity 2\", \"Issue\", \"Event\", \"Second Issue\", \"Report\"]\n'
-        "}}"
-    )
-
-
-def _search_web_for_topic(description: str, max_results: int = 5) -> str:
-    """
-    Searches DuckDuckGo for the given topic/description and scrapes the
-    top results to build a rich research knowledge base for the AI.
-
-    Returns a concatenated string of scraped text from multiple sources.
-    """
-    import time
-    from duckduckgo_search import DDGS
-    import requests
-
-    _BOT_UA = "FeroxTimesBot/1.0 (+https://www.feroxtimes.com/about)"
-    _SCRAPE_TIMEOUT = 15
-    _MIN_TEXT = 150
-
-    def _scrape_url(url: str) -> str:
-        """Quick scraper for a single URL."""
-        try:
-            from newspaper import Article as WebArticle
-            wa = WebArticle(url, browser_user_agent=_BOT_UA, request_timeout=_SCRAPE_TIMEOUT)
-            wa.download()
-            wa.parse()
-            text = wa.text or ""
-            if len(text.strip()) >= _MIN_TEXT:
-                return text.strip()
-        except Exception:
-            pass
-
-        # Fallback: simple requests + paragraph extraction
-        try:
-            from html.parser import HTMLParser
-
-            class _PE(HTMLParser):
-                def __init__(self):
-                    super().__init__()
-                    self._in = False; self._paras = []; self._cur = []
-                def handle_starttag(self, tag, attrs):
-                    if tag == "p": self._in = True; self._cur = []
-                def handle_endtag(self, tag):
-                    if tag == "p" and self._in:
-                        t = "".join(self._cur).strip()
-                        if len(t) > 30: self._paras.append(t)
-                        self._in = False
-                def handle_data(self, data):
-                    if self._in: self._cur.append(data)
-
-            r = requests.get(url, headers={"User-Agent": _BOT_UA}, timeout=_SCRAPE_TIMEOUT, allow_redirects=True)
-            r.raise_for_status()
-            p = _PE(); p.feed(r.text)
-            return "\n\n".join(p._paras)
-        except Exception:
-            return ""
-
-    knowledge_base = ""
-    try:
-        with DDGS() as ddgs:
-            results = list(ddgs.text(description, max_results=max_results))
-
-        logger.info("[AI Writer] DuckDuckGo returned %d results for: '%s'", len(results), description[:60])
-
-        for i, res in enumerate(results, 1):
-            url = res.get("href", "")
-            title = res.get("title", "No Title")
-            snippet = res.get("body", "")
-
-            if not url:
-                continue
-
-            logger.info("[AI Writer] Scraping source %d/%d: %s", i, len(results), url)
-            time.sleep(1)  # Polite delay
-            body = _scrape_url(url)
-
-            if body and len(body.strip()) > _MIN_TEXT:
-                # Truncate each source to 3000 chars to avoid token overflow
-                truncated = body[:3000]
-                knowledge_base += f"\n\n--- Source {i}: {title} ({url}) ---\n{snippet}\n\n{truncated}\n"
-            elif snippet:
-                # Fallback: use DuckDuckGo snippet if scraping failed
-                knowledge_base += f"\n\n--- Source {i} (snippet only): {title} ---\n{snippet}\n"
-
-    except Exception as exc:
-        logger.warning("[AI Writer] DuckDuckGo search failed for '%s': %s", description[:60], exc)
-
-    return knowledge_base.strip()
-
-
-def generate_article_from_prompt(
-    description: str,
-    category: str = "World",
-    tone: str = "neutral",
-    language: str = "english",
-    max_retries: int = 3,
-) -> dict | None:
-    """
-    Admin AI Article Writer — Core Engine.
-
-    Takes a human-written description of what kind of article is needed,
-    searches the internet for relevant information via DuckDuckGo, and
-    generates a complete journalist-style article using Groq AI.
-
-    Parameters
-    ----------
-    description : str  — What the article should be about (admin's brief).
-    category    : str  — Target category (e.g., 'Technology', 'Sports').
-    tone        : str  — Writing tone ('neutral', 'breaking', 'analysis', 'feature', 'opinion').
-    language    : str  — Output language ('english', 'urdu', 'both').
-    max_retries : int  — Number of Groq retry attempts.
-
-    Returns
-    -------
-    dict | None
-        On success: {"title", "meta_description", "content", "category", "tags", "research_sources_count"}
-        On failure: None
-    """
-    if not _GROQ_KEY:
-        logger.error("[AI Writer] Cannot generate — GROQ_API_KEY is not configured.")
-        return None
-
-    if not description or len(description.strip()) < 10:
-        logger.warning("[AI Writer] Description too short — aborting.")
-        return None
-
-    # ── Step 1: Internet Research via DuckDuckGo ─────────────────────────────
-    logger.info("[AI Writer] Starting internet research for: '%s'", description[:80])
-    knowledge_base = _search_web_for_topic(description, max_results=5)
-
-    if not knowledge_base or len(knowledge_base.strip()) < 200:
-        logger.warning(
-            "[AI Writer] Could not gather sufficient research for '%s'. "
-            "Proceeding with description only.",
-            description[:60],
-        )
-        knowledge_base = f"No web results found. Generate the best possible article based on your training knowledge about: {description}"
-
-    research_sources_count = knowledge_base.count("--- Source")
-    logger.info("[AI Writer] Research complete — %d sources gathered (%d chars).",
-                research_sources_count, len(knowledge_base))
-
-    # ── Step 2: Build Prompt & Call Groq ─────────────────────────────────────
-    system_prompt = _build_writer_prompt(description, category, tone, language)
-    user_content = (
-        f"EDITOR'S BRIEF: {description}\n\n"
-        f"══════════════════════════════════════\n"
-        f"INTERNET RESEARCH KNOWLEDGE BASE:\n"
-        f"(Use ONLY facts from below. Do not hallucinate.)\n"
-        f"══════════════════════════════════════\n\n"
-        f"{knowledge_base[:14000]}\n\n"
-        f"══════════════════════════════════════\n"
-        f"REMINDER: Return ONLY valid JSON. Lead paragraph must answer WHO, WHAT, WHERE, WHEN in 40–70 words."
-    )
-
-    client = Groq(api_key=_GROQ_KEY)
-    last_error = None
-
-    # Model selection: primary (better quality) → fallback (higher rate limit)
-    used_model = _MODEL_PRIMARY
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            logger.info("[AI Writer] Groq attempt %d/%d [model=%s]...", attempt, max_retries, used_model)
-            response = client.chat.completions.create(
-                model=used_model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user",   "content": user_content},
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.42,
-                max_tokens=4500,
-            )
-
-            raw_response = response.choices[0].message.content
-            data = _extract_json(raw_response)
-
-            if data is None:
-                logger.error("[AI Writer] JSON parse failed on attempt %d.", attempt)
-                last_error = "JSON parse failed"
-                time.sleep(2 * attempt)
-                continue
-
-            if not _validate_ai_response(data):
-                logger.error("[AI Writer] Validation failed on attempt %d [model=%s].", attempt, used_model)
-                last_error = "Validation failed"
-                time.sleep(3 * attempt)
-                continue
-
-            # ── Enforce field length constraints ──────────────────────────
-            data["title"]            = str(data["title"]).strip()[:250]
-            data["meta_description"] = str(data["meta_description"]).strip()[:160]
-            data["category"]         = category  # Always use admin-selected category
-            data["tags"]             = [str(t).strip()[:50] for t in data.get("tags", [])[:8] if str(t).strip()]
-            if not data["tags"]:
-                data["tags"] = ["News"]
-
-            # Add metadata for caller
-            data["research_sources_count"] = research_sources_count
-
-            logger.info(
-                "✅ [AI Writer] Article generated: '%s' [%s] | %d chars | %d tags | %d sources | model=%s",
-                data["title"], data["category"],
-                len(data["content"]), len(data["tags"]),
-                research_sources_count, used_model,
-            )
-            return data
-
-        except Exception as exc:
-            last_error = str(exc)
-            error_str = str(exc)
-
-            # ── Rate limit (429) → auto-switch to fallback model ──────────
-            if "429" in error_str and used_model == _MODEL_PRIMARY:
-                logger.warning(
-                    "[AI Writer] Primary model '%s' rate-limited. "
-                    "Auto-switching to fallback '%s' (higher limit).",
-                    _MODEL_PRIMARY, _MODEL_FALLBACK,
-                )
-                used_model = _MODEL_FALLBACK
-                time.sleep(2)
-                continue  # Immediate retry with fallback
-
-            logger.warning("[AI Writer] Groq attempt %d/%d failed [%s]: %s",
-                           attempt, max_retries, used_model, exc)
-            if attempt < max_retries:
-                time.sleep(5 * attempt)
-
-    logger.error("[AI Writer] ❌ All %d attempts exhausted. Last error: %s", max_retries, last_error)
     return None

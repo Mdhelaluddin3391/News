@@ -144,17 +144,41 @@ function updateSEOMetaTags(title, description, imageUrl, pageUrl, keywords = "",
     }
     setMetaTag('name', 'robots', robots);
 
-    setMetaTag('property', 'og:title', normalizedTitle);
-    setMetaTag('property', 'og:description', description);
-    setMetaTag('property', 'og:image', resolvedImageUrl);
-    setMetaTag('property', 'og:url', canonicalUrl);
+    // Update OG tags — prefer id-based elements (article page), fall back to selector
+    const ogTitle = document.getElementById('og-title');
+    if (ogTitle) ogTitle.setAttribute('content', normalizedTitle);
+    else setMetaTag('property', 'og:title', normalizedTitle);
+
+    const ogDesc = document.getElementById('og-description');
+    if (ogDesc) ogDesc.setAttribute('content', description);
+    else setMetaTag('property', 'og:description', description);
+
+    const ogImage = document.getElementById('og-image');
+    if (ogImage) ogImage.setAttribute('content', resolvedImageUrl);
+    else setMetaTag('property', 'og:image', resolvedImageUrl);
+
+    const ogUrl = document.getElementById('og-url');
+    if (ogUrl) ogUrl.setAttribute('content', canonicalUrl);
+    else setMetaTag('property', 'og:url', canonicalUrl);
+
     setMetaTag('property', 'og:type', pageType);
     setMetaTag('property', 'og:site_name', DEFAULT_SITE_NAME);
 
+    // Update Twitter tags — prefer id-based elements, fall back to selector
     setMetaTag('name', 'twitter:card', 'summary_large_image');
-    setMetaTag('name', 'twitter:title', normalizedTitle);
-    setMetaTag('name', 'twitter:description', description);
-    setMetaTag('name', 'twitter:image', resolvedImageUrl);
+    setMetaTag('name', 'twitter:site', '@feroxtimes');
+
+    const twTitle = document.getElementById('twitter-title');
+    if (twTitle) twTitle.setAttribute('content', normalizedTitle);
+    else setMetaTag('name', 'twitter:title', normalizedTitle);
+
+    const twDesc = document.getElementById('twitter-description');
+    if (twDesc) twDesc.setAttribute('content', description);
+    else setMetaTag('name', 'twitter:description', description);
+
+    const twImage = document.getElementById('twitter-image');
+    if (twImage) twImage.setAttribute('content', resolvedImageUrl);
+    else setMetaTag('name', 'twitter:image', resolvedImageUrl);
 
     let canonicalTag = document.querySelector('link[rel="canonical"]');
     if (!canonicalTag) {
@@ -193,118 +217,132 @@ function getDefaultPageMetadata() {
     const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
     const metadataByRoute = {
         '/': {
-            title: 'Ferox Times - Premium Global News',
-            description: DEFAULT_SITE_DESCRIPTION,
-            keywords: 'global news, breaking news, latest updates, world news, Ferox Times',
-            type: 'website'
+            title: 'Ferox Times - Breaking News, Global Reports & Analysis',
+            description: 'Stay updated with the latest breaking news, trending stories, and in-depth analysis from around the world. Ferox Times delivers real-time reporting you can trust.',
+            keywords: 'breaking news, world news, latest news, global updates, business news, technology news, Ferox Times',
+            type: 'website',
+            robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'
         },
         '/404': {
-            title: 'Page Not Found',
+            title: 'Page Not Found - Ferox Times',
             description: 'The page you requested could not be found on Ferox Times.',
             type: 'website',
             robots: 'noindex, follow'
         },
         '/about': {
-            title: 'About Ferox Times',
-            description: 'Learn more about Ferox Times, our mission, vision, and editorial standards.',
+            title: 'About Us - Ferox Times | Independent Global Journalism',
+            description: 'Learn about Ferox Times — an independent digital journalism organization delivering accurate, real-time global news, investigative reporting, and expert analysis.',
             type: 'website',
-            robots: 'noindex, follow'
+            robots: 'index, follow'
         },
         '/advertise': {
-            title: 'Advertise With Us',
-            description: 'Explore advertising opportunities, sponsorships, and brand partnerships with Ferox Times.',
+            title: 'Advertise With Us - Ferox Times',
+            description: 'Reach a global audience. Explore advertising opportunities, sponsorships, and brand partnerships with Ferox Times.',
             type: 'website',
-            robots: 'noindex, follow'
+            robots: 'index, follow'
         },
         '/authors': {
-            title: 'Our Authors',
-            description: 'Meet the journalists, editors, and contributors behind Ferox Times.',
+            title: 'Our Authors - Ferox Times Journalists & Contributors',
+            description: 'Meet the award-winning journalists, editors, and expert contributors behind Ferox Times reporting.',
             type: 'website',
-            robots: 'noindex, follow'
+            robots: 'index, follow'
         },
         '/careers': {
-            title: 'Careers',
-            description: 'Join the Ferox Times team across editorial, product, and engineering roles.',
+            title: 'Careers at Ferox Times - Join Our Newsroom',
+            description: 'Join the Ferox Times team. Browse open positions across editorial, product, and engineering at our global newsroom.',
             type: 'website',
-            robots: 'noindex, follow'
+            robots: 'index, follow'
         },
         '/contact': {
-            title: 'Contact Us',
-            description: 'Get in touch with the Ferox Times editorial and support teams.',
+            title: 'Contact Us - Ferox Times',
+            description: 'Get in touch with the Ferox Times editorial team for news tips, editorial inquiries, and partnership opportunities.',
             type: 'website',
-            robots: 'noindex, follow'
+            robots: 'index, follow'
         },
         '/cookie-policy': {
-            title: 'Cookie Policy',
-            description: 'Read the Ferox Times cookie policy and learn how cookies are used on the site.',
+            title: 'Cookie Policy - Ferox Times',
+            description: 'Read the Ferox Times cookie policy and learn how we use cookies and similar tracking technologies.',
             type: 'website',
-            robots: 'noindex, follow'
+            robots: 'index, follow'
+        },
+        '/editorial-guidelines': {
+            title: 'Editorial Guidelines - Ferox Times',
+            description: 'Our editorial standards, fact-checking processes, and journalistic values that guide every Ferox Times article.',
+            type: 'website',
+            robots: 'index, follow'
         },
         '/faq': {
-            title: 'Frequently Asked Questions',
-            description: 'Answers to common questions about Ferox Times subscriptions, accounts, and editorial coverage.',
+            title: 'FAQ - Ferox Times Help Center',
+            description: 'Answers to common questions about Ferox Times accounts, subscriptions, and editorial coverage.',
             type: 'website',
-            robots: 'noindex, follow'
+            robots: 'index, follow'
         },
+        '/privacy': {
+            title: 'Privacy Policy - Ferox Times',
+            description: 'Review how Ferox Times collects, uses, and protects your personal data in compliance with global privacy regulations.',
+            type: 'website',
+            robots: 'index, follow'
+        },
+        '/terms': {
+            title: 'Terms of Service - Ferox Times',
+            description: 'Read the terms and conditions governing your use of Ferox Times and our digital services.',
+            type: 'website',
+            robots: 'index, follow'
+        },
+        // Private / session pages – deliberately noindex
         '/forgot-password': {
-            title: 'Forgot Password',
+            title: 'Forgot Password - Ferox Times',
             description: 'Request a password reset for your Ferox Times account.',
             type: 'website',
             robots: 'noindex, follow'
         },
         '/login': {
-            title: 'Login',
+            title: 'Login - Ferox Times',
             description: 'Access your Ferox Times account securely.',
             type: 'website',
             robots: 'noindex, follow'
         },
-        '/privacy': {
-            title: 'Privacy Policy',
-            description: 'Review how Ferox Times collects, uses, and protects your personal data.',
-            type: 'website',
-            robots: 'noindex, follow'
-        },
         '/profile': {
-            title: 'My Profile',
+            title: 'My Profile - Ferox Times',
             description: 'Manage your Ferox Times account details and profile settings.',
             type: 'profile',
             robots: 'noindex, nofollow'
         },
         '/register': {
-            title: 'Create an Account',
+            title: 'Create an Account - Ferox Times',
             description: 'Register for a Ferox Times account to comment, save articles, and manage alerts.',
             type: 'website',
             robots: 'noindex, follow'
         },
         '/reset-password': {
-            title: 'Set New Password',
+            title: 'Reset Password - Ferox Times',
             description: 'Choose a new password for your Ferox Times account.',
             type: 'website',
             robots: 'noindex, follow'
         },
         '/saved': {
-            title: 'Saved Articles',
-            description: 'Review the articles you saved to read later on Ferox Times.',
+            title: 'Saved Articles - Ferox Times',
+            description: 'Review the articles you saved for later reading on Ferox Times.',
             type: 'website',
             robots: 'noindex, nofollow'
         },
-        '/terms': {
-            title: 'Terms of Service',
-            description: 'Read the terms and conditions governing use of Ferox Times.',
-            type: 'website',
-            robots: 'noindex, follow'
-        },
         '/unsubscribe': {
-            title: 'Unsubscribe',
-            description: 'Manage or confirm your Ferox Times newsletter unsubscribe request.',
+            title: 'Unsubscribe - Ferox Times',
+            description: 'Manage your Ferox Times newsletter preferences.',
             type: 'website',
             robots: 'noindex, follow'
         },
         '/verify-email': {
-            title: 'Verify Email',
+            title: 'Verify Email - Ferox Times',
             description: 'Verify your email address to activate your Ferox Times account.',
             type: 'website',
             robots: 'noindex, follow'
+        },
+        '/write-article': {
+            title: 'Write an Article - Ferox Times',
+            description: 'Submit your article to the Ferox Times editorial team.',
+            type: 'website',
+            robots: 'noindex, nofollow'
         }
     };
 

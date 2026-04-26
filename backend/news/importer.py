@@ -1,49 +1,47 @@
 """
-importer.py — GNews API fetcher + newspaper3k scraper + AI importer pipeline.
+importer.py — Industry-Grade GNews Intelligence Pipeline for Ferox Times.
 
-Pipeline per article:
-  GNews API → source_url de-duplication → robots.txt check → newspaper3k scrape
-      → Groq AI rewrite (Reuters/AP newsroom standards)
-      → Category/Tag get_or_create → Article(draft) save
-      → original_content cleared (legal compliance)
+Pipeline per article (2 articles per 30-minute cycle):
+──────────────────────────────────────────────────────
+  PHASE 1 │ GNews API → fetch top-headlines (title + URL only)
+  PHASE 2 │ De-duplication check (slug/title/URL)
+  PHASE 3 │ robots.txt compliance check on source URL
+  PHASE 4 │ DuckDuckGo deep research:
+           │   • Search the topic across the open web
+           │   • Scrape 5-8 trusted sources with newspaper3k
+           │   • Build a comprehensive multi-source knowledge base
+  PHASE 5 │ Groq AI → receives full knowledge base → writes complete
+           │           newsroom-standard article (Reuters/AP/BBC style)
+  PHASE 6 │ Category / Tag get_or_create → Draft Article saved
+  PHASE 7 │ Raw content cleared (copyright / legal compliance)
 
-Newsroom Standards (enforced by ai_utils.py prompt):
-  ✅ Author line           — Every article opens with "By Ferox Times".
-  ✅ Strong lead           — WHO, WHAT, WHERE, WHEN answered in first 40–60 words.
-  ✅ Source attribution    — "According to <source>..." in every article body.
-  ✅ HTML Sources section  — <h2>Sources</h2> with <ul> listed at end of every article.
-  ✅ Zero blog language    — No opinions, no rhetorical questions, no emotional phrases.
-  ✅ Zero AI clichés       — Full prohibited phrase list enforced at prompt level.
-  ✅ 500–900 word count    — Optimal for Google News ranking.
+Quality Standards:
+  ✅ 100% research-backed  — Every fact sourced from live internet research.
+  ✅ Pure news format      — No blog language, no opinions, no lists of tips.
+  ✅ Strong SEO title      — 58-68 chars, fact-based, no clickbait.
+  ✅ Dynamic subheadings   — Story-specific h2/h3 only, never generic labels.
+  ✅ Min 700 words         — Google News eligibility requirement.
+  ✅ 7 SEO tags            — Typed and validated for SERP performance.
+  ✅ Exactly 2 per cycle   — Protects Groq token budget.
 
 Legal Protections:
-  ✅ robots.txt respected  — We check the publisher's robots.txt before scraping.
-  ✅ Honest User-Agent     — We identify ourselves as 'FeroxTimesBot'.
-  ✅ Rate limiting         — 2-second delay between each article scrape.
+  ✅ robots.txt respected  — Publisher robots.txt checked before scraping.
+  ✅ Honest User-Agent     — Identified as 'FeroxTimesBot'.
+  ✅ Polite rate limiting  — 2-second delay between each source scrape.
   ✅ No content stored     — original_content cleared after AI rewrite.
-  ✅ No images downloaded  — featured_image left blank. Frontend uses default-news.png.
+  ✅ No images downloaded  — featured_image left blank (no copyright risk).
   ✅ Source attribution    — source_name and source_url always stored.
   ✅ AI rewrite mandatory  — If Groq fails, article is NEVER saved.
-
-Error Handling:
-  ✅ GNews API failure     — Returns clear error, no articles saved.
-  ✅ Scraping failure      — Article skipped with a warning log.
-  ✅ Broken / short text   — Article skipped (< 150 chars of content).
-  ✅ Groq failure          — Article skipped; never stored as raw copy.
-  ✅ robots.txt unreachable— Fail-open: we proceed politely.
-  ✅ DB errors             — Each article saved independently; one failure
-                             does not block the rest.
 """
 
 import logging
 import time
-import uuid
 from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 
 import requests
-from django.utils.html import strip_tags
 from django.contrib.auth import get_user_model
+from django.utils.html import strip_tags
 
 from news.models import Article, Author, Category, Tag
 from newspaper import Article as WebArticle
@@ -52,26 +50,40 @@ from .ai_utils import rewrite_article_with_ai
 
 logger = logging.getLogger(__name__)
 
-# ─── Constants ─────────────────────────────────────────────────────────────
+# ─── Pipeline Constants ───────────────────────────────────────────────────────
 
-# Our bot's User-Agent — used in both robots.txt checks and HTTP requests.
+# How many articles to produce per Celery task run.
+# Keep at 2 to protect Groq token budget on the free tier.
+ARTICLES_PER_RUN = 2
+
+# How many GNews headlines to fetch (we need extras in case some are dupes/blocked).
+GNEWS_FETCH_LIMIT = 8
+
+# Our bot's User-Agent — polite identification for robots.txt and HTTP requests.
 _BOT_USER_AGENT = "FeroxTimesBot/1.0 (+https://www.feroxtimes.com/about)"
 
-# Polite crawl delay between articles (seconds).
-_SCRAPE_DELAY_SECONDS = 2
+# Minimum scraped text length (chars) to proceed.
+_MIN_TEXT_LENGTH = 200
 
-# Minimum scraped text length to proceed with AI rewrite.
-_MIN_TEXT_LENGTH = 150
+# Timeouts
+_ROBOTS_TIMEOUT  = 8   # seconds for robots.txt fetch
+_SCRAPE_TIMEOUT  = 20  # seconds per source article scrape
 
-# Timeout for robots.txt fetch and article scraping.
-_ROBOTS_TIMEOUT = 8
-_SCRAPE_TIMEOUT = 15
+# DuckDuckGo: how many search results to pull for deep research.
+_DDGS_MAX_RESULTS = 10
+
+# Min / max sources to actually scrape for the knowledge base.
+_MIN_RESEARCH_SOURCES = 3
+_MAX_RESEARCH_SOURCES = 8
+
+# Polite delay between scrapes (seconds).
+_SCRAPE_DELAY = 2
 
 
-# ─── Helpers ───────────────────────────────────────────────────────────────
+# ─── Text Utilities ───────────────────────────────────────────────────────────
 
 def _clean_text(text: str, max_length: int | None = None) -> str:
-    """Strip HTML tags and truncate to max_length with an ellipsis."""
+    """Strip HTML tags and optional length cap."""
     if not text:
         return ""
     cleaned = strip_tags(text).strip()
@@ -80,105 +92,84 @@ def _clean_text(text: str, max_length: int | None = None) -> str:
     return cleaned
 
 
+# ─── robots.txt Compliance ────────────────────────────────────────────────────
+
 def _is_scraping_allowed(url: str) -> bool:
     """
-    Checks the source website's robots.txt to see if scraping is permitted
-    for our bot ('FeroxTimesBot'). Falls back to checking the wildcard ('*')
-    rule if no specific rule exists for our bot.
-
-    Returns True if allowed (or if robots.txt cannot be fetched — fail-open).
+    Returns True if scraping is allowed (or robots.txt is unreachable — fail-open).
     Returns False only when robots.txt is readable AND explicitly disallows.
     """
     try:
         parsed = urlparse(url)
         robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
-        
-        # We manually fetch robots.txt using requests with a timeout
-        # because RobotFileParser.read() uses urllib without a timeout and can hang indefinitely.
         try:
-            resp = requests.get(robots_url, headers={"User-Agent": _BOT_USER_AGENT}, timeout=_ROBOTS_TIMEOUT)
+            resp = requests.get(
+                robots_url,
+                headers={"User-Agent": _BOT_USER_AGENT},
+                timeout=_ROBOTS_TIMEOUT,
+            )
             lines = resp.text.splitlines()
-        except requests.RequestException as exc:
-            logger.debug("Could not read robots.txt for '%s' due to timeout/error: %s — proceeding.", url, exc)
+        except requests.RequestException:
             return True  # fail-open
 
         rp = RobotFileParser()
         rp.set_url(robots_url)
         rp.parse(lines)
 
-        # First check our specific bot name, then fall back to wildcard (*)
         allowed = rp.can_fetch(_BOT_USER_AGENT, url) or rp.can_fetch("*", url)
-
         if not allowed:
-            logger.warning(
-                "robots.txt disallows scraping for '%s' (robots: %s) — skipping.",
-                url, robots_url,
-            )
+            logger.warning("robots.txt blocked: %s", url)
         return allowed
-    except Exception as exc:
-        # Catch any other unexpected errors during parsing
-        logger.debug("Unexpected error during robots.txt check for '%s': %s — proceeding.", url, exc)
-        return True
+    except Exception:
+        return True  # fail-open on any unexpected error
 
 
-def _scrape_full_text(url: str) -> str:
+# ─── Article Scraper ──────────────────────────────────────────────────────────
+
+def _scrape_url(url: str) -> str:
     """
-    Uses newspaper3k to download and parse the full article body.
-    Returns an empty string on any failure so the caller can handle it gracefully.
-
-    Improvements:
-    - Uses a generous 15-second timeout to handle slow servers.
-    - Falls back to requests + BeautifulSoup paragraph extraction if
-      newspaper3k returns insufficient text (< 150 chars).
+    Scrapes full article text from a URL using newspaper3k with a
+    BeautifulSoup paragraph-extraction fallback.
+    Returns empty string on failure so callers handle it gracefully.
     """
     raw_text = ""
 
-    # ── Primary: newspaper3k ────────────────────────────────────────────────
+    # Primary: newspaper3k
     try:
-        web_article = WebArticle(
-            url,
-            browser_user_agent=_BOT_USER_AGENT,
-            request_timeout=_SCRAPE_TIMEOUT,
-        )
-        web_article.download()
-        web_article.parse()
-        raw_text = web_article.text or ""
+        wa = WebArticle(url, browser_user_agent=_BOT_USER_AGENT, request_timeout=_SCRAPE_TIMEOUT)
+        wa.download()
+        wa.parse()
+        raw_text = wa.text or ""
     except Exception as exc:
-        logger.warning("newspaper3k scraping failed for %s: %s", url, exc)
+        logger.debug("newspaper3k failed for %s: %s", url, exc)
 
-    # ── Fallback: requests + simple paragraph extraction ────────────────────
-    if not raw_text or len(raw_text.strip()) < _MIN_TEXT_LENGTH:
-        logger.info(
-            "newspaper3k returned insufficient text (%d chars) for %s — trying fallback.",
-            len(raw_text.strip()),
-            url,
-        )
+    # Fallback: simple <p> extractor via requests + HTMLParser
+    if len(raw_text.strip()) < _MIN_TEXT_LENGTH:
         try:
             from html.parser import HTMLParser
 
-            class _ParagraphExtractor(HTMLParser):
-                """Minimal HTML parser that extracts visible <p> text."""
+            class _PE(HTMLParser):
                 def __init__(self):
                     super().__init__()
-                    self._in_p = False
-                    self._paragraphs: list[str] = []
-                    self._current: list[str] = []
+                    self._in = False
+                    self._paras: list[str] = []
+                    self._cur: list[str] = []
 
                 def handle_starttag(self, tag, attrs):
                     if tag == "p":
-                        self._in_p = True
-                        self._current = []
+                        self._in = True
+                        self._cur = []
 
                 def handle_endtag(self, tag):
-                    if tag == "p" and self._in_p:
-                        text = "".join(self._current).strip()
-                        if len(text) > 30:
-                            self._paragraphs.append(text)
-                        self._in_p = False
+                    if tag == "p" and self._in:
+                        t = "".join(self._cur).strip()
+                        if len(t) > 40:
+                            self._paras.append(t)
+                        self._in = False
 
                 def handle_data(self, data):
-                    if self._in_p:
-                        self._current.append(data)
+                    if self._in:
+                        self._cur.append(data)
 
             resp = requests.get(
                 url,
@@ -187,77 +178,130 @@ def _scrape_full_text(url: str) -> str:
                 allow_redirects=True,
             )
             resp.raise_for_status()
-            parser = _ParagraphExtractor()
-            parser.feed(resp.text)
-            fallback_text = "\n\n".join(parser._paragraphs)
-            if len(fallback_text.strip()) > len(raw_text.strip()):
-                raw_text = fallback_text
-                logger.info(
-                    "Fallback extractor retrieved %d chars for %s.",
-                    len(raw_text),
-                    url,
-                )
-        except Exception as fallback_exc:
-            logger.warning("Fallback scraping also failed for %s: %s", url, fallback_exc)
+            pe = _PE()
+            pe.feed(resp.text)
+            fallback = "\n\n".join(pe._paras)
+            if len(fallback) > len(raw_text):
+                raw_text = fallback
+        except Exception as fb_exc:
+            logger.debug("Fallback scrape failed for %s: %s", url, fb_exc)
 
     return raw_text.strip()
 
 
-def _search_and_scrape_context(title: str, primary_url: str) -> str:
+# ─── Deep Internet Research Engine ────────────────────────────────────────────
+
+def _build_knowledge_base(headline: str, primary_url: str) -> tuple[str, int]:
     """
-    Searches DuckDuckGo for the article title to gather multi-source context.
-    Fetches the top 2-3 results, scrapes their text, and concatenates it.
+    Core intelligence phase of the pipeline.
+
+    1. Searches DuckDuckGo for the headline to find related coverage.
+    2. Scrapes up to _MAX_RESEARCH_SOURCES trusted articles from results.
+    3. Includes the primary source (GNews article) as Source 0.
+    4. Returns a concatenated knowledge base string + source count.
+
+    The knowledge base feeds directly into the Groq prompt so the AI
+    can write a fully fact-based, multi-source article without hallucinating.
     """
-    context = ""
+    knowledge_base = ""
+    sources_scraped = 0
+
+    # ── Source 0: Primary GNews source ───────────────────────────────────────
+    if primary_url and _is_scraping_allowed(primary_url):
+        logger.info("[Research] Scraping primary source: %s", primary_url)
+        primary_text = _scrape_url(primary_url)
+        if len(primary_text.strip()) >= _MIN_TEXT_LENGTH:
+            knowledge_base += (
+                f"\n\n{'═' * 60}\n"
+                f"SOURCE 0 [Primary Source] — {primary_url}\n"
+                f"{'═' * 60}\n"
+                f"{primary_text[:5000]}\n"
+            )
+            sources_scraped += 1
+            logger.info("[Research] Primary source: %d chars scraped.", len(primary_text))
+
+    # ── DuckDuckGo discovery ──────────────────────────────────────────────────
+    ddg_results = []
     try:
         from duckduckgo_search import DDGS
         with DDGS() as ddgs:
-            results = list(ddgs.text(title, max_results=3))
-            
-        for res in results:
-            url = res.get("href")
-            if not url or url == primary_url:
-                continue
-            
-            logger.info("  [Multi-Source] Scraping context from: %s", url)
-            # Skip if explicitly disallowed, fail-open applies
-            if not _is_scraping_allowed(url):
-                continue
-            
-            time.sleep(_SCRAPE_DELAY_SECONDS) # Polite delay
-            bg_text = _scrape_full_text(url)
-            
-            if bg_text and len(bg_text.strip()) > _MIN_TEXT_LENGTH:
-                # Truncate each bg source to avoid massive payloads
-                truncated_bg = _clean_text(bg_text, max_length=4000)
-                context += f"\n\n--- Background Source: {res.get('title', url)} ---\n{truncated_bg}\n"
-                
-    except Exception as exc:
-        logger.warning("[Multi-Source] Search Context gathering failed for '%s': %s", title, exc)
-        
-    return context.strip()
+            ddg_results = list(ddgs.text(headline, max_results=_DDGS_MAX_RESULTS))
+        logger.info(
+            "[Research] DuckDuckGo returned %d results for: '%s'",
+            len(ddg_results), headline[:70],
+        )
+    except Exception as ddg_exc:
+        logger.warning("[Research] DuckDuckGo search failed for '%s': %s", headline[:60], ddg_exc)
 
+    # ── Scrape each result ────────────────────────────────────────────────────
+    for i, result in enumerate(ddg_results, start=1):
+        if sources_scraped >= _MAX_RESEARCH_SOURCES:
+            break
+
+        url   = result.get("href", "")
+        title = result.get("title", "No Title")
+        snippet = result.get("body", "")
+
+        if not url or url == primary_url:
+            continue
+
+        # robots.txt check (fail-open)
+        if not _is_scraping_allowed(url):
+            logger.debug("[Research] robots.txt blocked source %d: %s", i, url)
+            continue
+
+        logger.info("[Research] Scraping source %d/%d: %s", i, len(ddg_results), url)
+        time.sleep(_SCRAPE_DELAY)  # polite delay
+
+        body = _scrape_url(url)
+
+        if len(body.strip()) >= _MIN_TEXT_LENGTH:
+            # Truncate each source to 4 000 chars to avoid token overflow
+            truncated = body[:4000]
+            knowledge_base += (
+                f"\n\n{'─' * 60}\n"
+                f"SOURCE {sources_scraped} — {title}\n"
+                f"URL: {url}\n"
+                f"{'─' * 60}\n"
+                f"{snippet}\n\n"
+                f"{truncated}\n"
+            )
+            sources_scraped += 1
+            logger.info("[Research] Source %d: %d chars added.", sources_scraped, len(truncated))
+        elif snippet:
+            # Snippet-only fallback if full scrape failed
+            knowledge_base += (
+                f"\n\n{'─' * 60}\n"
+                f"SOURCE {sources_scraped} [Snippet only] — {title}\n"
+                f"{'─' * 60}\n"
+                f"{snippet}\n"
+            )
+            sources_scraped += 1
+
+    logger.info(
+        "[Research] Knowledge base complete: %d sources | %d chars total.",
+        sources_scraped, len(knowledge_base),
+    )
+    return knowledge_base.strip(), sources_scraped
+
+
+# ─── Duplicate Detection ──────────────────────────────────────────────────────
 
 def _is_duplicate(source_url: str, original_title: str) -> bool:
-    """
-    Returns True if an article with the same source URL or original title
-    already exists in the database, preventing duplicate imports.
-    """
+    """Prevents re-importing the same story via URL or title match."""
     return (
         Article.objects.filter(source_url=source_url).exists()
         or Article.objects.filter(original_title=original_title).exists()
     )
 
 
-# ─── Provider-specific parsers ──────────────────────────────────────────────
+# ─── GNews Response Parser ────────────────────────────────────────────────────
 
 def _parse_gnews_item(item: dict) -> dict:
     return {
         "title":       item.get("title", "").strip(),
         "source_url":  item.get("url", "").strip(),
-        "source_name": "Ferox Times",
-        # NOTE: 'image' field from GNews is intentionally ignored.
-        # Downloading third-party images without a license is copyright infringement.
+        "source_name": item.get("source", {}).get("name", "Ferox Times").strip() or "Ferox Times",
     }
 
 
@@ -266,172 +310,131 @@ _PARSERS = {
 }
 
 
-# ─── Main importer ──────────────────────────────────────────────────────────
+# ─── Main Pipeline ────────────────────────────────────────────────────────────
 
 def fetch_and_import_news(api_url: str, provider: str) -> str:
     """
-    Fetches top-5 headlines from `api_url`, checks robots.txt, scrapes full
-    text, rewrites via Groq AI, saves each as a draft Article, then clears
-    the raw scraped content for copyright compliance.
+    Runs the full intelligence pipeline for up to ARTICLES_PER_RUN articles.
 
-    Returns a human-readable result string (used by the Celery task for logging).
+    Returns a human-readable result string used by the Celery task for logging.
 
-    Error Handling Strategy:
-    - API failure   → Return error immediately (no articles processed).
-    - Per-article   → Log error and skip; continue to next article.
-    - DB error      → Log and skip; never crash the whole pipeline.
+    Strategy:
+    - Fetch GNEWS_FETCH_LIMIT headlines (more than needed, to survive dupes/blocks).
+    - Process one by one until ARTICLES_PER_RUN successful imports are done.
+    - Each article gets a full DuckDuckGo research phase before being sent to Groq.
     """
     if provider not in _PARSERS:
-        return f"❌ Unknown provider: '{provider}'. Valid options: {list(_PARSERS)}"
+        return f"❌ Unknown provider: '{provider}'. Valid: {list(_PARSERS)}"
 
     parser_fn, data_key = _PARSERS[provider]
 
-    # ── Step 1: Hit the news API ────────────────────────────────────────────
+    # ── Phase 1: Fetch GNews headlines ───────────────────────────────────────
+    logger.info("[Pipeline] Fetching %d headlines from GNews…", GNEWS_FETCH_LIMIT)
     try:
         response = requests.get(api_url, timeout=20, headers={"User-Agent": _BOT_USER_AGENT})
         response.raise_for_status()
         raw_data = response.json()
     except requests.exceptions.Timeout:
-        msg = f"❌ GNews API request timed out for provider '{provider}'."
-        logger.error(msg)
-        return msg
+        return f"❌ GNews API request timed out."
     except requests.exceptions.ConnectionError as exc:
-        msg = f"❌ GNews API connection failed for provider '{provider}': {exc}"
-        logger.error(msg)
-        return msg
+        return f"❌ GNews API connection failed: {exc}"
     except requests.exceptions.HTTPError as exc:
-        status_code = getattr(exc.response, "status_code", "?")
-        if status_code == 403:
-            msg = f"❌ GNews API key is invalid or quota exceeded (HTTP 403)."
-        elif status_code == 429:
-            msg = f"❌ GNews API rate limit hit (HTTP 429). Will retry later."
-        else:
-            msg = f"❌ GNews API HTTP error {status_code} for provider '{provider}': {exc}"
-        logger.error(msg)
-        return msg
-    except requests.RequestException as exc:
-        msg = f"❌ GNews API request failed for provider '{provider}': {exc}"
-        logger.error(msg)
-        return msg
-    except ValueError as exc:
-        msg = f"❌ GNews API returned non-JSON for provider '{provider}': {exc}"
-        logger.error(msg)
-        return msg
+        code = getattr(exc.response, "status_code", "?")
+        if code == 403:
+            return "❌ GNews API key invalid or quota exceeded (HTTP 403)."
+        if code == 429:
+            return "❌ GNews rate limit hit (HTTP 429). Will retry."
+        return f"❌ GNews HTTP error {code}: {exc}"
+    except (requests.RequestException, ValueError) as exc:
+        return f"❌ GNews API failed: {exc}"
 
-    # Check for API-level errors in the response body
     if "errors" in raw_data or raw_data.get("status") == "error":
-        error_msg = raw_data.get("errors") or raw_data.get("message") or "Unknown API error"
-        msg = f"❌ GNews API returned an error: {error_msg}"
-        logger.error(msg)
-        return msg
+        err = raw_data.get("errors") or raw_data.get("message") or "Unknown error"
+        return f"❌ GNews API error: {err}"
 
-    # Fetch only top 5 headlines as required
-    articles_data = raw_data.get(data_key, [])[:5]
+    headlines = raw_data.get(data_key, [])[:GNEWS_FETCH_LIMIT]
+    if not headlines:
+        return f"⚠️ No headlines from GNews — may be rate-limited or empty category."
 
-    if not articles_data:
-        msg = f"⚠️ No articles returned from '{provider}'. The API may be rate-limited or the category is empty."
-        logger.warning(msg)
-        return msg
+    logger.info("[Pipeline] Got %d headlines. Target: %d articles.", len(headlines), ARTICLES_PER_RUN)
 
     imported_count = 0
-    skipped_count = 0
-    skip_reasons: list[str] = []
+    skipped_count  = 0
+    skip_log: list[str] = []
 
-    for idx, item in enumerate(articles_data, start=1):
+    # ── Phase 2–7: Process headlines until we hit ARTICLES_PER_RUN ───────────
+    for idx, item in enumerate(headlines, start=1):
+        if imported_count >= ARTICLES_PER_RUN:
+            logger.info("[Pipeline] Target of %d articles reached. Stopping.", ARTICLES_PER_RUN)
+            break
+
         try:
             parsed      = parser_fn(item)
-            title       = parsed["title"]
+            headline    = parsed["title"]
             source_url  = parsed["source_url"]
             source_name = parsed["source_name"]
 
             logger.info(
-                "[%d/%d] Processing: '%s' from %s",
-                idx, len(articles_data), title, source_name,
+                "[%d/%d] Processing: '%s'",
+                idx, len(headlines), headline[:90],
             )
 
-            # ── Step 2: Basic validation ──────────────────────────────────
-            if not title or not source_url:
-                reason = f"Missing title or URL (title={bool(title)}, url={bool(source_url)})"
-                logger.debug("Skipping item %d: %s", idx, reason)
-                skip_reasons.append(reason)
+            # ── Validate ──────────────────────────────────────────────────
+            if not headline or not source_url:
+                skip_log.append(f"[{idx}] Missing title or URL")
                 skipped_count += 1
                 continue
 
-            # ── Step 3: Duplicate check ───────────────────────────────────
-            if _is_duplicate(source_url, title):
-                logger.debug("Duplicate detected, skipping: '%s'", title)
-                skip_reasons.append(f"Duplicate: '{title[:60]}'")
+            # ── Duplicate check ───────────────────────────────────────────
+            if _is_duplicate(source_url, headline):
+                logger.debug("[%d] Duplicate — skipping: '%s'", idx, headline[:60])
+                skip_log.append(f"[{idx}] Duplicate: '{headline[:50]}'")
                 skipped_count += 1
                 continue
 
-            # ── Step 4: robots.txt compliance check ───────────────────────
+            # ── robots.txt check on primary source ────────────────────────
             if not _is_scraping_allowed(source_url):
-                logger.info(
-                    "Skipping '%s' — robots.txt disallows scraping of %s.",
-                    title, source_url,
-                )
-                skip_reasons.append(f"robots.txt blocked: '{title[:60]}'")
+                skip_log.append(f"[{idx}] robots.txt blocked: '{headline[:50]}'")
                 skipped_count += 1
                 continue
 
-            # ── Step 5: Polite crawl delay ────────────────────────────────
-            time.sleep(_SCRAPE_DELAY_SECONDS)
+            # ── Phase 4: Deep internet research ───────────────────────────
+            logger.info("[%d/%d] Starting deep research for: '%s'", idx, len(headlines), headline[:70])
+            knowledge_base, source_count = _build_knowledge_base(headline, source_url)
 
-            # ── Step 6: Scrape full article text ──────────────────────────
-            logger.info("[%d/%d] Scraping: %s", idx, len(articles_data), source_url)
-            raw_text = _scrape_full_text(source_url)
-
-            if not raw_text or len(raw_text.strip()) < _MIN_TEXT_LENGTH:
-                reason = (
-                    f"Insufficient scraped text ({len(raw_text.strip()) if raw_text else 0} chars) "
-                    f"for '{title[:60]}'"
-                )
+            if source_count < _MIN_RESEARCH_SOURCES or len(knowledge_base.strip()) < 500:
                 logger.warning(
-                    "[%d/%d] %s — skipping (need ≥%d chars).",
-                    idx, len(articles_data), reason, _MIN_TEXT_LENGTH,
+                    "[%d] Insufficient research (%d sources, %d chars) for '%s' — skipping.",
+                    idx, source_count, len(knowledge_base), headline[:60],
                 )
-                skip_reasons.append(reason)
+                skip_log.append(f"[{idx}] Insufficient research: '{headline[:50]}'")
                 skipped_count += 1
                 continue
 
-            # ── Step 6.5: Aggregate multi-source context via Web Search ───
-            logger.info("[%d/%d] Fetching background search context via DDGS...", idx, len(articles_data))
-            bg_context = _search_and_scrape_context(title, source_url)
-            if bg_context:
-                raw_text += f"\n\n══════════════════════════════════════\nADDITIONAL BACKGROUND CONTEXT:\n{bg_context}"
-                logger.info("[%d/%d] Appended %d chars of multi-source background context.", idx, len(articles_data), len(bg_context))
-
-            # ── Step 7: AI rewrite via Groq ─────────────────────────────
             logger.info(
-                "[%d/%d] Sending to Groq for AI rewrite: '%s' (%d chars of raw text)",
-                idx, len(articles_data), title, len(raw_text),
+                "[%d] Research complete: %d sources | %d chars. Sending to Groq…",
+                idx, source_count, len(knowledge_base),
             )
-            ai_data = rewrite_article_with_ai(title, raw_text, source_name)
+
+            # ── Phase 5: Groq AI rewrite with full knowledge base ─────────
+            ai_data = rewrite_article_with_ai(
+                original_title=headline,
+                raw_text=knowledge_base,
+                source_name=source_name,
+            )
 
             if not ai_data:
-                reason = f"Groq rewrite failed for '{title[:60]}'"
-                logger.warning(
-                    "[%d/%d] %s — article skipped to prevent plagiarism.",
-                    idx, len(articles_data), reason,
-                )
-                skip_reasons.append(reason)
+                skip_log.append(f"[{idx}] Groq rewrite failed: '{headline[:50]}'")
                 skipped_count += 1
                 continue
 
-            # ── Step 8: Resolve Category (get or create) ──────────────────
-            category_name = (ai_data.get("category") or "World").strip()
-            if not category_name:
-                category_name = "World"
-            category_obj, cat_created = Category.objects.get_or_create(
-                name=category_name,
-                defaults={"name": category_name},
+            # ── Phase 6a: Resolve Category ────────────────────────────────
+            cat_name = (ai_data.get("category") or "World").strip() or "World"
+            category_obj, _ = Category.objects.get_or_create(
+                name=cat_name, defaults={"name": cat_name}
             )
-            if cat_created:
-                logger.info("Created new category: '%s'", category_name)
 
-            # ── Step 8.5: Resolve Virtual Reporter (AI User + Author profile) ───
-            # The display name "Ferox Times" matches the author line
-            # injected into every article's HTML content by ai_utils.py:
+            # ── Phase 6b: Resolve AI Author (virtual reporter) ────────────
             User = get_user_model()
             ai_user, user_created = User.objects.get_or_create(
                 email="ai_desk@feroxtimes.com",
@@ -441,31 +444,21 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
                     "is_staff": False,
                     "is_active": True,
                     "bio": (
-                        "The official news desk of Ferox Times. "
-                        "All AI-assisted articles are reviewed against Reuters/AP "
-                        "editorial standards before publication."
+                        "The official AI-assisted news desk of Ferox Times. "
+                        "All articles are researched from multiple live internet "
+                        "sources and written to Reuters/AP editorial standards."
                     ),
-                }
+                },
             )
             if user_created:
-                ai_user.set_unusable_password()  # Prevent anyone from logging in as this user
+                ai_user.set_unusable_password()
                 ai_user.save()
-                logger.info("Created Ferox Times user: '%s'", ai_user.email)
 
-            # Ensure an Author profile exists for the AI user.
-            # Article.author requires an Author instance, not a User instance.
-            ai_author, author_created = Author.objects.get_or_create(
-                user=ai_user,
-                defaults={
-                    "role": "Reporter",
-                }
+            ai_author, _ = Author.objects.get_or_create(
+                user=ai_user, defaults={"role": "Reporter"}
             )
-            if author_created:
-                logger.info(
-                    "Created Author profile for Ferox Times user: '%s'", ai_user.email
-                )
 
-            # ── Step 9: Build the Article object ──────────────────────────
+            # ── Phase 6c: Build Article ───────────────────────────────────
             ai_content  = ai_data.get("content", "")
             description = _clean_text(ai_content, max_length=250)
             if not description:
@@ -473,76 +466,62 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
 
             article = Article(
                 # AI-generated fields
-                title            = ai_data.get("title") or title[:255],
+                title            = ai_data.get("title") or headline[:255],
                 meta_description = ai_data.get("meta_description", "")[:160],
                 description      = description,
                 content          = ai_content,
                 category         = category_obj,
-                author           = ai_author,  # Author instance (not User)
-
-                # Original source tracking fields
-                original_title   = title[:500],
+                author           = ai_author,
+                # Source tracking
+                original_title   = headline[:500],
                 source_name      = source_name[:100],
                 source_url       = source_url[:500],
-
-                # TEMPORARY: raw scraped text stored here for reference.
-                # CLEARED immediately after save in Step 11 (copyright compliance).
-                original_content = raw_text,
-
-                # Status & flags
+                # Raw content stored temporarily for copyright compliance clear
+                original_content = f"[Research: {source_count} sources | {len(knowledge_base)} chars]",
+                # Status
                 status           = "draft",
                 is_imported      = True,
             )
 
-            # ── Step 10: Persist the article ──────────────────────────────
-            article.save()  # triggers slug auto-generation in Article.save()
-
-            # ── Step 11: Clear raw scraped content (copyright compliance) ──
+            # ── Phase 7: Persist + clear raw content ─────────────────────
+            article.save()  # triggers slug auto-generation
             Article.objects.filter(pk=article.pk).update(original_content=None)
-            logger.info(
-                "🗑️  original_content cleared for article [id=%s].",
-                article.pk,
-            )
 
-            # ── Step 12: Attach Tags (get or create) ──────────────────────
-            tag_names = ai_data.get("tags", [])
+            # ── Attach Tags ───────────────────────────────────────────────
             tag_objs = []
-            for tag_name in tag_names:
+            for tag_name in ai_data.get("tags", []):
                 tag_name = str(tag_name).strip()[:50]
                 if tag_name:
                     try:
                         tag_obj, _ = Tag.objects.get_or_create(name=tag_name)
                         tag_objs.append(tag_obj)
-                    except Exception as tag_exc:
-                        logger.warning("Could not create tag '%s': %s", tag_name, tag_exc)
+                    except Exception as te:
+                        logger.warning("Tag error '%s': %s", tag_name, te)
             if tag_objs:
                 article.tags.set(tag_objs)
 
             imported_count += 1
             logger.info(
-                "✅ [%d/%d] Imported draft article [id=%s]: '%s' [%s]",
-                idx, len(articles_data), article.pk, article.title, category_name,
+                "✅ [%d/%d] Draft saved [id=%s]: '%s' [%s] | %d sources | %d chars",
+                idx, len(headlines),
+                article.pk, article.title, cat_name,
+                source_count, len(ai_content),
             )
 
-        except Exception as article_exc:
-            # Never let a single article crash the entire import pipeline
-            logger.exception(
-                "❌ Unexpected error processing article %d ('%s'): %s",
-                idx, item.get("title", "?"), article_exc,
-            )
-            skip_reasons.append(f"Unexpected error for article {idx}: {article_exc}")
+        except Exception as exc:
+            logger.exception("❌ Unexpected error for article %d ('%s'): %s", idx, item.get("title", "?"), exc)
+            skip_log.append(f"[{idx}] Unexpected error: {exc}")
             skipped_count += 1
             continue
 
-    # ── Final Summary ───────────────────────────────────────────────────────
-    summary_parts = [
-        f"✅ {imported_count} newsroom-standard draft article(s) imported from '{provider}'.",
-        f"(Skipped: {skipped_count})",
+    # ── Final Summary ─────────────────────────────────────────────────────────
+    parts = [
+        f"✅ {imported_count}/{ARTICLES_PER_RUN} research-backed draft articles saved.",
+        f"Skipped: {skipped_count}.",
     ]
-    if skip_reasons:
-        skip_detail = " | ".join(skip_reasons[:5])
-        summary_parts.append(f"Skip reasons: [{skip_detail}]")
+    if skip_log:
+        parts.append(f"Details: {' | '.join(skip_log[:5])}")
 
-    summary = " ".join(summary_parts)
-    logger.info(summary)
+    summary = " ".join(parts)
+    logger.info("[Pipeline] Run complete. %s", summary)
     return summary

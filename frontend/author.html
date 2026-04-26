@@ -6,14 +6,29 @@
     <base href="/">
     <title>Author Profile - Ferox Times</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
-    
-    <link rel="preconnect" href="https://www.feroxtimes.com" crossorigin>
-    
-    <meta name="description" content="Read articles and news written by our expert journalists at Ferox Times.">
-    <meta property="og:title" content="Author Profile - Ferox Times">
-    <meta property="og:description" content="Read articles and news written by our expert journalists at Ferox Times.">
+
+    <!-- Primary Meta (JS updates dynamically) -->
+    <meta name="description" content="Read articles and news written by our expert journalists and contributors at Ferox Times.">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Ferox Times">
+
+    <!-- Open Graph -->
     <meta property="og:type" content="profile">
-    <meta property="og:image" content="https://www.feroxtimes.com/images/default-avatar.png">
+    <meta property="og:site_name" content="Ferox Times">
+    <meta property="og:url" id="og-url" content="">
+    <meta property="og:title" id="og-title" content="Author Profile - Ferox Times">
+    <meta property="og:description" id="og-description" content="Read articles and news written by our expert journalists at Ferox Times.">
+    <meta property="og:image" id="og-image" content="https://www.feroxtimes.com/images/default-avatar.png">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@feroxtimes">
+    <meta name="twitter:title" id="twitter-title" content="Author Profile - Ferox Times">
+    <meta name="twitter:description" id="twitter-description" content="Read articles and news written by our expert journalists at Ferox Times.">
+    <meta name="twitter:image" id="twitter-image" content="https://www.feroxtimes.com/images/default-avatar.png">
+
+    <!-- Canonical (set dynamically by JS) -->
     <link rel="canonical" id="canonical-url" href="">
     <script>
         document.addEventListener("DOMContentLoaded", () => {
@@ -25,7 +40,12 @@
                 .setAttribute("href", canonicalOrigin + canonicalPath);
         });
     </script>
-    
+
+    <!-- Preconnects -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/components/top-bar.css">

@@ -141,7 +141,9 @@ class CustomUserAdmin(admin.ModelAdmin):
     list_display = (
         'email_display', 'name', 'role_badge',
         'email_verified_badge', 'active_badge',
-        'staff_badge', 'last_login_display', 'created_at',
+        'staff_badge',
+        'articles_count_badge', 'comments_count_badge',
+        'last_login_display', 'created_at',
     )
 
     list_display_links = ('email_display', 'name')
@@ -293,10 +295,44 @@ class CustomUserAdmin(admin.ModelAdmin):
 
     # ── Queryset: superusers see everyone, staff see non-superusers ────────
     def get_queryset(self, request):
+        from interactions.models import Comment
+        from news.models import Article, Author
+        from django.db.models import OuterRef, Subquery, IntegerField, Value
+        from django.db.models.functions import Coalesce
+
         qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        return qs.filter(is_superuser=False)
+        if not request.user.is_superuser:
+            qs = qs.filter(is_superuser=False)
+
+        # Annotate article count via author_profile → Author → Article
+        qs = qs.annotate(
+            _article_count  = Count('author_profile__articles', distinct=True),
+            _comment_count  = Count('comments', distinct=True),
+        )
+        return qs
+
+    # ── New columns: article + comment count ─────────────────────────────
+    @admin.display(description='Articles', ordering='_article_count')
+    def articles_count_badge(self, obj):
+        count = getattr(obj, '_article_count', 0)
+        if count == 0:
+            return format_html('<span style="color:#6b7280;font-size:12px;">0</span>')
+        return format_html(
+            '<span style="background:#1e3a5f;color:#60a5fa;padding:2px 9px;'
+            'border-radius:20px;font-size:11px;font-weight:700;">{}</span>',
+            count,
+        )
+
+    @admin.display(description='Comments', ordering='_comment_count')
+    def comments_count_badge(self, obj):
+        count = getattr(obj, '_comment_count', 0)
+        if count == 0:
+            return format_html('<span style="color:#6b7280;font-size:12px;">0</span>')
+        return format_html(
+            '<span style="background:#064e3b;color:#6ee7b7;padding:2px 9px;'
+            'border-radius:20px;font-size:11px;font-weight:700;">{}</span>',
+            count,
+        )
 
     # ── Readonly: protect superuser fields from non-superusers ────────────
     def get_readonly_fields(self, request, obj=None):
@@ -424,15 +460,23 @@ class CustomUserAdmin(admin.ModelAdmin):
 
     # ── Dashboard stats banner ─────────────────────────────────────────────
     def changelist_view(self, request, extra_context=None):
-        total       = User.objects.count()
-        active      = User.objects.filter(is_active=True).count()
-        staff       = User.objects.filter(is_staff=True).count()
-        unverified  = User.objects.filter(is_email_verified=False, is_active=True).count()
-        new_today   = User.objects.filter(created_at__date=timezone.now().date()).count()
+        from news.models import Article
+        from interactions.models import Comment
+
+        total      = User.objects.count()
+        active     = User.objects.filter(is_active=True).count()
+        staff      = User.objects.filter(is_staff=True).count()
+        unverified = User.objects.filter(is_email_verified=False, is_active=True).count()
+        new_today  = User.objects.filter(created_at__date=timezone.now().date()).count()
+        total_arts = Article.objects.count()
+        pub_arts   = Article.objects.filter(status='published').count()
+        comments   = Comment.objects.count()
 
         messages.info(
             request,
-            f'Users | Total: {total} | Active: {active} | Staff: {staff} | '
-            f'Unverified: {unverified} | Joined Today: {new_today}'
+            f'👥 Users: {total} total | {active} active | {staff} staff | '
+            f'{unverified} unverified | {new_today} joined today  '
+            f'│  📰 Articles: {pub_arts}/{total_arts} published  '
+            f'│  💬 Comments: {comments}'
         )
         return super().changelist_view(request, extra_context=extra_context)

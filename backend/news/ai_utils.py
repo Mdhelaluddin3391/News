@@ -88,7 +88,8 @@ def _build_prompt(original_title: str, source_name: str) -> str:
         "  Holistic, Synergy, In today's fast-paced world, In the modern era,\n"
         "  Ever-evolving, Unprecedented (use only if a precedent is cited),\n"
         "  Deep dive, Dive in, Let's explore, As mentioned, Notably, Crucially,\n"
-        "  Essentially, Interestingly, Surprisingly, Importantly.\n\n"
+        "  Essentially, Interestingly, Surprisingly, Importantly, Future Outlook,\n"
+        "  Looking Ahead, Moving Forward.\n\n"
 
         "RULE 5 — ATTRIBUTION DISCIPLINE (rotate — never repeat the same phrase twice):\n"
         "  Use these in rotation: officials said | data showed | the filing indicated\n"
@@ -142,16 +143,17 @@ def _build_prompt(original_title: str, source_name: str) -> str:
         "   · Official responses, expert perspectives, countervailing views.\n"
         "   · Use <blockquote> for direct quotes. Attribute precisely.\n\n"
 
-        "8. FUTURE OUTLOOK [MANDATORY — final paragraph]\n"
-        "   · Verified upcoming events, deadlines, or next steps from the knowledge base.\n"
-        "   · End with a sharp, factual observation — not a moral judgement.\n"
-        "   · This must be the LAST paragraph. No summary. No conclusion label.\n\n"
+        "8. THE KICKER / CLOSING CONTEXT [MANDATORY — final paragraph]\n"
+        "   · End the article organically like a 10-year veteran journalist. DO NOT use predictable formats.\n"
+        "   · Each article must have a unique ending structure. It can be a verified upcoming event, an overarching context, or a sharp factual observation.\n"
+        "   · NO repetitive labels or headings like 'Future Outlook', 'Looking Ahead', etc. It must flow naturally.\n"
+        "   · Leave the reader with a strong, grounded final thought based directly on the reported facts.\n\n"
 
         "MINIMUM CONTENT LENGTH: 750 words of readable prose.\n"
         "MAXIMUM BLOG MARKERS: 0. If there is a tip, list-of-advice, or how-to sentence, delete it.\n\n"
 
-        # ── SEO Metadata Rules ───────────────────────────────────────────────
-        "SEO METADATA RULES:\n\n"
+        # ── SEO & KEYWORD RULES ───────────────────────────────────────────────
+        "SEO & KEYWORD RULES (Crucial for Google Ranking):\n\n"
 
         "TITLE (58-68 characters EXACTLY):\n"
         "  · Must contain 1-2 high-intent search keywords people would actually Google.\n"
@@ -166,6 +168,11 @@ def _build_prompt(original_title: str, source_name: str) -> str:
         "  · Complete sentence. Active voice. No trailing ellipsis.\n"
         "  · Must contain the second most important fact from the story.\n"
         "  · Must be SEO-optimised: include primary keyword naturally.\n\n"
+        
+        "ARTICLE BODY KEYWORDS:\n"
+        "  · Identify 3-4 primary and secondary semantic keywords related to the story.\n"
+        "  · Naturally distribute these keywords throughout the article body, especially in the first 100 words and subheadings (<h2>).\n"
+        "  · DO NOT keyword stuff; maintain a 100% professional and human journalistic flow.\n\n"
 
         "CATEGORY — choose EXACTLY ONE:\n"
         "  Technology | World | Politics | Sports | Business |\n"

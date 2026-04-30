@@ -64,11 +64,12 @@ def _build_prompt(original_title: str, source_name: str) -> str:
         # ── The Iron Rules (Non-Negotiable) ─────────────────────────────────
         "THE IRON RULES — VIOLATING ANY OF THESE DISQUALIFIES THE ARTICLE:\n\n"
 
-        "RULE 1 — PURE NEWS FORMAT ONLY:\n"
-        "  This is a newspaper article. It is NOT a blog post. It is NOT a listicle.\n"
-        "  It is NOT a how-to guide. It is NOT an opinion piece. It is NOT an essay.\n"
-        "  Every paragraph must report a new fact, quote, or development.\n"
-        "  If a sentence does not add new information, delete it.\n\n"
+        "RULE 1 — AGENCY WIRE JOURNALISM ONLY:\n"
+        "  Write like an AP or Reuters wire reporter. Every sentence earns its place.\n"
+        "  Every paragraph advances the story with a NEW fact, quote, or development.\n"
+        "  NO padding. NO repetition. NO restating the headline. NO throat-clearing.\n"
+        "  If a sentence does not add new, distinct information — DELETE IT immediately.\n"
+        "  TIGHT is better than LONG. A sharp 600-word article beats a bloated 900-word one.\n\n"
 
         "RULE 2 — ZERO HALLUCINATION:\n"
         "  Every claim, figure, date, name, and statistic must come from the\n"
@@ -89,7 +90,10 @@ def _build_prompt(original_title: str, source_name: str) -> str:
         "  Ever-evolving, Unprecedented (use only if a precedent is cited),\n"
         "  Deep dive, Dive in, Let's explore, As mentioned, Notably, Crucially,\n"
         "  Essentially, Interestingly, Surprisingly, Importantly, Future Outlook,\n"
-        "  Looking Ahead, Moving Forward.\n\n"
+        "  Looking Ahead, Moving Forward, Will continue to dominate, Remains to be seen,\n"
+        "  Closely watched, Widely expected, Many experts believe, It is worth noting,\n"
+        "  At the end of the day, Going forward, In light of this, With this in mind,\n"
+        "  This comes as, This follows, This marks, This signals, This underscores.\n\n"
 
         "RULE 5 — ATTRIBUTION DISCIPLINE (rotate — never repeat the same phrase twice):\n"
         "  Use these in rotation: officials said | data showed | the filing indicated\n"
@@ -101,56 +105,70 @@ def _build_prompt(original_title: str, source_name: str) -> str:
         "  Numbers make news concrete. Always use figures: '47 percent', '$3.2 billion',\n"
         "  '12 people', not 'nearly half', 'billions', 'many people'.\n\n"
 
+        "RULE 7 — ANTI-BLOG WRITING TESTS (apply to every paragraph before writing it):\n"
+        "  ASK: Does this sentence tell the reader something NEW they didn't know?\n"
+        "  ASK: Is this sentence adding a fact, or just restating the previous point?\n"
+        "  ASK: Would a Reuters editor cut this sentence? If YES — delete it.\n"
+        "  A real news paragraph = ONE clear idea + ONE concrete fact or quote.\n\n"
+
         # ── Article Architecture ─────────────────────────────────────────────
         "ARTICLE ARCHITECTURE — Follow this narrative structure seamlessly.\n"
-        "Do NOT label these sections. Blend them like a professional newspaper story.\n"
+        "Do NOT label these sections. Blend them like a professional wire service story.\n"
         "Use HTML tags ONLY: <p> <h2> <h3> <ul> <li> <blockquote> <strong> <em>\n\n"
 
         "1. THE LEAD PARAGRAPH [MANDATORY — MUST be first]\n"
-        "   · 40-65 words. One paragraph. No subheading before it.\n"
-        "   · Answers WHO + WHAT + WHERE + WHEN + WHY IT MATTERS NOW.\n"
+        "   · 35-55 words. Punchy. One paragraph. No subheading before it.\n"
+        "   · THE MOST IMPORTANT FACT OF THE STORY — in the first sentence.\n"
+        "   · Answers WHO + WHAT + WHERE + WHEN in a single tight sentence.\n"
         "   · First word MUST be a proper noun (name/place/org) or a specific number.\n"
-        "   · NEVER start with A / An / The / In / On / At.\n"
-        "   · Uses present perfect or simple past tense for immediacy.\n\n"
+        "   · NEVER start with A / An / The / In / On / At / South / North / East / West.\n"
+        "   · GOOD lead: 'Pakistan raised its benchmark interest rate to 22 percent\n"
+        "     Thursday, the highest level since 2008, as IMF loan talks stalled in Geneva.'\n"
+        "   · BAD lead: 'In a significant development that has caught the attention of\n"
+        "     many analysts, Pakistan has decided to raise its interest rates.'\n"
+        "   · Uses simple past tense. No 'has been', no 'is expected to'.\n\n"
 
         "2. NUT GRAF [MANDATORY — immediately after lead]\n"
-        "   · 1-2 sentences. Places the story in its larger context.\n"
-        "   · Why does this matter beyond today? What pattern or trend does it fit?\n\n"
+        "   · 1-2 sentences MAX. Places the story in its larger context.\n"
+        "   · ONE sharp sentence: Why does this matter beyond today?\n\n"
 
-        "3. CORE DEVELOPMENT [3-5 paragraphs]\n"
+        "3. CORE DEVELOPMENT [3-5 paragraphs — strict NO REPEAT rule]\n"
         "   · Chronological or logical unfolding of the key facts.\n"
-        "   · Use <strong> on ONE critical statistic or figure per section (once).\n"
-        "   · Every paragraph introduces a new fact, angle, or development.\n\n"
+        "   · Each paragraph = ONE new distinct fact or development only.\n"
+        "   · NEVER rephrase something already said earlier. Move the story forward.\n"
+        "   · Use <strong> on ONE critical statistic or figure per section (once).\n\n"
 
-        "4. STORY-SPECIFIC SUBHEADINGS [<h2> — REQUIRED for articles over 500 words]\n"
+        "4. STORY-SPECIFIC SUBHEADINGS [<h2> — REQUIRED for articles over 400 words]\n"
         "   · Subheadings must be INTENSELY STORY-SPECIFIC — like a newspaper section header.\n"
         "   · GOOD examples: 'Fed Rate Decision Rattles Asian Markets'\n"
         "                     'IMF Demands Fuel Subsidy Cuts by March'\n"
         "                     'Three Officers Charged in Birmingham Probe'\n"
-        "   · BAD examples (BANNED): 'Background', 'Context', 'History',\n"
-        "                             'Impact', 'Analysis', 'Key Developments',\n"
-        "                             'What This Means', 'Expert Views', 'Outlook'.\n\n"
+        "   · BAD examples (BANNED): 'Background', 'Context', 'History', 'Impact',\n"
+        "                             'Analysis', 'Key Developments', 'What This Means',\n"
+        "                             'Expert Views', 'Outlook', 'Reaction', 'Update'.\n\n"
 
-        "5. HISTORICAL / LEGAL / ECONOMIC CONTEXT [1-2 paragraphs]\n"
-        "   · Place the event in context seamlessly within the narrative flow.\n"
+        "5. CONTEXT [1 paragraph — woven in, never a separate section]\n"
+        "   · One tight paragraph placing the event in historical or legal context.\n"
         "   · No separate section titled 'Background' or 'History'.\n\n"
 
-        "6. HUMAN STAKES [1-2 paragraphs]\n"
-        "   · Who is directly affected? Use concrete numbers.\n"
-        "   · Real quotes or official statements in <blockquote> tags.\n\n"
-
-        "7. VOICES AND REACTIONS [1-2 paragraphs]\n"
+        "6. VOICES AND REACTIONS [1-2 paragraphs]\n"
         "   · Official responses, expert perspectives, countervailing views.\n"
-        "   · Use <blockquote> for direct quotes. Attribute precisely.\n\n"
+        "   · Use <blockquote> for direct quotes. Attribute precisely.\n"
+        "   · If no direct quotes available from knowledge base, report actions not words.\n\n"
 
-        "8. THE KICKER / CLOSING CONTEXT [MANDATORY — final paragraph]\n"
-        "   · End the article organically like a 10-year veteran journalist. DO NOT use predictable formats.\n"
-        "   · Each article must have a unique ending structure. It can be a verified upcoming event, an overarching context, or a sharp factual observation.\n"
-        "   · NO repetitive labels or headings like 'Future Outlook', 'Looking Ahead', etc. It must flow naturally.\n"
-        "   · Leave the reader with a strong, grounded final thought based directly on the reported facts.\n\n"
+        "7. THE KICKER [MANDATORY — final paragraph, NO heading above it]\n"
+        "   · Write a kicker like a veteran journalist — organic, grounded, no formula.\n"
+        "   · Options: a verified upcoming event date, an ironic/sharp factual observation,\n"
+        "     a consequence already in motion, or a concrete number that reframes the story.\n"
+        "   · NEVER: generic, vague, or forward-looking fluff.\n"
+        "   · BANNED kicker openers: 'As the situation develops', 'Only time will tell',\n"
+        "     'The world will be watching', 'What happens next', 'The coming weeks/months',\n"
+        "     'Will continue to', 'Remains to be seen'.\n"
+        "   · GOOD kicker: 'Formal charges are expected by 15 May, court records showed.'\n"
+        "   · GOOD kicker: 'Shares in the parent company fell 4.7 percent at close.'\n\n"
 
-        "MINIMUM CONTENT LENGTH: 750 words of readable prose.\n"
-        "MAXIMUM BLOG MARKERS: 0. If there is a tip, list-of-advice, or how-to sentence, delete it.\n\n"
+        "QUALITY OVER LENGTH: Write 600-900 words of dense, fact-packed news prose.\n"
+        "Every word must earn its place. Zero filler. Zero repetition. Zero blog markers.\n\n"
 
         # ── SEO & KEYWORD RULES ───────────────────────────────────────────────
         "SEO & KEYWORD RULES (Crucial for Google Ranking):\n\n"
@@ -354,11 +372,13 @@ def rewrite_article_with_ai(
         f"{'═' * 70}\n\n"
         f"{knowledge_base_truncated}\n\n"
         f"{'═' * 70}\n"
-        f"FINAL REMINDERS:\n"
-        f"1. Lead paragraph: WHO + WHAT + WHERE + WHEN in 40-65 words. First word = proper noun.\n"
-        f"2. Minimum 750 words of pure news prose — no blog, no lists, no tips.\n"
-        f"3. All subheadings (<h2>) MUST be story-specific — never generic labels.\n"
-        f"4. Return ONLY valid JSON. No markdown. No preamble. No explanation.\n"
+        f"FINAL REMINDERS — AGENCY WIRE CHECKLIST:\n"
+        f"1. LEAD: First word = proper noun. 35-55 words. Most important fact FIRST. Simple past tense.\n"
+        f"2. NO PADDING: If a sentence doesn't add a NEW fact — delete it. Tight beats long.\n"
+        f"3. NO BLOG ENDINGS: No 'remains to be seen', 'will continue to dominate', 'the world watches'.\n"
+        f"4. KICKER: End with a specific fact, date, or number. Never with vague forward-looking fluff.\n"
+        f"5. SUBHEADINGS: Story-specific only (e.g. 'IMF Demands Cuts by March') — never 'Background'.\n"
+        f"6. Return ONLY valid JSON. No markdown. No preamble. No explanation.\n"
         f"{'═' * 70}"
     )
 
@@ -380,8 +400,8 @@ def rewrite_article_with_ai(
                     {"role": "user",   "content": user_content},
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.35,   # Low temperature = factual, structured output
-                max_tokens=5000,    # Enough for a 900-1200 word article in HTML
+                temperature=0.25,   # Very low temperature = tight, factual, no padding
+                max_tokens=4000,    # 600-900 word article — quality not quantity
             )
 
             raw_response = response.choices[0].message.content

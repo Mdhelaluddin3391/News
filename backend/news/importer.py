@@ -453,6 +453,10 @@ def fetch_and_import_news(api_url: str, provider: str) -> str:
             if user_created:
                 ai_user.set_unusable_password()
                 ai_user.save()
+            elif ai_user.name != "Ferox Times":
+                # Fix any existing record with a stale name (e.g. "Ferox Times AI Desk")
+                ai_user.name = "Ferox Times"
+                ai_user.save(update_fields=["name"])
 
             ai_author, _ = Author.objects.get_or_create(
                 user=ai_user, defaults={"role": "Reporter"}
